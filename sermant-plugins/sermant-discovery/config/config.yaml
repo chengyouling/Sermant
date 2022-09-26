@@ -1,0 +1,11 @@
+# consul发现配置
+consul.discovery.plugin:
+  host: localhost # consul服务ip
+  scheme: http # 调用协议http、https
+  port: 8500 # consul访问端口
+  catalogServicesWatchTimeout: 3 # 监听consul服务请求超时时间
+  catalogServicesWatchDelay: 2000 # 监听consul服务实例变化任务延时时间
+  refreshIntervalInMillis: 20000 # 定时拉取服务实例间隔时间
+
+dynamic.config:
+  dynamicConfigType: ZOOKEEPER
