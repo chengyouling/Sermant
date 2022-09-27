@@ -37,8 +37,9 @@ public interface ServiceDiscoveryClient extends Closeable {
      * 注册方法
      *
      * @param serviceInstance 注册
+     * @return true注册成功
      */
-    void registry(ServiceInstance serviceInstance);
+    boolean registry(ServiceInstance serviceInstance);
 
     /**
      * 查询实例列表

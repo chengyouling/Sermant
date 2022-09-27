@@ -22,14 +22,14 @@ import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
-import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2022-09-26
  */
 public class InstanceCacheManager {
-    private final Cache<String, InstanceCache> cache;
+    private final LoadingCache<String, InstanceCache> cache;
 
     private final ServiceDiscoveryClient discoveryClient;
 
@@ -50,9 +50,9 @@ public class InstanceCacheManager {
      */
     public InstanceCacheManager(ServiceDiscoveryClient discoveryClient) {
         this.discoveryClient = discoveryClient;
+        final long cacheExpireMs = PluginConfigManager.getPluginConfig(LbConfig.class).getCacheExpireMs();
         this.cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(PluginConfigManager.getPluginConfig(LbConfig.class).getCacheExpireMs(),
-                        TimeUnit.MILLISECONDS)
+                .expireAfterWrite(cacheExpireMs, TimeUnit.MILLISECONDS)
                 .build(new CacheLoader<String, InstanceCache>() {
                     @Override
                     public InstanceCache load(String serviceName) {
@@ -72,10 +72,11 @@ public class InstanceCacheManager {
      * @return 实例列表
      */
     public List<ServiceInstance> getInstances(String serviceName) {
-        final Collection<ServiceInstance> instances = discoveryClient.getInstances(serviceName);
-        final InstanceCache instanceCache = cache.getIfPresent(serviceName);
-        if (instanceCache == null) {
-            return Collections.emptyList();
+        InstanceCache instanceCache;
+        try {
+            instanceCache = cache.get(serviceName);
+        } catch (ExecutionException e) {
+            instanceCache = new InstanceCache(serviceName, new ArrayList<>(discoveryClient.getInstances(serviceName)));
         }
         return instanceCache.getInstances();
     }

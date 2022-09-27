@@ -22,11 +22,13 @@ import java.util.logging.Logger;
 
 import org.apache.http.client.methods.HttpUriRequest;
 import com.huawei.discovery.consul.service.DiscoveryClientService;
+import com.huawei.discovery.consul.service.LbService;
 import com.huawei.discovery.consul.utils.HttpConstants;
 import com.huawei.discovery.consul.utils.HttpParamersUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
+import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.service.ServiceManager;
 
 /**
@@ -56,6 +58,7 @@ public class HttpClientInterceptor implements Interceptor {
         if (HttpConstants.isRealmHost(uri.getHost())) {
             Map<String, String> hostAndPath = HttpParamersUtils.recoverHostAndPath(uri.getPath());
             String serviceName = hostAndPath.get(HttpConstants.HTTP_URI_HOST);
+            PluginServiceManager.getPluginService(LbService.class).choose(serviceName);
             Map<String, String> result = discoveryClientService.getInstances(serviceName);
             if (result.size() > 0) {
                 String uriNew = HttpParamersUtils.buildNewUrl(uri, result, hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
