@@ -21,6 +21,7 @@
         <spring-component-version>5.0.13.RELEASE</spring-component-version>
         <spring-cloud-version>2.2.1.RELEASE</spring-cloud-version>
         <slf4j.version>1.7.35</slf4j.version>
+        <curator.x.version>5.3.0</curator.x.version>
     </properties>
 
     <dependencies>
@@ -69,6 +70,21 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.curator</groupId>
+            <artifactId>curator-x-discovery</artifactId>
+            <version>${curator.x.version}</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>log4j</artifactId>
+                    <groupId>log4j</groupId>
+                </exclusion>
+                <exclusion>
+                    <artifactId>netty</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!--test 依赖-->

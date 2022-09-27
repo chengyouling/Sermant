@@ -15,3 +15,4 @@
 #
 
 com.huawei.discovery.service.client.HttpConsulDiscoveryClient
+com.huawei.discovery.service.lb.LbServiceImpl
