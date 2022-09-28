@@ -34,6 +34,7 @@ import org.apache.curator.x.discovery.ServiceType;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
@@ -70,6 +71,11 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
         this.curatorFramework = buildClient();
         this.curatorFramework.start();
         this.serviceDiscovery = build();
+        try {
+            this.serviceDiscovery.start();
+        } catch (Exception exception) {
+            LOGGER.log(Level.SEVERE, "Can not start zookeeper discovery client!", exception);
+        }
     }
 
     @Override
@@ -79,7 +85,9 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
                 serviceInstance.serviceName(), serviceInstance.getMetadata());
         final org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> instance =
                 new org.apache.curator.x.discovery.ServiceInstance<>(
-                        serviceInstance.serviceName(), id, serviceInstance.getHost(), serviceInstance.getPort(),
+                        serviceInstance.serviceName(), id,
+                        lbConfig.isPreferIpAddress() ? serviceInstance.getIp() : serviceInstance.getHost(),
+                        serviceInstance.getPort(),
                         0, zookeeperServiceInstance, System.currentTimeMillis(), ServiceType.DYNAMIC, null);
         try {
             this.serviceDiscovery.registerService(instance);
@@ -153,5 +161,10 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
     @Override
     public void close() {
         curatorFramework.close();
+        try {
+            this.serviceDiscovery.close();
+        } catch (IOException ex) {
+            LOGGER.log(Level.WARNING, "Stop zookeeper discovery client failed", ex);
+        }
     }
 }

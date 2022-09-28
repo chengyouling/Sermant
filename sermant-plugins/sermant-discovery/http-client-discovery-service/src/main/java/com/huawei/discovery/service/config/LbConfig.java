@@ -62,6 +62,19 @@ public class LbConfig implements PluginConfig {
      */
     private String lbType = "RoundRobin";
 
+    /**
+     * 倾向IP, 若为true, 则所有关联的地址均有ip替换host
+     */
+    private boolean preferIpAddress = false;
+
+    public boolean isPreferIpAddress() {
+        return preferIpAddress;
+    }
+
+    public void setPreferIpAddress(boolean preferIpAddress) {
+        this.preferIpAddress = preferIpAddress;
+    }
+
     public String getLbType() {
         return lbType;
     }
