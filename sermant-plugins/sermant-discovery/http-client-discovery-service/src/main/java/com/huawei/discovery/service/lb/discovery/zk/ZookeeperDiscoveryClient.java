@@ -16,17 +16,14 @@
 
 package com.huawei.discovery.service.lb.discovery.zk;
 
+import com.huawei.discovery.consul.entity.DefaultServiceInstance;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.service.config.LbConfig;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
-import com.huawei.discovery.service.lb.discovery.entity.DefaultServiceInstance;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.utils.ReflectUtils;
-
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -34,7 +31,8 @@ import org.apache.curator.retry.RetryForever;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceType;
-import org.apache.curator.x.discovery.details.InstanceSerializer;
+import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
+import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +56,7 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
 
     private CuratorFramework curatorFramework;
 
-    private ServiceDiscovery<Object> serviceDiscovery;
+    private ServiceDiscovery<ZookeeperInstance> serviceDiscovery;
 
     /**
      * zk客户端
@@ -77,9 +75,9 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
     @Override
     public boolean registry(ServiceInstance serviceInstance) {
         final String id = UUID.randomUUID().toString();
-        final ZookeeperServiceInstance zookeeperServiceInstance = new ZookeeperServiceInstance(id,
+        final ZookeeperInstance zookeeperServiceInstance = new ZookeeperInstance(id,
                 serviceInstance.serviceName(), serviceInstance.getMetadata());
-        final org.apache.curator.x.discovery.ServiceInstance<Object> instance =
+        final org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> instance =
                 new org.apache.curator.x.discovery.ServiceInstance<>(
                         serviceInstance.serviceName(), id, serviceInstance.getHost(), serviceInstance.getPort(),
                         0, zookeeperServiceInstance, System.currentTimeMillis(), ServiceType.DYNAMIC, null);
@@ -94,23 +92,26 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
 
     @Override
     public Collection<ServiceInstance> getInstances(String serviceId) {
+        final ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         try {
+            Thread.currentThread().setContextClassLoader(ZookeeperDiscoveryClient.class.getClassLoader());
             return convert(serviceDiscovery.queryForInstances(serviceId));
         } catch (Exception exception) {
             LOGGER.log(Level.WARNING, "Can not query service instances from registry center!", exception);
+            Thread.currentThread().setContextClassLoader(contextClassLoader);
         }
         return Collections.emptyList();
     }
 
     private Collection<ServiceInstance> convert(
-            Collection<org.apache.curator.x.discovery.ServiceInstance<Object>> serviceInstances) {
+            Collection<org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance>> serviceInstances) {
         if (serviceInstances == null || serviceInstances.isEmpty()) {
             return Collections.emptyList();
         }
         return serviceInstances.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    private ServiceInstance convert(org.apache.curator.x.discovery.ServiceInstance<Object> instance) {
+    private ServiceInstance convert(org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> instance) {
         final DefaultServiceInstance serviceInstance = new DefaultServiceInstance();
         serviceInstance.setHost(instance.getAddress());
         serviceInstance.setIp(instance.getAddress());
@@ -135,11 +136,11 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
         return Collections.emptyList();
     }
 
-    private ServiceDiscovery<Object> build() {
-        return ServiceDiscoveryBuilder.builder(Object.class)
+    private ServiceDiscovery<ZookeeperInstance> build() {
+        return ServiceDiscoveryBuilder.builder(ZookeeperInstance.class)
                 .client(this.curatorFramework)
                 .basePath(lbConfig.getZkBasePath())
-                .serializer(new ZkJsonInstanceSerializer<>())
+                .serializer(new JsonInstanceSerializer<>(ZookeeperInstance.class))
                 .watchInstances(false)
                 .build();
     }
@@ -152,33 +153,5 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
     @Override
     public void close() {
         curatorFramework.close();
-    }
-
-    /**
-     * 序列化器
-     *
-     * @param <T> 实例类型
-     */
-    static class ZkJsonInstanceSerializer<T> implements InstanceSerializer<T> {
-        private final ObjectMapper mapper;
-        private final JavaType type;
-
-        /**
-         * 实例
-         */
-        ZkJsonInstanceSerializer() {
-            this.mapper = new ObjectMapper();
-            this.type = mapper.getTypeFactory().constructType(org.apache.curator.x.discovery.ServiceInstance.class);
-        }
-
-        @Override
-        public byte[] serialize(org.apache.curator.x.discovery.ServiceInstance<T> instance) throws Exception {
-            return mapper.writeValueAsBytes(instance);
-        }
-
-        @Override
-        public org.apache.curator.x.discovery.ServiceInstance<T> deserialize(byte[] bytes) throws Exception {
-            return mapper.readValue(bytes, type);
-        }
     }
 }

@@ -60,7 +60,7 @@ public class InstanceCacheManager {
                         if (instances != null && !instances.isEmpty()) {
                             return new InstanceCache(serviceName, new ArrayList<>(instances));
                         }
-                        return null;
+                        return new InstanceCache(serviceName, new ArrayList<>());
                     }
                 });
     }
