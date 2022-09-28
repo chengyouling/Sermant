@@ -1,7 +1,0 @@
-com\huawei\discovery\consul\interceptors\OkHttpClientInterceptor.class
-com\huawei\discovery\consul\service\DiscoveryClientService.class
-com\huawei\discovery\consul\declarers\HttpClientDeclarer.class
-com\huawei\discovery\consul\declarers\OkHttpClientDeclarer.class
-com\huawei\discovery\consul\interceptors\HttpClientInterceptor.class
-com\huawei\discovery\consul\utils\HttpParamersUtils.class
-com\huawei\discovery\consul\utils\HttpConstants.class

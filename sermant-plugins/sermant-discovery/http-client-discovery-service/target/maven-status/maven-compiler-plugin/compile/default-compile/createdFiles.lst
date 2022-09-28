@@ -1,6 +1,0 @@
-com\huawei\discovery\service\client\HttpConsulClient.class
-com\huawei\discovery\service\config\ConsulDiscoveryConfig.class
-com\huawei\discovery\service\service\ConsulServerRefreshTask$PollConfigurationTask.class
-com\huawei\discovery\service\client\HttpConsulDiscoveryClient.class
-com\huawei\discovery\service\service\ConsulServerRefreshTask.class
-com\huawei\discovery\service\service\ConsulServersWatch.class
