@@ -16,5 +16,5 @@
 #
 com.huawei.discovery.consul.declarers.HttpClientDeclarer
 com.huawei.discovery.consul.declarers.OkHttpClientDeclarer
-com.huawei.discovery.consul.declarers.SpringBootDeclarer
+com.huawei.discovery.consul.declarers.RegistrationDeclarer
 

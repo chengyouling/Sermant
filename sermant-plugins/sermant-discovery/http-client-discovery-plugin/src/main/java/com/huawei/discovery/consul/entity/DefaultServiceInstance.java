@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.service.lb.discovery.entity;
+package com.huawei.discovery.consul.entity;
 
 import com.huawei.discovery.consul.entity.InstanceStats;
 import com.huawei.discovery.consul.entity.ServiceInstance;

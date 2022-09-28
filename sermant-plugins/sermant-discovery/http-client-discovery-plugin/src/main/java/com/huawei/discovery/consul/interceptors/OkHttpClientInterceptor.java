@@ -18,9 +18,11 @@ package com.huawei.discovery.consul.interceptors;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
-import com.huawei.discovery.consul.service.DiscoveryClientService;
+import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.consul.service.LbService;
 import com.huawei.discovery.consul.utils.HttpConstants;
 import com.huawei.discovery.consul.utils.HttpParamersUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
@@ -41,33 +43,31 @@ public class OkHttpClientInterceptor implements Interceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private final DiscoveryClientService discoveryClientService;
+    private final LbService lbService;
 
     /**
      * 构造方法
      */
     public OkHttpClientInterceptor() {
-        discoveryClientService = ServiceManager.getService(DiscoveryClientService.class);
+        lbService = ServiceManager.getService(LbService.class);
     }
 
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
         Request request = (Request)context.getRawMemberFieldValue("originalRequest");
         URI uri = request.url().uri();
-        if (HttpConstants.isRealmHost(uri.getHost())) {
-            String method = request.method();
-            Map<String, String> hostAndPath = HttpParamersUtils.recoverHostAndPath(uri.getPath());
-            String serviceName = hostAndPath.get(HttpConstants.HTTP_URI_HOST);
-            Map<String, String> result = discoveryClientService.getInstances(serviceName);
-            if (result.size() > 0) {
-                String url = HttpParamersUtils.buildNewUrl(uri, result, hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-                HttpUrl newUrl = HttpUrl.parse(url);
-                Request newRequest = request
-                        .newBuilder()
-                        .url(newUrl)
-                        .build();
-                context.setRawMemberFieldValue("originalRequest", newRequest);
-            }
+        String method = request.method();
+        Map<String, String> hostAndPath = HttpParamersUtils.recoverHostAndPath(uri.getPath());
+        String serviceName = hostAndPath.get(HttpConstants.HTTP_URI_HOST);
+        Optional<ServiceInstance> optional = lbService.choose(serviceName);
+        if (optional.isPresent()) {
+            String url = HttpParamersUtils.buildNewUrl(uri, optional.get(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+            HttpUrl newUrl = HttpUrl.parse(url);
+            Request newRequest = request
+                    .newBuilder()
+                    .url(newUrl)
+                    .build();
+            context.setRawMemberFieldValue("originalRequest", newRequest);
         }
         return context;
     }

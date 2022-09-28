@@ -9,15 +9,17 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpUriRequest;
 
+import com.huawei.discovery.consul.entity.ServiceInstance;
+
 public class HttpParamersUtils {
 
-    public static String buildNewUrl(URI uri, Map<String, String> result, String path, String method) {
+    public static String buildNewUrl(URI uri, ServiceInstance serviceInstance, String path, String method) {
         StringBuilder urlBuild = new StringBuilder();
         urlBuild.append(uri.getScheme())
                 .append(HttpConstants.HTTP_URL_DOUBLIE_SLASH)
-                .append(result.get(HttpConstants.HTTP_URI_HOST))
+                .append(serviceInstance.getIp())
                 .append(HttpConstants.HTTP_URL_COLON)
-                .append(result.get(HttpConstants.HTTP_URI_PORT))
+                .append(serviceInstance.getPort())
                 .append(path);
         if (method.equals(HttpConstants.HTTP_GET)) {
             urlBuild.append(HttpConstants.HTTP_URL_UNKNOWN)

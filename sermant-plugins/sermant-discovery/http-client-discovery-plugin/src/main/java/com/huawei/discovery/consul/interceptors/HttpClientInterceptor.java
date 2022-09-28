@@ -18,17 +18,18 @@ package com.huawei.discovery.consul.interceptors;
 
 import java.net.URI;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 import org.apache.http.client.methods.HttpUriRequest;
-import com.huawei.discovery.consul.service.DiscoveryClientService;
+
+import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.consul.service.LbService;
 import com.huawei.discovery.consul.utils.HttpConstants;
 import com.huawei.discovery.consul.utils.HttpParamersUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
-import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.service.ServiceManager;
 
 /**
@@ -41,13 +42,13 @@ public class HttpClientInterceptor implements Interceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private final DiscoveryClientService discoveryClientService;
+    private final LbService lbService;
 
     /**
      * 构造方法
      */
     public HttpClientInterceptor() {
-        discoveryClientService = ServiceManager.getService(DiscoveryClientService.class);
+        lbService = ServiceManager.getService(LbService.class);
     }
 
     @Override
@@ -55,15 +56,11 @@ public class HttpClientInterceptor implements Interceptor {
         HttpUriRequest httpUriRequest = (HttpUriRequest) context.getArguments()[0];
         String method = httpUriRequest.getMethod();
         URI uri = httpUriRequest.getURI();
-        if (HttpConstants.isRealmHost(uri.getHost())) {
-            Map<String, String> hostAndPath = HttpParamersUtils.recoverHostAndPath(uri.getPath());
-            String serviceName = hostAndPath.get(HttpConstants.HTTP_URI_HOST);
-            PluginServiceManager.getPluginService(LbService.class).choose(serviceName);
-            Map<String, String> result = discoveryClientService.getInstances(serviceName);
-            if (result.size() > 0) {
-                String uriNew = HttpParamersUtils.buildNewUrl(uri, result, hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-                context.getArguments()[0] = HttpParamersUtils.builNewRequest(uriNew, method, httpUriRequest);
-            }
+        Map<String, String> hostAndPath = HttpParamersUtils.recoverHostAndPath(uri.getPath());
+        Optional<ServiceInstance> optional = lbService.choose(hostAndPath.get(HttpConstants.HTTP_URI_HOST));
+        if (optional.isPresent()) {
+            String uriNew = HttpParamersUtils.buildNewUrl(uri, optional.get(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+            context.getArguments()[0] = HttpParamersUtils.builNewRequest(uriNew, method, httpUriRequest);
         }
         return context;
     }
