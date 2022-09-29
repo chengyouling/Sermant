@@ -21,6 +21,7 @@ import com.huawei.discovery.service.lb.stats.InstanceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 最低并发负载均衡
@@ -31,17 +32,32 @@ import java.util.List;
 public class BestAvailableLoadbalancer extends AbstractLoadbalancer {
     @Override
     protected ServiceInstance doChoose(String serviceName, List<ServiceInstance> instances) {
-        long minActiveRequest = Long.MAX_VALUE;
-        ServiceInstance result = instances.get(0);
-        for (ServiceInstance serviceInstance : instances) {
+        // 相同且并发数最小实例数量
+        int sameActiveCount = 0;
+        long minActiveRequest = -1;
+
+        // 记录最小实例的下标
+        final int[] activeIndexes = new int[instances.size()];
+        for (int index = 0, size = instances.size(); index < size; index++) {
+            final ServiceInstance serviceInstance = instances.get(index);
             final InstanceStats instanceStats = ServiceStatsManager.INSTANCE.getInstanceStats(serviceInstance);
-            final long activeRequest = instanceStats.getActiveRequests().get();
-            if (minActiveRequest > activeRequest) {
-                result = serviceInstance;
+            final long activeRequest = instanceStats.getActiveRequests();
+            if (minActiveRequest == -1 || activeRequest < minActiveRequest) {
                 minActiveRequest = activeRequest;
+                sameActiveCount = 1;
+                activeIndexes[0] = index;
+            } else if (minActiveRequest == activeRequest) {
+                activeIndexes[sameActiveCount++] = index;
             }
         }
-        return result;
+
+        // 刚好存在最小的并发实例
+        if (sameActiveCount == 1) {
+            return instances.get(activeIndexes[0]);
+        }
+
+        // 多个相同的并发实例采用从中随机策略选择一个实例
+        return instances.get(activeIndexes[ThreadLocalRandom.current().nextInt(sameActiveCount)]);
     }
 
     @Override

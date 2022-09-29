@@ -16,7 +16,10 @@
 
 package com.huawei.discovery.service.lb.stats;
 
+import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.Recorder;
+
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -48,9 +51,27 @@ public class InstanceStats implements Recorder {
     private final AtomicLong failRequestCount = new AtomicLong();
 
     /**
+     * 时间窗口
+     */
+    private final long activeRequestTimeoutWindowMs;
+
+    /**
+     * 上一次记录并发数的时间戳
+     */
+    private volatile long lastActiveRequestTimestamp;
+
+    /**
      * 平均响应时间
      */
     private double responseAvgTime = 0d;
+
+    /**
+     * 构造器
+     */
+    public InstanceStats() {
+        this.activeRequestTimeoutWindowMs =
+                PluginConfigManager.getPluginConfig(LbConfig.class).getActiveRequestTimeoutWindowMs();
+    }
 
     /**
      * 调用前请求
@@ -59,6 +80,7 @@ public class InstanceStats implements Recorder {
     public void beforeRequest() {
         activeRequests.incrementAndGet();
         allRequestCount.incrementAndGet();
+        lastActiveRequestTimestamp = System.currentTimeMillis();
     }
 
     /**
@@ -105,8 +127,19 @@ public class InstanceStats implements Recorder {
         return allRequestConsumeTime;
     }
 
-    public AtomicLong getActiveRequests() {
-        return activeRequests;
+    /**
+     * 获取并发数
+     *
+     * @return 并发数
+     */
+    public long getActiveRequests() {
+        final long activeCount = activeRequests.get();
+        final long currentTimeMillis = System.currentTimeMillis();
+        if (currentTimeMillis - lastActiveRequestTimestamp >= this.activeRequestTimeoutWindowMs) {
+            this.activeRequests.set(0);
+            return 0;
+        }
+        return activeCount;
     }
 
     public AtomicLong getFailRequestCount() {

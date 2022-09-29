@@ -19,18 +19,13 @@ package com.huawei.discovery.service.lb.stats;
 import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
-
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 /**
  * 服务指标数据, 管理所有实例数据
@@ -41,11 +36,6 @@ import java.util.stream.Collectors;
 public class ServiceStats {
     private final LoadingCache<ServiceInstance, InstanceStats> instanceStatsCache;
     private final String serviceName;
-
-    /**
-     * 权重
-     */
-    private List<Double> responseTimeWeights;
 
     /**
      * 构造器
@@ -85,34 +75,6 @@ public class ServiceStats {
      * 进行聚合统计, 当前仅响应时间
      */
     public void aggregationStats() {
-    }
-
-    private void aggregationStats(Collection<InstanceStats> instanceStats) {
-        double total = 0d;
-        for (InstanceStats stats : instanceStats) {
-            total += stats.getResponseAvgTime();
-        }
-        double indexWeight = 0d;
-        final List<Double> weights = new ArrayList<>((int) instanceStatsCache.size());
-        for (InstanceStats stats : instanceStats) {
-            final double curWeight = total - stats.getResponseAvgTime();
-            indexWeight += curWeight;
-            weights.add(indexWeight);
-        }
-        this.responseTimeWeights = weights;
-    }
-
-    /**
-     * 指定服务进行聚合统计
-     *
-     * @param serviceInstances 指定实例
-     */
-    public void aggregationStats(List<ServiceInstance> serviceInstances) {
-        aggregationStats(serviceInstances.stream().map(this::getStats).collect(Collectors.toList()));
-    }
-
-    public List<Double> getResponseTimeWeights() {
-        return responseTimeWeights;
     }
 
     public String getServiceName() {

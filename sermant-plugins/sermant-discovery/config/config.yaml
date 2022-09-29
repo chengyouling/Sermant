@@ -10,4 +10,5 @@ consul.discovery.plugin:
 dynamic.config:
   dynamicConfigType: ZOOKEEPER
 sermant.discovery.lb:
-  lbType: RoundRobin
+  lbType: RoundRobin               # 负载均衡类型, 当前支持轮询(RoundRobin)、随机(Random)、响应时间权重(WeightedResponseTime)、最低并发数(BestAvailable)
+  registryAddress: 127.0.0.1:2181  # 注册中心地址

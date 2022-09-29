@@ -28,44 +28,61 @@ import com.huaweicloud.sermant.core.plugin.config.PluginConfig;
 @ConfigTypeKey("sermant.discovery.lb")
 public class LbConfig implements PluginConfig {
     /**
+     * ===============Zookeeper注册中心专属配置================
+     * ZK连接超时时间
+     */
+    private int connectionTimeoutMs = LbConstants.DEFAULT_CONNECTION_TIMEOUT_MS;
+
+    /**
+     * ZK响应超时时间
+     */
+    private int readTimeoutMs = LbConstants.DEFAULT_READ_TIMEOUT_MS;
+
+    /**
+     * ZK连接重试时间
+     */
+    private int retryIntervalMs = LbConstants.DEFAULT_RETRY_INTERVAL_MS;
+
+    /**
+     * zookeeper uri格式规范
+     */
+    private String zkUriSpec = "{scheme}://{address}:{port}";
+
+    /**
+     * zookeeper保存数据的根路径
+     * ===============Zookeeper注册中心专属配置结束================
+     */
+    private String zkBasePath = "/services";
+
+    /**
      * 注册中心地址
      */
     private String registryAddress = "127.0.0.1:2181";
 
     /**
-     * 连接超时时间
-     */
-    private int connectionTimeoutMs = 2000;
-
-    /**
-     * 响应超时时间
-     */
-    private int readTimeoutMs = 10000;
-
-    /**
-     * 连接重试时间
-     */
-    private int retryIntervalMs = 30000;
-
-    /**
-     * zookeeper保存数据的前缀
-     */
-    private String zkBasePath = "/services";
-
-    /**
      * 缓存获取时间
      */
-    private long cacheExpireMs = 30000L;
+    private long cacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
 
     /**
      * 缓存自动刷新时间
      */
-    private long refreshIntervalMs = 60000L;
+    private long refreshIntervalMs = LbConstants.DEFAULT_REFRESH_INTERVAL_MS;
 
     /**
      * 缓存并发度, 影响从缓存获取实例的效率
      */
-    private int cacheConcurrencyLevel = 16;
+    private int cacheConcurrencyLevel = LbConstants.DEFAULT_CACHE_CONCURRENCY_LEVEL;
+
+    /**
+     * 服务指标数据缓存, 默认60分钟
+     */
+    private long statsCacheExpireTime = LbConstants.DEFAULT_STATS_CACHE_EXPIRE_TIME;
+
+    /**
+     * 统计数据定时聚合统计刷新时间, 若设置<=0, 则不会开启聚合统计, 关联聚合统计的负载均衡将会失效
+     */
+    private long lbStatsRefreshIntervalMs = LbConstants.DEFAULT_LB_STATS_REFRESH_INTERVAL_MS;
 
     /**
      * 负载均衡类型
@@ -78,14 +95,25 @@ public class LbConfig implements PluginConfig {
     private boolean preferIpAddress = false;
 
     /**
-     * 服务指标数据缓存, 默认60分钟
+     * 统计并发数的时间窗口, 默认10分钟, 并发数仅在时间窗口内统计生效, 超出则清0
      */
-    private long statsCacheExpireTime = 60;
+    private long activeRequestTimeoutWindowMs = LbConstants.DEFAULT_ACTIVE_REQUEST_COUNT_WINDOW_MS;
 
-    /**
-     * 统计数据定时聚合统计刷新时间, 若设置<=0, 则不会开启聚合统计, 关联聚合统计的负载均衡将会失效
-     */
-    private long lbStatsRefreshIntervalMs = 30000L;
+    public long getActiveRequestTimeoutWindowMs() {
+        return activeRequestTimeoutWindowMs;
+    }
+
+    public void setActiveRequestTimeoutWindowMs(long activeRequestTimeoutWindowMs) {
+        this.activeRequestTimeoutWindowMs = activeRequestTimeoutWindowMs;
+    }
+
+    public String getZkUriSpec() {
+        return zkUriSpec;
+    }
+
+    public void setZkUriSpec(String zkUriSpec) {
+        this.zkUriSpec = zkUriSpec;
+    }
 
     public long getLbStatsRefreshIntervalMs() {
         return lbStatsRefreshIntervalMs;

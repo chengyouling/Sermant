@@ -17,11 +17,14 @@
 package com.huawei.discovery.service.lb.rule;
 
 import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.service.lb.stats.InstanceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * 基于响应时间的负载均衡
@@ -30,30 +33,56 @@ import java.util.concurrent.ThreadLocalRandom;
  * @since 2022-09-29
  */
 public class WeightedResponseTimeLoadbalancer extends AbstractLoadbalancer {
+    private static final double DOUBLE_GAP = 1e-6d;
+
     private final AbstractLoadbalancer defaultLb = new RoundRobinLoadbalancer();
 
     @Override
     protected ServiceInstance doChoose(String serviceName, List<ServiceInstance> instances) {
         final ServiceStats serviceStats = ServiceStatsManager.INSTANCE.getServiceStats(serviceName);
-        List<Double> responseTimeWeights = serviceStats.getResponseTimeWeights();
-        if (responseTimeWeights == null) {
+        List<Double> responseTimeWeights = calculateResponseTimeWeight(serviceStats, instances);
+        double maxWeights = responseTimeWeights.get(responseTimeWeights.size() - 1);
+        if (maxWeights <= DOUBLE_GAP) {
+            // 此时还未开始统计响应时间, 采用轮询调用
             return defaultLb.doChoose(serviceName, instances);
         }
-        if (responseTimeWeights.size() != instances.size()) {
-            // 采取强制刷新
-            serviceStats.aggregationStats(instances);
-            responseTimeWeights = serviceStats.getResponseTimeWeights();
-        }
-        double maxWeights = responseTimeWeights.get(responseTimeWeights.size() - 1);
         final double seed = ThreadLocalRandom.current().nextDouble(maxWeights);
-        ServiceInstance result = instances.get(0);
+        ServiceInstance result = null;
         for (int i = 0, size = responseTimeWeights.size(); i < size; i++) {
             if (seed <= responseTimeWeights.get(i)) {
                 result = instances.get(i);
                 break;
             }
         }
+        if (result == null) {
+            return defaultLb.doChoose(serviceName, instances);
+        }
         return result;
+    }
+
+    /**
+     * 计算响应时间权重
+     *
+     * @param serviceInstances 服务实例
+     * @param serviceStats 服务指标信息
+     * @return 权重列表
+     */
+    private List<Double> calculateResponseTimeWeight(ServiceStats serviceStats,
+            List<ServiceInstance> serviceInstances) {
+        final List<InstanceStats> instanceStats = serviceInstances.stream().map(serviceStats::getStats)
+                .collect(Collectors.toList());
+        double total = 0d;
+        for (InstanceStats stats : instanceStats) {
+            total += stats.getResponseAvgTime();
+        }
+        double indexWeight = 0d;
+        final List<Double> weights = new ArrayList<>(instanceStats.size());
+        for (InstanceStats stats : instanceStats) {
+            final double curWeight = total - stats.getResponseAvgTime();
+            indexWeight += curWeight;
+            weights.add(indexWeight);
+        }
+        return weights;
     }
 
     @Override

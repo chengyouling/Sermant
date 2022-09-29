@@ -31,6 +31,7 @@ import org.apache.curator.retry.RetryForever;
 import org.apache.curator.x.discovery.ServiceDiscovery;
 import org.apache.curator.x.discovery.ServiceDiscoveryBuilder;
 import org.apache.curator.x.discovery.ServiceType;
+import org.apache.curator.x.discovery.UriSpec;
 import org.apache.curator.x.discovery.details.JsonInstanceSerializer;
 import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 
@@ -86,10 +87,11 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
         final ZookeeperInstance zookeeperServiceInstance = new ZookeeperInstance(id,
                 serviceInstance.serviceName(), serviceInstance.getMetadata());
         instance = new org.apache.curator.x.discovery.ServiceInstance<>(
-                        serviceInstance.serviceName(), id,
-                        lbConfig.isPreferIpAddress() ? serviceInstance.getIp() : serviceInstance.getHost(),
-                        serviceInstance.getPort(),
-                        0, zookeeperServiceInstance, System.currentTimeMillis(), ServiceType.DYNAMIC, null);
+                serviceInstance.serviceName(), id,
+                lbConfig.isPreferIpAddress() ? serviceInstance.getIp() : serviceInstance.getHost(),
+                serviceInstance.getPort(),
+                0, zookeeperServiceInstance, System.currentTimeMillis(), ServiceType.DYNAMIC,
+                new UriSpec(lbConfig.getZkUriSpec()));
         try {
             this.serviceDiscovery.registerService(instance);
             return true;

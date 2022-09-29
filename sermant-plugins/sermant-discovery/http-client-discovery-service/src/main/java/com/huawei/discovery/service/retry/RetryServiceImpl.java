@@ -126,7 +126,7 @@ public class RetryServiceImpl implements InvokerService {
             final long start = System.currentTimeMillis();
             final Optional<ServiceInstance> instance = choose(serviceName, isRetry);
             if (!instance.isPresent()) {
-                throw new ProviderException("Can not found provider named + " + serviceName);
+                throw new ProviderException("Can not found provider named: " + serviceName);
             }
             invokerContext.setServiceInstance(instance.get());
             final InstanceStats stats = ServiceStatsManager.INSTANCE.getInstanceStats(instance.get());
