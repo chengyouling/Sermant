@@ -16,7 +16,6 @@
 
 package com.huawei.discovery.service.retry;
 
-import com.huawei.discovery.consul.entity.InstanceStats;
 import com.huawei.discovery.consul.entity.Recorder;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.consul.retry.InvokerContext;
@@ -27,6 +26,10 @@ import com.huawei.discovery.consul.retry.RetryException;
 import com.huawei.discovery.consul.service.InvokerService;
 import com.huawei.discovery.service.ex.ProviderException;
 import com.huawei.discovery.service.lb.DiscoveryManager;
+import com.huawei.discovery.service.lb.rule.AbstractLoadbalancer;
+import com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer;
+import com.huawei.discovery.service.lb.stats.InstanceStats;
+import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 
@@ -58,6 +61,8 @@ public class RetryServiceImpl implements InvokerService {
     private static final int MAX_SIZE = 9999;
 
     private static final String NAME = "SERMANT_DEFAULT_RETRY";
+
+    private final AbstractLoadbalancer retryLoadbalancer = new RoundRobinLoadbalancer();
 
     private final List<Class<? extends Throwable>> retryEx = Arrays.asList(
             ConnectException.class,
@@ -116,31 +121,43 @@ public class RetryServiceImpl implements InvokerService {
             throws Exception {
         final RetryContext<Recorder> context = retry.context();
         final InvokerContext invokerContext = new InvokerContext();
+        boolean isRetry = false;
         do {
-            final Optional<ServiceInstance> instance = DiscoveryManager.INSTANCE.choose(serviceName);
-            if (instance.isPresent()) {
-                invokerContext.setServiceInstance(instance.get());
-                final InstanceStats stats = instance.get().getStats();
-                context.onBefore(stats);
-                try {
-                    final Object result = invokeFunc.apply(invokerContext);
-                    if (invokerContext.getEx() != null) {
-                        // 此处调用器, 若调用出现异常, 则以异常结果返回
-                        context.onError(stats, (Exception) invokerContext.getEx());
-                        invokerContext.setEx(null);
-                        continue;
-                    }
-                    final boolean isNeedRetry = context.onResult(stats, result);
-                    if (!isNeedRetry) {
-                        context.onComplete(stats);
-                        return Optional.ofNullable(result);
-                    }
-                } catch (Exception ex) {
-                    context.onError(stats, ex);
-                }
-            } else {
+            final long start = System.currentTimeMillis();
+            final Optional<ServiceInstance> instance = choose(serviceName, isRetry);
+            if (!instance.isPresent()) {
                 throw new ProviderException("Can not found provider named + " + serviceName);
             }
+            invokerContext.setServiceInstance(instance.get());
+            final InstanceStats stats = ServiceStatsManager.INSTANCE.getInstanceStats(instance.get());
+            context.onBefore(stats);
+            long consumeTimeMs;
+            try {
+                final Object result = invokeFunc.apply(invokerContext);
+                consumeTimeMs = System.currentTimeMillis() - start;
+                if (invokerContext.getEx() != null) {
+                    // 此处调用器, 若调用出现异常, 则以异常结果返回
+                    context.onError(stats, (Exception) invokerContext.getEx(), consumeTimeMs);
+                    invokerContext.setEx(null);
+                    continue;
+                }
+                final boolean isNeedRetry = context.onResult(stats, result, consumeTimeMs);
+                if (!isNeedRetry) {
+                    context.onComplete(stats);
+                    return Optional.ofNullable(result);
+                }
+            } catch (Exception ex) {
+                context.onError(stats, ex, System.currentTimeMillis() - start);
+            }
+            isRetry = true;
         } while (true);
+    }
+
+    private Optional<ServiceInstance> choose(String serviceName, boolean isRetry) {
+        if (isRetry) {
+            // 处于重试中的实例采用轮询, 避免已经调用过的再次调用
+            return DiscoveryManager.INSTANCE.choose(serviceName, retryLoadbalancer);
+        }
+        return DiscoveryManager.INSTANCE.choose(serviceName);
     }
 }

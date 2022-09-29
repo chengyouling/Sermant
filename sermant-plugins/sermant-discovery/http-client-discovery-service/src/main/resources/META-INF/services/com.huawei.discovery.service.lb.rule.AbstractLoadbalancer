@@ -16,3 +16,5 @@
 
 com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer
 com.huawei.discovery.service.lb.rule.RandomLoadbalancer
+com.huawei.discovery.service.lb.rule.BestAvailableLoadbalancer
+com.huawei.discovery.service.lb.rule.WeightedResponseTimeLoadbalancer

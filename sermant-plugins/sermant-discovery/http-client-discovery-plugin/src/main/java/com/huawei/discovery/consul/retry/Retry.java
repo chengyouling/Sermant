@@ -76,18 +76,20 @@ public interface Retry {
          *
          * @param serviceInstanceStats 选择调用的实例
          * @param result 调用结果
+         * @param consumeTimeMs 调用的消耗时间
          * @return true则表示重试通过或者达到最大重试次数, false则需要进行下一次重试
          */
-        boolean onResult(T serviceInstanceStats, Object result);
+        boolean onResult(T serviceInstanceStats, Object result, long consumeTimeMs);
 
         /**
          * 调用异常验证
          *
          * @param serviceInstanceStats 选择调用的实例
          * @param ex 调用异常时调用
+         * @param consumeTimeMs 调用的消耗时间
          * @throws Exception 不满足异常重试条件时抛出异常
          */
-        void onError(T serviceInstanceStats, Exception ex) throws Exception;
+        void onError(T serviceInstanceStats, Exception ex, long consumeTimeMs) throws Exception;
 
         /**
          * 最终结束, 在重试彻底结束后调用该方法

@@ -24,9 +24,7 @@ import java.util.Map;
  * @author zhouss
  * @since 2022-09-26
  */
-public class DefaultServiceInstance implements ServiceInstance {
-    private InstanceStats instanceStats;
-
+public class DefaultServiceInstance extends HashedServiceInstance {
     private String serviceName;
 
     private String host;
@@ -34,6 +32,8 @@ public class DefaultServiceInstance implements ServiceInstance {
     private String ip;
 
     private int port;
+
+    private String id;
 
     private Map<String, String> metadata;
 
@@ -62,6 +62,7 @@ public class DefaultServiceInstance implements ServiceInstance {
         this.metadata = metadata;
         this.serviceName = serviceName;
         this.status = Status.UP;
+        this.id = ip + ":" + port;
     }
 
     public void setServiceName(String serviceName) {
@@ -82,6 +83,11 @@ public class DefaultServiceInstance implements ServiceInstance {
 
     public void setMetadata(Map<String, String> metadata) {
         this.metadata = metadata;
+    }
+
+    @Override
+    public String getId() {
+        return this.id;
     }
 
     @Override
@@ -110,14 +116,6 @@ public class DefaultServiceInstance implements ServiceInstance {
     }
 
     @Override
-    public InstanceStats getStats() {
-        if (instanceStats == null) {
-            instanceStats = new InstanceStats();
-        }
-        return instanceStats;
-    }
-
-    @Override
     public Status status() {
         return this.status;
     }
@@ -130,7 +128,7 @@ public class DefaultServiceInstance implements ServiceInstance {
         this.status = status;
     }
 
-    public void setInstanceStats(InstanceStats instanceStats) {
-        this.instanceStats = instanceStats;
+    public void setId(String id) {
+        this.id = id;
     }
 }

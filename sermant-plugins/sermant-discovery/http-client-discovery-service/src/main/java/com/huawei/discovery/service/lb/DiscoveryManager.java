@@ -16,8 +16,8 @@
 
 package com.huawei.discovery.service.lb;
 
+import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.ServiceInstance;
-import com.huawei.discovery.service.config.LbConfig;
 import com.huawei.discovery.service.lb.cache.InstanceCacheManager;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 import com.huawei.discovery.service.lb.discovery.zk.ZookeeperDiscoveryClient;

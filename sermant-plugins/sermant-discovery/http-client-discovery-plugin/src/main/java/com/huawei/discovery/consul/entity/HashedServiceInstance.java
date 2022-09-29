@@ -16,35 +16,29 @@
 
 package com.huawei.discovery.consul.entity;
 
+import java.util.Objects;
+
 /**
- * 状态记录
+ * 重写hashCode, equal
  *
  * @author zhouss
- * @since 2022-09-28
+ * @since 2022-09-29
  */
-public interface Recorder {
-    /**
-     * 调用前请求
-     */
-    void beforeRequest();
+public abstract class HashedServiceInstance implements ServiceInstance {
+    @Override
+    public boolean equals(Object target) {
+        if (this == target) {
+            return true;
+        }
+        if (target == null || getClass() != target.getClass()) {
+            return false;
+        }
+        ServiceInstance that = (ServiceInstance) target;
+        return getId().equals(that.getId());
+    }
 
-    /**
-     * 异常调用统计
-     *
-     * @param ex 异常类型
-     * @param consumeTimeMs 调用消耗的时间
-     */
-    void errorRequest(Throwable ex, long consumeTimeMs);
-
-    /**
-     * 结果调用
-     *
-     * @param consumeTimeMs 调用消耗的时间
-     */
-    void afterRequest(long consumeTimeMs);
-
-    /**
-     * 结束请求
-     */
-    void completeRequest();
+    @Override
+    public int hashCode() {
+        return Objects.hash(getId());
+    }
 }

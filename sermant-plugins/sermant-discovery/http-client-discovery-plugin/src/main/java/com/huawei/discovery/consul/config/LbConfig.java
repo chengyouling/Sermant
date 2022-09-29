@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.service.config;
+package com.huawei.discovery.consul.config;
 
 import com.huaweicloud.sermant.core.config.common.ConfigTypeKey;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfig;
@@ -76,6 +76,32 @@ public class LbConfig implements PluginConfig {
      * 倾向IP, 若为true, 则所有关联的地址均有ip替换host
      */
     private boolean preferIpAddress = false;
+
+    /**
+     * 服务指标数据缓存, 默认60分钟
+     */
+    private long statsCacheExpireTime = 60;
+
+    /**
+     * 统计数据定时聚合统计刷新时间, 若设置<=0, 则不会开启聚合统计, 关联聚合统计的负载均衡将会失效
+     */
+    private long lbStatsRefreshIntervalMs = 30000L;
+
+    public long getLbStatsRefreshIntervalMs() {
+        return lbStatsRefreshIntervalMs;
+    }
+
+    public void setLbStatsRefreshIntervalMs(long lbStatsRefreshIntervalMs) {
+        this.lbStatsRefreshIntervalMs = lbStatsRefreshIntervalMs;
+    }
+
+    public long getStatsCacheExpireTime() {
+        return statsCacheExpireTime;
+    }
+
+    public void setStatsCacheExpireTime(long statsCacheExpireTime) {
+        this.statsCacheExpireTime = statsCacheExpireTime;
+    }
 
     public long getRefreshIntervalMs() {
         return refreshIntervalMs;

@@ -16,19 +16,18 @@
 
 package com.huawei.discovery.consul.interceptors;
 
-import java.util.Map;
-
-import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.cloud.consul.discovery.ConsulDiscoveryProperties;
-import org.springframework.cloud.consul.serviceregistry.ConsulAutoRegistration;
-
 import com.huawei.discovery.consul.entity.DefaultServiceInstance;
-import com.huawei.discovery.consul.entity.InstanceStats;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.consul.service.RegistryService;
+
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.service.ServiceManager;
+
+import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.cloud.consul.discovery.ConsulDiscoveryProperties;
+
+import java.util.Map;
 
 /**
  * 拦截获取服务列表

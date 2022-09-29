@@ -16,9 +16,9 @@
 
 package com.huawei.discovery.service.lb.discovery.zk;
 
+import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.DefaultServiceInstance;
 import com.huawei.discovery.consul.entity.ServiceInstance;
-import com.huawei.discovery.service.config.LbConfig;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
@@ -120,18 +120,19 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
         return serviceInstances.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    private ServiceInstance convert(org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> instance) {
+    private ServiceInstance convert(org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> curInstance) {
         final DefaultServiceInstance serviceInstance = new DefaultServiceInstance();
-        serviceInstance.setHost(instance.getAddress());
-        serviceInstance.setIp(instance.getAddress());
-        serviceInstance.setServiceName(instance.getName());
-        serviceInstance.setPort(instance.getPort());
-        if (instance.getPayload() != null) {
-            final Optional<Object> metadata = ReflectUtils.getFieldValue(instance.getPayload(), "metadata");
+        serviceInstance.setHost(curInstance.getAddress());
+        serviceInstance.setIp(curInstance.getAddress());
+        serviceInstance.setServiceName(curInstance.getName());
+        serviceInstance.setPort(curInstance.getPort());
+        if (curInstance.getPayload() != null) {
+            final Optional<Object> metadata = ReflectUtils.getFieldValue(curInstance.getPayload(), "metadata");
             if (metadata.isPresent() && metadata.get() instanceof Map) {
                 serviceInstance.setMetadata((Map<String, String>) metadata.get());
             }
         }
+        serviceInstance.setId(curInstance.getAddress() + ":" + curInstance.getPort());
         return serviceInstance;
     }
 

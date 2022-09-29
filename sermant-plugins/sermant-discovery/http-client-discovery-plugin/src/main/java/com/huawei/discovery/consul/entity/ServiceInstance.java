@@ -26,6 +26,13 @@ import java.util.Map;
  */
 public interface ServiceInstance {
     /**
+     * 唯一标识符 ip:port
+     *
+     * @return id
+     */
+    String getId();
+
+    /**
      * 所属服务名
      *
      * @return 服务名
@@ -61,19 +68,28 @@ public interface ServiceInstance {
     Map<String, String> getMetadata();
 
     /**
-     * 获取实例状态
-     * 该数据仅当开启需记录指标数据的负载均衡才开启, 例如依据响应时间选择实例
-     *
-     * @return InstanceStats
-     */
-    InstanceStats getStats();
-
-    /**
      * 状态
      *
      * @return 服务状态
      */
     Status status();
+
+    /**
+     * 判断是否与目标相等
+     *
+     * @param target 目标对象
+     * @return 是否相等
+     */
+    @Override
+    boolean equals(Object target);
+
+    /**
+     * 重写hashcode方法
+     *
+     * @return hash码
+     */
+    @Override
+    int hashCode();
 
     /**
      * 服务实例状态

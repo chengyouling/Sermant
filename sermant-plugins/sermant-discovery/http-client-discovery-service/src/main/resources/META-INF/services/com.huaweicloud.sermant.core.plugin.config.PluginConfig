@@ -15,4 +15,4 @@
 #
 
 com.huawei.discovery.service.config.ConsulDiscoveryConfig
-com.huawei.discovery.service.config.LbConfig
+com.huawei.discovery.consul.config.LbConfig

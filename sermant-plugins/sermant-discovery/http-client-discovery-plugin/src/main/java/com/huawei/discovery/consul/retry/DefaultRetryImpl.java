@@ -86,8 +86,8 @@ public class DefaultRetryImpl implements Retry {
         }
 
         @Override
-        public boolean onResult(Recorder serviceInstanceStats, Object result) {
-            serviceInstanceStats.afterRequest();
+        public boolean onResult(Recorder serviceInstanceStats, Object result, long consumeTimeMs) {
+            serviceInstanceStats.afterRequest(consumeTimeMs);
             final Predicate<Object> resultPredicate = config().getResultPredicate();
             if (resultPredicate != null && resultPredicate.test(result)) {
                 final int num = invokeCount.incrementAndGet();
@@ -102,8 +102,8 @@ public class DefaultRetryImpl implements Retry {
         }
 
         @Override
-        public void onError(Recorder serviceInstanceStats, Exception ex) throws Exception {
-            serviceInstanceStats.errorRequest(ex);
+        public void onError(Recorder serviceInstanceStats, Exception ex, long consumeTimeMs) throws Exception {
+            serviceInstanceStats.errorRequest(ex, consumeTimeMs);
             final Predicate<Throwable> throwablePredicate = config().getThrowablePredicate();
             if (throwablePredicate != null && throwablePredicate.test(ex)) {
                 lastEx.set(ex);
