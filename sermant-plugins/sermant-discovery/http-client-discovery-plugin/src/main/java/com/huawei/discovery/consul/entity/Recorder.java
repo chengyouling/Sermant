@@ -16,61 +16,32 @@
 
 package com.huawei.discovery.consul.entity;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 /**
- * 记录当前实例的指标数据
+ * 状态记录
  *
  * @author zhouss
- * @since 2022-09-26
+ * @since 2022-09-28
  */
-public class InstanceStats implements Recorder {
-    /**
-     * 正在请求的数量
-     */
-    private final AtomicLong activeRequests = new AtomicLong();
-
-    public AtomicLong getActiveRequests() {
-        return activeRequests;
-    }
-
+public interface Recorder {
     /**
      * 调用前请求
      */
-    @Override
-    public void beforeRequest() {
-        activeRequests.incrementAndGet();
-    }
+    void beforeRequest();
 
     /**
      * 异常调用统计
      *
      * @param ex 异常类型
      */
-    @Override
-    public void errorRequest(Throwable ex) {
-        final long request = activeRequests.decrementAndGet();
-        if (request < 0) {
-            activeRequests.set(0);
-        }
-    }
+    void errorRequest(Throwable ex);
 
     /**
      * 结果调用
      */
-    @Override
-    public void afterRequest() {
-        final long request = activeRequests.decrementAndGet();
-        if (request < 0) {
-            activeRequests.set(0);
-        }
-    }
+    void afterRequest();
 
     /**
      * 结束请求
      */
-    @Override
-    public void completeRequest() {
-
-    }
+    void completeRequest();
 }

@@ -59,6 +59,8 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
 
     private ServiceDiscovery<ZookeeperInstance> serviceDiscovery;
 
+    private org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> instance;
+
     /**
      * zk客户端
      */
@@ -83,8 +85,7 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
         final String id = UUID.randomUUID().toString();
         final ZookeeperInstance zookeeperServiceInstance = new ZookeeperInstance(id,
                 serviceInstance.serviceName(), serviceInstance.getMetadata());
-        final org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> instance =
-                new org.apache.curator.x.discovery.ServiceInstance<>(
+        instance = new org.apache.curator.x.discovery.ServiceInstance<>(
                         serviceInstance.serviceName(), id,
                         lbConfig.isPreferIpAddress() ? serviceInstance.getIp() : serviceInstance.getHost(),
                         serviceInstance.getPort(),
@@ -142,6 +143,19 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
             LOGGER.log(Level.WARNING, "Can not query services from registry center!", exception);
         }
         return Collections.emptyList();
+    }
+
+    @Override
+    public boolean unRegistry() {
+        if (instance != null) {
+            try {
+                this.serviceDiscovery.unregisterService(instance);
+                return true;
+            } catch (Exception exception) {
+                LOGGER.log(Level.WARNING, "Can not un registry from zookeeper center!", exception);
+            }
+        }
+        return false;
     }
 
     private ServiceDiscovery<ZookeeperInstance> build() {

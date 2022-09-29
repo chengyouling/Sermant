@@ -50,9 +50,11 @@ public class InstanceCacheManager {
      */
     public InstanceCacheManager(ServiceDiscoveryClient discoveryClient) {
         this.discoveryClient = discoveryClient;
-        final long cacheExpireMs = PluginConfigManager.getPluginConfig(LbConfig.class).getCacheExpireMs();
+        final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         this.cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(cacheExpireMs, TimeUnit.MILLISECONDS)
+                .expireAfterWrite(lbConfig.getCacheExpireMs(), TimeUnit.MILLISECONDS)
+                .refreshAfterWrite(lbConfig.getRefreshIntervalMs(), TimeUnit.MILLISECONDS)
+                .concurrencyLevel(lbConfig.getCacheConcurrencyLevel())
                 .build(new CacheLoader<String, InstanceCache>() {
                     @Override
                     public InstanceCache load(String serviceName) {
@@ -76,8 +78,8 @@ public class InstanceCacheManager {
         try {
             instanceCache = cache.get(serviceName);
         } catch (ExecutionException e) {
-            instanceCache = new InstanceCache(serviceName, new ArrayList<>(discoveryClient.getInstances(serviceName)));
+            return new ArrayList<>(discoveryClient.getInstances(serviceName));
         }
-        return instanceCache.getInstances();
+        return new ArrayList<>(instanceCache.getInstances());
     }
 }

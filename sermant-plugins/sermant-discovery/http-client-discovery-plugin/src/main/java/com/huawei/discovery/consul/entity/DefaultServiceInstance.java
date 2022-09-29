@@ -16,9 +16,6 @@
 
 package com.huawei.discovery.consul.entity;
 
-import com.huawei.discovery.consul.entity.InstanceStats;
-import com.huawei.discovery.consul.entity.ServiceInstance;
-
 import java.util.Map;
 
 /**
@@ -39,6 +36,8 @@ public class DefaultServiceInstance implements ServiceInstance {
     private int port;
 
     private Map<String, String> metadata;
+
+    private Status status;
 
     /**
      * 默认构造器
@@ -62,6 +61,7 @@ public class DefaultServiceInstance implements ServiceInstance {
         this.port = port;
         this.metadata = metadata;
         this.serviceName = serviceName;
+        this.status = Status.UP;
     }
 
     public void setServiceName(String serviceName) {
@@ -115,6 +115,19 @@ public class DefaultServiceInstance implements ServiceInstance {
             instanceStats = new InstanceStats();
         }
         return instanceStats;
+    }
+
+    @Override
+    public Status status() {
+        return this.status;
+    }
+
+    public Status getStatus() {
+        return status;
+    }
+
+    public void setStatus(Status status) {
+        this.status = status;
     }
 
     public void setInstanceStats(InstanceStats instanceStats) {

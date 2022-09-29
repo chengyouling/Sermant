@@ -17,6 +17,7 @@
 package com.huawei.discovery.consul.declarers;
 
 import com.huawei.discovery.consul.interceptors.HttpClientInterceptor;
+
 import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
@@ -49,7 +50,11 @@ public class HttpClientDeclarer extends AbstractPluginDeclarer {
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[] {
-                InterceptDeclarer.build(MethodMatcher.nameEquals("execute"), INTERCEPT_CLASS)
+                InterceptDeclarer.build(MethodMatcher.nameEquals("execute")
+                                .and(MethodMatcher.paramTypesEqual("org.apache.http.client.methods.HttpUriRequest"))
+                        .and(MethodMatcher.paramCountEquals(1))
+                        .and(MethodMatcher.resultTypeEquals("org.apache.http.client.methods.CloseableHttpResponse")),
+                        INTERCEPT_CLASS)
         };
     }
 }

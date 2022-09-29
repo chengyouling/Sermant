@@ -67,4 +67,33 @@ public interface ServiceInstance {
      * @return InstanceStats
      */
     InstanceStats getStats();
+
+    /**
+     * 状态
+     *
+     * @return 服务状态
+     */
+    Status status();
+
+    /**
+     * 服务实例状态
+     *
+     * @since 2022-09-28
+     */
+    enum Status {
+        /**
+         * 可用
+         */
+        UP,
+
+        /**
+         * 不可用
+         */
+        DOWN,
+
+        /**
+         * 未知
+         */
+        UN_KNOW;
+    }
 }

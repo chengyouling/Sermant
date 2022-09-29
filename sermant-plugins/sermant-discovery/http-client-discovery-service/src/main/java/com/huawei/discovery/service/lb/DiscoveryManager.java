@@ -21,6 +21,7 @@ import com.huawei.discovery.service.config.LbConfig;
 import com.huawei.discovery.service.lb.cache.InstanceCacheManager;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 import com.huawei.discovery.service.lb.discovery.zk.ZookeeperDiscoveryClient;
+import com.huawei.discovery.service.lb.filter.InstanceFilter;
 import com.huawei.discovery.service.lb.rule.AbstractLoadbalancer;
 import com.huawei.discovery.service.lb.rule.Loadbalancer;
 import com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer;
@@ -28,6 +29,7 @@ import com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,20 +50,15 @@ public enum DiscoveryManager {
 
     private final Map<String, AbstractLoadbalancer> lbCache = new HashMap<>();
 
+    private final List<InstanceFilter> filters = new ArrayList<>();
+
     private final AbstractLoadbalancer defaultLb = new RoundRobinLoadbalancer();
 
-    private final LbConfig lbConfig;
+    private LbConfig lbConfig;
 
     private ServiceDiscoveryClient serviceDiscoveryClient;
 
-    private final InstanceCacheManager cacheManager;
-
-    DiscoveryManager() {
-        initServiceDiscoveryClient();
-        loadLb();
-        lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
-        cacheManager = new InstanceCacheManager(serviceDiscoveryClient);
-    }
+    private InstanceCacheManager cacheManager;
 
     private void initServiceDiscoveryClient() {
         serviceDiscoveryClient = new ZookeeperDiscoveryClient();
@@ -85,11 +82,30 @@ public enum DiscoveryManager {
     }
 
     /**
+     * 启动方法
+     */
+    public void start() {
+        initServiceDiscoveryClient();
+        loadLb();
+        loadFilter();
+        lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
+        cacheManager = new InstanceCacheManager(serviceDiscoveryClient);
+    }
+
+    private void loadFilter() {
+        for (InstanceFilter filter : ServiceLoader.load(InstanceFilter.class, this.getClass()
+                .getClassLoader())) {
+            this.filters.add(filter);
+        }
+    }
+
+    /**
      * 停止相关服务
      *
      * @throws IOException 停止失败抛出
      */
     public void stop() throws IOException {
+        serviceDiscoveryClient.unRegistry();
         serviceDiscoveryClient.close();
     }
 
@@ -111,7 +127,10 @@ public enum DiscoveryManager {
      * @return ServiceInstance
      */
     public Optional<ServiceInstance> choose(String serviceName, Loadbalancer lb) {
-        final List<ServiceInstance> instances = cacheManager.getInstances(serviceName);
+        List<ServiceInstance> instances = cacheManager.getInstances(serviceName);
+        for (InstanceFilter filter : filters) {
+            instances = filter.filter(instances);
+        }
         return lb.choose(serviceName, instances);
     }
 

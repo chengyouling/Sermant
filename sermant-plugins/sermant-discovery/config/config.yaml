@@ -9,3 +9,5 @@ consul.discovery.plugin:
 
 dynamic.config:
   dynamicConfigType: ZOOKEEPER
+sermant.discovery.lb:
+  lbType: RoundRobin

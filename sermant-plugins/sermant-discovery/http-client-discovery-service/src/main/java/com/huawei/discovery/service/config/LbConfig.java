@@ -58,6 +58,16 @@ public class LbConfig implements PluginConfig {
     private long cacheExpireMs = 30000L;
 
     /**
+     * 缓存自动刷新时间
+     */
+    private long refreshIntervalMs = 60000L;
+
+    /**
+     * 缓存并发度, 影响从缓存获取实例的效率
+     */
+    private int cacheConcurrencyLevel = 16;
+
+    /**
      * 负载均衡类型
      */
     private String lbType = "RoundRobin";
@@ -66,6 +76,22 @@ public class LbConfig implements PluginConfig {
      * 倾向IP, 若为true, 则所有关联的地址均有ip替换host
      */
     private boolean preferIpAddress = false;
+
+    public long getRefreshIntervalMs() {
+        return refreshIntervalMs;
+    }
+
+    public void setRefreshIntervalMs(long refreshIntervalMs) {
+        this.refreshIntervalMs = refreshIntervalMs;
+    }
+
+    public int getCacheConcurrencyLevel() {
+        return cacheConcurrencyLevel;
+    }
+
+    public void setCacheConcurrencyLevel(int cacheConcurrencyLevel) {
+        this.cacheConcurrencyLevel = cacheConcurrencyLevel;
+    }
 
     public boolean isPreferIpAddress() {
         return preferIpAddress;

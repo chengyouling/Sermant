@@ -55,4 +55,11 @@ public interface ServiceDiscoveryClient extends Closeable {
      * @return 所有服务名列表
      */
     Collection<String> getServices();
+
+    /**
+     * 当前实例下线
+     *
+     * @return 是否注册成功
+     */
+    boolean unRegistry();
 }

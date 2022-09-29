@@ -37,7 +37,7 @@ public class LbServiceImpl implements LbService {
 
     @Override
     public void start() {
-        LbService.super.start();
+        DiscoveryManager.INSTANCE.start();
     }
 
     @Override
