@@ -72,7 +72,7 @@ public interface ServiceInstance {
      *
      * @return 服务状态
      */
-    Status status();
+    String status();
 
     /**
      * 判断是否与目标相等

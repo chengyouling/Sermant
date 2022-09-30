@@ -68,6 +68,16 @@ public class LbConstants {
      */
     public static final long DEFAULT_ACTIVE_REQUEST_COUNT_WINDOW_MS = 600000L;
 
+    /**
+     * 服务超时后最大重试次数
+     */
+    public static final int DEFAULT_MAX_RETRY = 3;
+
+    /**
+     * 重试等待时间, 默认一秒
+     */
+    public static final long DEFAULT_RETRY_WAIT_MS = 1000L;
+
     private LbConstants() {
     }
 }

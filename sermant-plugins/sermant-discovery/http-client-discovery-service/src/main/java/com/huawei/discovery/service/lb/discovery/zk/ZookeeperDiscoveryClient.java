@@ -19,11 +19,11 @@ package com.huawei.discovery.service.lb.discovery.zk;
 import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.DefaultServiceInstance;
 import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.consul.entity.ServiceInstance.Status;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
-import com.huaweicloud.sermant.core.utils.ReflectUtils;
 
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -38,8 +38,6 @@ import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,6 +51,8 @@ import java.util.stream.Collectors;
  */
 public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
     private static final Logger LOGGER = LoggerFactory.getLogger();
+
+    private static final String STATUS_KEY = "instance_status";
 
     private final LbConfig lbConfig;
 
@@ -129,10 +129,9 @@ public class ZookeeperDiscoveryClient implements ServiceDiscoveryClient {
         serviceInstance.setServiceName(curInstance.getName());
         serviceInstance.setPort(curInstance.getPort());
         if (curInstance.getPayload() != null) {
-            final Optional<Object> metadata = ReflectUtils.getFieldValue(curInstance.getPayload(), "metadata");
-            if (metadata.isPresent() && metadata.get() instanceof Map) {
-                serviceInstance.setMetadata((Map<String, String>) metadata.get());
-            }
+            final ZookeeperInstance payload = curInstance.getPayload();
+            serviceInstance.setMetadata(payload.getMetadata());
+            serviceInstance.setStatus(payload.getMetadata().getOrDefault(STATUS_KEY, Status.UP.name()));
         }
         serviceInstance.setId(curInstance.getAddress() + ":" + curInstance.getPort());
         return serviceInstance;

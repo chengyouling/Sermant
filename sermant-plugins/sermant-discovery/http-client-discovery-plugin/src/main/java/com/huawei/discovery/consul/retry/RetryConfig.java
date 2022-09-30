@@ -61,20 +61,24 @@ public class RetryConfig {
      */
     public RetryConfig(List<Class<? extends Throwable>> retryEx,
             Predicate<Object> resultPredicate, String name) {
-        this.throwablePredicate = ex -> {
-            if (ex == null) {
-                return false;
-            }
-            for (Class<? extends Throwable> cur : retryEx) {
-                if (cur.isAssignableFrom(ex.getClass())) {
-                    return true;
-                }
-            }
-            return false;
-        };
+        this(retryEx, resultPredicate, name, DEFAULT_WAIT_RETRY_MS, DEFAULT_MAX_RETRY);
+    }
+
+    /**
+     * 构造器
+     *
+     * @param retryEx 重试异常集合
+     * @param resultPredicate  结果判断
+     * @param retryWaitMs 重试等待时间
+     * @param maxRetry 最大重试次数
+     * @param name 配置名
+     */
+    public RetryConfig(List<Class<? extends Throwable>> retryEx,
+            Predicate<Object> resultPredicate, String name, long retryWaitMs, int maxRetry) {
+        this.maxRetry = maxRetry;
+        this.throwablePredicate = buildThrowPredicate(retryEx);
         this.resultPredicate = resultPredicate;
-        this.maxRetry = DEFAULT_MAX_RETRY;
-        this.retryRetryWaitMs = DEFAULT_WAIT_RETRY_MS;
+        this.retryRetryWaitMs = retryWaitMs;
         this.name = name;
     }
 
@@ -87,7 +91,7 @@ public class RetryConfig {
      */
     public RetryConfig(Predicate<Throwable> throwablePredicate,
             Predicate<Object> resultPredicate, String name) {
-        this(throwablePredicate, resultPredicate, DEFAULT_MAX_RETRY, name);
+        this(throwablePredicate, resultPredicate, name, DEFAULT_WAIT_RETRY_MS, DEFAULT_MAX_RETRY);
     }
 
     /**
@@ -95,16 +99,31 @@ public class RetryConfig {
      *
      * @param throwablePredicate 异常判断
      * @param resultPredicate  结果判断
+     * @param retryWaitMs 重试等待时间
      * @param maxRetry 最大重试次数
      * @param name 配置名
      */
     public RetryConfig(Predicate<Throwable> throwablePredicate,
-            Predicate<Object> resultPredicate, int maxRetry, String name) {
+            Predicate<Object> resultPredicate, String name, long retryWaitMs, int maxRetry) {
         this.maxRetry = maxRetry;
         this.throwablePredicate = throwablePredicate;
         this.resultPredicate = resultPredicate;
-        this.retryRetryWaitMs = DEFAULT_WAIT_RETRY_MS;
+        this.retryRetryWaitMs = retryWaitMs;
         this.name = name;
+    }
+
+    private Predicate<Throwable> buildThrowPredicate(List<Class<? extends Throwable>> retryEx) {
+        return ex -> {
+            if (ex == null) {
+                return false;
+            }
+            for (Class<? extends Throwable> cur : retryEx) {
+                if (cur.isAssignableFrom(ex.getClass())) {
+                    return true;
+                }
+            }
+            return false;
+        };
     }
 
     public String getName() {

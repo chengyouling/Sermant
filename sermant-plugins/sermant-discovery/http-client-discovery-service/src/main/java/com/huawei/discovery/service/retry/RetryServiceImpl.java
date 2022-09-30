@@ -16,6 +16,7 @@
 
 package com.huawei.discovery.service.retry;
 
+import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.Recorder;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.consul.retry.InvokerContext;
@@ -32,6 +33,7 @@ import com.huawei.discovery.service.lb.stats.InstanceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -76,7 +78,13 @@ public class RetryServiceImpl implements InvokerService {
 
     @Override
     public void start() {
-        defaultRetry = Retry.create(new RetryConfig(retryEx, result -> false, NAME));
+        final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
+        defaultRetry = Retry.create(new RetryConfig(
+            retryEx,
+            result -> false,
+            NAME,
+            lbConfig.getRetryWaitMs(),
+            lbConfig.getMaxRetry()));
     }
 
     @Override
@@ -147,6 +155,9 @@ public class RetryServiceImpl implements InvokerService {
                     return Optional.ofNullable(result);
                 }
             } catch (Exception ex) {
+                if (ex instanceof RetryException) {
+                    throw ex;
+                }
                 context.onError(stats, ex, System.currentTimeMillis() - start);
             }
             isRetry = true;

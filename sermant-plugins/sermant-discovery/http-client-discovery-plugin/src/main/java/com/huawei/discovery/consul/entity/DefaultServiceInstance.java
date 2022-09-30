@@ -37,7 +37,7 @@ public class DefaultServiceInstance extends HashedServiceInstance {
 
     private Map<String, String> metadata;
 
-    private Status status;
+    private String status;
 
     /**
      * 默认构造器
@@ -61,7 +61,7 @@ public class DefaultServiceInstance extends HashedServiceInstance {
         this.port = port;
         this.metadata = metadata;
         this.serviceName = serviceName;
-        this.status = Status.UP;
+        this.status = Status.UP.name();
         this.id = ip + ":" + port;
     }
 
@@ -116,15 +116,15 @@ public class DefaultServiceInstance extends HashedServiceInstance {
     }
 
     @Override
-    public Status status() {
+    public String status() {
         return this.status;
     }
 
-    public Status getStatus() {
+    public String getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(String status) {
         this.status = status;
     }
 

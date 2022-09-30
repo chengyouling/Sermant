@@ -60,6 +60,16 @@ public class LbConfig implements PluginConfig {
     private String registryAddress = "127.0.0.1:2181";
 
     /**
+     * 服务超时后最大重试次数
+     */
+    private int maxRetry = LbConstants.DEFAULT_MAX_RETRY;
+
+    /**
+     * 重试等待时间, 默认一秒
+     */
+    private long retryWaitMs = LbConstants.DEFAULT_RETRY_WAIT_MS;
+
+    /**
      * 缓存获取时间
      */
     private long cacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
@@ -205,6 +215,22 @@ public class LbConfig implements PluginConfig {
 
     public int getReadTimeoutMs() {
         return readTimeoutMs;
+    }
+
+    public int getMaxRetry() {
+        return maxRetry;
+    }
+
+    public void setMaxRetry(int maxRetry) {
+        this.maxRetry = maxRetry;
+    }
+
+    public long getRetryWaitMs() {
+        return retryWaitMs;
+    }
+
+    public void setRetryWaitMs(long retryWaitMs) {
+        this.retryWaitMs = retryWaitMs;
     }
 
     public void setReadTimeoutMs(int readTimeoutMs) {
