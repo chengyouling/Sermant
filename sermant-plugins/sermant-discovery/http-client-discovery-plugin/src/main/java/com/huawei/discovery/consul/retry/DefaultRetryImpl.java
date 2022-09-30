@@ -19,7 +19,6 @@ package com.huawei.discovery.consul.retry;
 import com.huawei.discovery.consul.entity.Recorder;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 
 /**
@@ -75,11 +74,6 @@ public class DefaultRetryImpl implements Retry {
          */
         private final AtomicInteger invokeCount = new AtomicInteger();
 
-        /**
-         * 上一次调用异常
-         */
-        private final AtomicReference<Exception> lastEx = new AtomicReference<>();
-
         @Override
         public void onBefore(Recorder serviceInstanceStats) {
             serviceInstanceStats.beforeRequest();
@@ -106,7 +100,6 @@ public class DefaultRetryImpl implements Retry {
             serviceInstanceStats.errorRequest(ex, consumeTimeMs);
             final Predicate<Throwable> throwablePredicate = config().getThrowablePredicate();
             if (throwablePredicate != null && throwablePredicate.test(ex)) {
-                lastEx.set(ex);
                 final int num = invokeCount.incrementAndGet();
                 if (num < config().getMaxRetry()) {
                     waitToRetry();

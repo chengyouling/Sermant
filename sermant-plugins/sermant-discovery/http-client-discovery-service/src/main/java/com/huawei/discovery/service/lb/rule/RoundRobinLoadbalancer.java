@@ -29,6 +29,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @since 2022-09-26
  */
 public class RoundRobinLoadbalancer extends AbstractLoadbalancer {
+    /**
+     * 公用实例-无状态
+     */
+    public static final RoundRobinLoadbalancer INSTANCE = new RoundRobinLoadbalancer();
+
     private static final int SEED = 999;
 
     private final AtomicInteger position;

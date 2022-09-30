@@ -36,7 +36,6 @@ import java.util.Map;
  * @since 2021-12-13
  */
 public class RegistrationInterceptor implements Interceptor {
-
     private final RegistryService registryService;
 
     /**

@@ -27,10 +27,10 @@ import com.huawei.discovery.consul.retry.RetryException;
 import com.huawei.discovery.consul.service.InvokerService;
 import com.huawei.discovery.service.ex.ProviderException;
 import com.huawei.discovery.service.lb.DiscoveryManager;
-import com.huawei.discovery.service.lb.rule.AbstractLoadbalancer;
-import com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer;
 import com.huawei.discovery.service.lb.stats.InstanceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
+import com.huawei.discovery.service.retry.policy.RoundRobinRetryPolicy;
+import com.huawei.discovery.service.retry.policy.RetryPolicy;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
@@ -64,7 +64,7 @@ public class RetryServiceImpl implements InvokerService {
 
     private static final String NAME = "SERMANT_DEFAULT_RETRY";
 
-    private final AbstractLoadbalancer retryLoadbalancer = new RoundRobinLoadbalancer();
+    private final RetryPolicy retryPolicy = new RoundRobinRetryPolicy();
 
     private final List<Class<? extends Throwable>> retryEx = Arrays.asList(
             ConnectException.class,
@@ -166,8 +166,7 @@ public class RetryServiceImpl implements InvokerService {
 
     private Optional<ServiceInstance> choose(String serviceName, boolean isRetry) {
         if (isRetry) {
-            // 处于重试中的实例采用轮询, 避免已经调用过的再次调用
-            return DiscoveryManager.INSTANCE.choose(serviceName, retryLoadbalancer);
+            return retryPolicy.select(serviceName);
         }
         return DiscoveryManager.INSTANCE.choose(serviceName);
     }

@@ -18,8 +18,11 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <package.plugin.type>service</package.plugin.type>
-        <curator.x.version>5.3.0</curator.x.version>
+        <!--Curator 2.x.x兼容Zookeeper的3.4.x和3.5.x
+            Curator 3.x.x只兼容Zookeeper 3.5.x-->
+        <curator.x.version>2.13.0</curator.x.version>
         <cloud.zk.version>3.1.0</cloud.zk.version>
+        <zk.version>3.4.14</zk.version>
     </properties>
 
     <dependencies>
@@ -109,10 +112,19 @@
                     <artifactId>netty</artifactId>
                     <groupId>io.netty</groupId>
                 </exclusion>
+                <exclusion>
+                    <groupId>org.apache.zookeeper</groupId>
+                    <artifactId>zookeeper</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
-        <!--test 依赖-->
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>${zk.version}</version>
+        </dependency>
+
         <!--测试依赖-->
         <dependency>
             <groupId>junit</groupId>
