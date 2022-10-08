@@ -108,6 +108,7 @@ public class DefaultRetryImpl implements Retry {
                     throw new RetryException(ex);
                 }
             }
+            throw ex;
         }
 
         @Override
