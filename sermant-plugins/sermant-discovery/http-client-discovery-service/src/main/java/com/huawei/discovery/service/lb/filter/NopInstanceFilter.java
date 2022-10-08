@@ -28,7 +28,7 @@ import java.util.List;
  */
 public class NopInstanceFilter implements InstanceFilter {
     @Override
-    public List<ServiceInstance> filter(List<ServiceInstance> serviceInstances) {
+    public List<ServiceInstance> filter(String serviceName, List<ServiceInstance> serviceInstances) {
         return serviceInstances;
     }
 }

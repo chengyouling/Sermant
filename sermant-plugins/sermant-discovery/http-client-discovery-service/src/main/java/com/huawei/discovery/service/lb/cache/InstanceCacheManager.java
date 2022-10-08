@@ -58,11 +58,7 @@ public class InstanceCacheManager {
                 .build(new CacheLoader<String, InstanceCache>() {
                     @Override
                     public InstanceCache load(String serviceName) {
-                        final Collection<ServiceInstance> instances = discoveryClient.getInstances(serviceName);
-                        if (instances != null && !instances.isEmpty()) {
-                            return new InstanceCache(serviceName, new ArrayList<>(instances));
-                        }
-                        return new InstanceCache(serviceName, new ArrayList<>());
+                        return createCache(serviceName);
                     }
                 });
     }
@@ -74,12 +70,32 @@ public class InstanceCacheManager {
      * @return 实例列表
      */
     public List<ServiceInstance> getInstances(String serviceName) {
-        InstanceCache instanceCache;
-        try {
-            instanceCache = cache.get(serviceName);
-        } catch (ExecutionException e) {
-            return new ArrayList<>(discoveryClient.getInstances(serviceName));
+        final List<ServiceInstance> instances = getInstanceCache(serviceName).getInstances();
+        if (instances == null || instances.isEmpty()) {
+            return tryUpdateInstances(serviceName);
         }
-        return new ArrayList<>(instanceCache.getInstances());
+        return new ArrayList<>(instances);
     }
+
+    private InstanceCache getInstanceCache(String serviceName) {
+        try {
+            return cache.get(serviceName);
+        } catch (ExecutionException e) {
+            return createCache(serviceName);
+        }
+    }
+
+    private List<ServiceInstance> tryUpdateInstances(String serviceName) {
+        cache.refresh(serviceName);
+        return new ArrayList<>(getInstanceCache(serviceName).getInstances());
+    }
+
+    private InstanceCache createCache(String serviceName) {
+        final Collection<ServiceInstance> instances = discoveryClient.getInstances(serviceName);
+        if (instances != null && !instances.isEmpty()) {
+            return new InstanceCache(serviceName, new ArrayList<>(instances));
+        }
+        return new InstanceCache(serviceName, new ArrayList<>());
+    }
+
 }

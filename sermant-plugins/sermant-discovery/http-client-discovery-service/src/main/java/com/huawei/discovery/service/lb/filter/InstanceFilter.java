@@ -31,8 +31,9 @@ public interface InstanceFilter {
     /**
      * 过滤
      *
+     * @param serviceName 服务名
      * @param serviceInstances 过滤前的实例
      * @return 过滤后的实例
      */
-    List<ServiceInstance> filter(List<ServiceInstance> serviceInstances);
+    List<ServiceInstance> filter(String serviceName, List<ServiceInstance> serviceInstances);
 }

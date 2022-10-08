@@ -14,21 +14,17 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.service.retry.policy;
+package com.huawei.discovery.service.lb.discovery.zk;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
-import java.util.Optional;
+import com.huaweicloud.sermant.core.plugin.service.PluginService;
 
 /**
- * 针对相同实例进行重试
+ * zk服务
  *
  * @author zhouss
- * @since 2022-09-30
+ * @since 2022-10-08
  */
-public class SameInstanceRetryPolicy implements RetryPolicy {
-    @Override
-    public Optional<ServiceInstance> select(String serviceName) {
-        return Optional.empty();
-    }
+public interface ZkService extends ServiceDiscoveryClient{
 }

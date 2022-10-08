@@ -29,8 +29,8 @@ import com.huawei.discovery.service.ex.ProviderException;
 import com.huawei.discovery.service.lb.DiscoveryManager;
 import com.huawei.discovery.service.lb.stats.InstanceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
-import com.huawei.discovery.service.retry.policy.RoundRobinRetryPolicy;
 import com.huawei.discovery.service.retry.policy.RetryPolicy;
+import com.huawei.discovery.service.retry.policy.RoundRobinRetryPolicy;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.NoRouteToHostException;
 import java.net.SocketTimeoutException;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
@@ -132,9 +133,10 @@ public class RetryServiceImpl implements InvokerService {
         boolean isRetry = false;
         do {
             final long start = System.currentTimeMillis();
-            final Optional<ServiceInstance> instance = choose(serviceName, isRetry);
+            final Optional<ServiceInstance> instance = choose(serviceName, isRetry,
+                    invokerContext.getServiceInstance());
             if (!instance.isPresent()) {
-                throw new ProviderException("Can not found provider named: " + serviceName);
+                throw new ProviderException("Can not found provider service named: " + serviceName);
             }
             invokerContext.setServiceInstance(instance.get());
             final InstanceStats stats = ServiceStatsManager.INSTANCE.getInstanceStats(instance.get());
@@ -142,6 +144,7 @@ public class RetryServiceImpl implements InvokerService {
             long consumeTimeMs;
             try {
                 final Object result = invokeFunc.apply(invokerContext);
+                isRetry = true;
                 consumeTimeMs = System.currentTimeMillis() - start;
                 if (invokerContext.getEx() != null) {
                     // 此处调用器, 若调用出现异常, 则以异常结果返回
@@ -155,18 +158,25 @@ public class RetryServiceImpl implements InvokerService {
                     return Optional.ofNullable(result);
                 }
             } catch (Exception ex) {
-                if (ex instanceof RetryException) {
-                    throw ex;
-                }
-                context.onError(stats, ex, System.currentTimeMillis() - start);
+                isRetry = true;
+                handleEx(ex, context, stats, System.currentTimeMillis() - start);
             }
-            isRetry = true;
         } while (true);
     }
 
-    private Optional<ServiceInstance> choose(String serviceName, boolean isRetry) {
+    private void handleEx(Exception ex, RetryContext<Recorder> context, InstanceStats stats, long consumeTimeMs)
+            throws Exception {
+        if (ex instanceof RetryException) {
+            throw ex;
+        }
+        context.onError(stats, ex, consumeTimeMs);
+    }
+
+    private Optional<ServiceInstance> choose(String serviceName, boolean isRetry, ServiceInstance serviceInstance) {
         if (isRetry) {
-            return retryPolicy.select(serviceName);
+            LOGGER.info(String.format(Locale.ENGLISH, "Start retry for invoking service [%s] at time %s",
+                    serviceName, LocalDateTime.now()));
+            return retryPolicy.select(serviceName, serviceInstance);
         }
         return DiscoveryManager.INSTANCE.choose(serviceName);
     }

@@ -20,21 +20,27 @@ import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.cache.InstanceCacheManager;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
-import com.huawei.discovery.service.lb.discovery.zk.ZookeeperDiscoveryClient;
+import com.huawei.discovery.service.lb.discovery.zk.ZkDiscoveryClientProxy;
 import com.huawei.discovery.service.lb.filter.InstanceFilter;
 import com.huawei.discovery.service.lb.rule.AbstractLoadbalancer;
 import com.huawei.discovery.service.lb.rule.Loadbalancer;
 import com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer;
 
+import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 负载均衡管理器
@@ -48,11 +54,23 @@ public enum DiscoveryManager {
      */
     INSTANCE;
 
-    private final Map<String, AbstractLoadbalancer> lbCache = new HashMap<>();
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
+    /**
+     * lb类型缓存
+     * key: lb类型
+     * value: class类型
+     */
+    private final Map<String, Class<? extends AbstractLoadbalancer>> lbCache = new HashMap<>();
+
+    /**
+     * 各个服务自身的负载均衡缓存, 分开管理, 防止有状态负载均衡实例相互影响
+     */
+    private final Map<String, AbstractLoadbalancer> serviceLbCache = new ConcurrentHashMap<>();
 
     private final List<InstanceFilter> filters = new ArrayList<>();
 
-    private final AbstractLoadbalancer defaultLb = new RoundRobinLoadbalancer();
+    private final AtomicBoolean isStarted = new AtomicBoolean();
 
     private LbConfig lbConfig;
 
@@ -61,14 +79,14 @@ public enum DiscoveryManager {
     private InstanceCacheManager cacheManager;
 
     private void initServiceDiscoveryClient() {
-        serviceDiscoveryClient = new ZookeeperDiscoveryClient();
+        serviceDiscoveryClient = new ZkDiscoveryClientProxy();
         serviceDiscoveryClient.init();
     }
 
     private void loadLb() {
         for (AbstractLoadbalancer loadbalancer : ServiceLoader.load(AbstractLoadbalancer.class, this.getClass()
                 .getClassLoader())) {
-            lbCache.put(loadbalancer.lbType(), loadbalancer);
+            lbCache.put(loadbalancer.lbType(), loadbalancer.getClass());
         }
     }
 
@@ -78,6 +96,7 @@ public enum DiscoveryManager {
      * @param serviceInstance 注册实例
      */
     public void registry(ServiceInstance serviceInstance) {
+        checkStats();
         serviceDiscoveryClient.registry(serviceInstance);
     }
 
@@ -105,6 +124,8 @@ public enum DiscoveryManager {
      * @throws IOException 停止失败抛出
      */
     public void stop() throws IOException {
+        lbCache.clear();
+        serviceLbCache.clear();
         serviceDiscoveryClient.unRegistry();
         serviceDiscoveryClient.close();
     }
@@ -116,25 +137,65 @@ public enum DiscoveryManager {
      * @return ServiceInstance
      */
     public Optional<ServiceInstance> choose(String serviceName) {
-        return choose(serviceName, getLoadbalancer());
+        return choose(serviceName, getLoadbalancer(serviceName));
     }
 
     /**
-     * 选择实例
+     * 选择实例, 支持自定义lb
      *
      * @param serviceName 服务名
-     * @param lb 负载均衡
+     * @param customLb 负载均衡
      * @return ServiceInstance
      */
-    public Optional<ServiceInstance> choose(String serviceName, Loadbalancer lb) {
-        List<ServiceInstance> instances = cacheManager.getInstances(serviceName);
-        for (InstanceFilter filter : filters) {
-            instances = filter.filter(instances);
-        }
-        return lb.choose(serviceName, instances);
+    public Optional<ServiceInstance> choose(String serviceName, Loadbalancer customLb) {
+        return choose(serviceName, customLb, null);
     }
 
-    private Loadbalancer getLoadbalancer() {
-        return lbCache.getOrDefault(lbConfig.getLbType(), defaultLb);
+    /**
+     * 选择实例, 支持自定义过滤器
+     *
+     * @param serviceName 服务名
+     * @param customLb 负载均衡
+     * @param customFilter 自定义过滤器
+     * @return ServiceInstance
+     */
+    public Optional<ServiceInstance> choose(String serviceName, Loadbalancer customLb, InstanceFilter customFilter) {
+        checkStats();
+        List<ServiceInstance> instances = cacheManager.getInstances(serviceName);
+        for (InstanceFilter filter : filters) {
+            instances = filter.filter(serviceName, instances);
+        }
+        if (customFilter != null) {
+            instances = customFilter.filter(serviceName, instances);
+        }
+        return customLb.choose(serviceName, instances);
+    }
+
+    private void checkStats() {
+        if (isStarted.compareAndSet(false, true)) {
+            this.start();
+        }
+    }
+
+    private Loadbalancer getLoadbalancer(String serviceName) {
+        return serviceLbCache.computeIfAbsent(serviceName, curService -> {
+            final Class<? extends AbstractLoadbalancer> lbClazz = lbCache
+                    .getOrDefault(lbConfig.getLbType(), RoundRobinLoadbalancer.class);
+            return createLb(lbClazz).orElse(null);
+        });
+    }
+
+    private Optional<AbstractLoadbalancer> createLb(Class<? extends AbstractLoadbalancer> clazz) {
+        try {
+            return Optional.of(clazz.newInstance());
+        } catch (InstantiationException e) {
+            LOGGER.log(Level.WARNING, String.format(Locale.ENGLISH,
+                    "Can not create instance for clazz [%s] with no params constructor!", clazz.getName()),
+                    e);
+        } catch (IllegalAccessException e) {
+            LOGGER.log(Level.WARNING, String.format(Locale.ENGLISH,
+                    "Can not access no params constructor for clazz [%s]!", clazz.getName()), e);
+        }
+        return Optional.empty();
     }
 }

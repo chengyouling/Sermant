@@ -14,25 +14,15 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.service.retry.policy;
+package com.huawei.discovery.service.lb.discovery.zk;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
-
-import java.util.Optional;
+import com.huaweicloud.sermant.core.plugin.service.PluginService;
 
 /**
- * 重试策略
+ * Zk 3.5.x 支持
  *
  * @author zhouss
- * @since 2022-09-30
+ * @since 2022-10-08
  */
-public interface RetryPolicy {
-    /**
-     * 选择服务, 基于重试策略选择重试逻辑
-     *
-     * @param serviceName 服务名
-     * @param lastInstance 上一个选择实例
-     * @return 选择的实例
-     */
-    Optional<ServiceInstance> select(String serviceName, ServiceInstance lastInstance);
+public interface ZkService35 extends ZkService, PluginService {
 }

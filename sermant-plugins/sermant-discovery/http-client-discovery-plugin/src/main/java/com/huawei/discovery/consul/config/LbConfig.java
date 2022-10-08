@@ -49,6 +49,11 @@ public class LbConfig implements PluginConfig {
     private String zkUriSpec = "{scheme}://{address}:{port}";
 
     /**
+     * 服务端版本, 客户端版本需要与服务端版本相匹配才可连接
+     */
+    private String zkServerVersion = "3.4.x";
+
+    /**
      * zookeeper保存数据的根路径
      * ===============Zookeeper注册中心专属配置结束================
      */
@@ -108,6 +113,14 @@ public class LbConfig implements PluginConfig {
      * 统计并发数的时间窗口, 默认10分钟, 并发数仅在时间窗口内统计生效, 超出则清0
      */
     private long activeRequestTimeoutWindowMs = LbConstants.DEFAULT_ACTIVE_REQUEST_COUNT_WINDOW_MS;
+
+    public String getZkServerVersion() {
+        return zkServerVersion;
+    }
+
+    public void setZkServerVersion(String version) {
+        this.zkServerVersion = version;
+    }
 
     public long getActiveRequestTimeoutWindowMs() {
         return activeRequestTimeoutWindowMs;

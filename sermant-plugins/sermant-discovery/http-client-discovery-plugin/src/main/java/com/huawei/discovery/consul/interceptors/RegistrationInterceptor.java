@@ -52,12 +52,13 @@ public class RegistrationInterceptor implements Interceptor {
         }
         String ipAddress = "";
         String instanceZone = "";
-        if (context.getRawMemberFieldValue("properties") instanceof ConsulDiscoveryProperties) {
-            ConsulDiscoveryProperties property = (ConsulDiscoveryProperties)context.getRawMemberFieldValue("properties");
-            ipAddress = property.getIpAddress();
-            instanceZone = property.getInstanceZone();
-        }
+//        if (context.getRawMemberFieldValue("properties") instanceof ConsulDiscoveryProperties) {
+//            ConsulDiscoveryProperties property = (ConsulDiscoveryProperties)context.getRawMemberFieldValue("properties");
+//            ipAddress = property.getIpAddress();
+//            instanceZone = property.getInstanceZone();
+//        }
         final Registration registration = (Registration) context.getArguments()[0];
+        ipAddress = registration.getHost();
         Map<String, String> metadata = registration.getMetadata();
         metadata.putIfAbsent("zone", instanceZone);
         ServiceInstance serviceInstance = new DefaultServiceInstance(registration.getHost(), ipAddress,

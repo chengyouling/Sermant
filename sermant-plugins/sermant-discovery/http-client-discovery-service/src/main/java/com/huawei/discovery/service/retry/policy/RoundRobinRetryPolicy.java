@@ -20,7 +20,9 @@ import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.DiscoveryManager;
 import com.huawei.discovery.service.lb.rule.RoundRobinLoadbalancer;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 默认的重试策略-轮询
@@ -29,8 +31,17 @@ import java.util.Optional;
  * @since 2022-09-30
  */
 public class RoundRobinRetryPolicy implements RetryPolicy {
+    private final Map<String, RoundRobinLoadbalancer> lbCache = new ConcurrentHashMap<>();
+
     @Override
-    public Optional<ServiceInstance> select(String serviceName) {
-        return DiscoveryManager.INSTANCE.choose(serviceName, RoundRobinLoadbalancer.INSTANCE);
+    public Optional<ServiceInstance> select(String serviceName, ServiceInstance lastInstance) {
+        return DiscoveryManager.INSTANCE.choose(serviceName, lbCache.computeIfAbsent(serviceName,
+            name -> new RoundRobinLoadbalancer()), (serviceName1, serviceInstances) -> {
+                if (serviceInstances == null || serviceInstances.size() <= 1) {
+                    return serviceInstances;
+                }
+                serviceInstances.removeIf(instance -> instance.equals(lastInstance));
+                return serviceInstances;
+            });
     }
 }
