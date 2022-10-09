@@ -25,7 +25,6 @@ import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.fasterxml.jackson.databind.JavaType;
@@ -44,7 +43,7 @@ import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Objects;
+import java.util.HashMap;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -91,10 +90,11 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
     @Override
     public boolean registry(ServiceInstance serviceInstance) {
         final String id = UUID.randomUUID().toString();
-        serviceInstance.getMetadata().put("sermant-discovery", "zk");
+        final HashMap<String, String> metadata = new HashMap<>(serviceInstance.getMetadata());
+        metadata.put("sermant-discovery", "zk");
         final ZookeeperInstance zookeeperServiceInstance =
                 new ZookeeperInstance(getAddress(serviceInstance) + ":" + serviceInstance.getPort(),
-                        serviceInstance.serviceName(), serviceInstance.getMetadata());
+                        serviceInstance.serviceName(), metadata);
         instance = new org.apache.curator.x.discovery.ServiceInstance<>(
                 serviceInstance.serviceName(), id,
                 getAddress(serviceInstance),
@@ -223,7 +223,7 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
 
         @Override
         public byte[] serialize(org.apache.curator.x.discovery.ServiceInstance<T> instance) throws Exception {
-            return mapper.writeValueAsBytes(new WriteAbleInstance<T>(new WriteAbleServiceInstance<>(instance)));
+            return mapper.writeValueAsBytes(new WriteAbleServiceInstance<>(instance));
         }
     }
 
@@ -255,136 +255,6 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
         @JsonTypeInfo(use = Id.CLASS, defaultImpl = Object.class)
         public T getPayload() {
             return super.getPayload();
-        }
-    }
-
-    /**
-     * 序列化的实例, 标记payload类型, 便于与其他开源的zk数据可互相识别
-     *
-     * @param <T> 实例类型
-     * @since 2022-10-08
-     */
-    public static class WriteAbleInstance<T> {
-        private final String name;
-        private final String id;
-        private final String address;
-        private final Integer port;
-        private final Integer sslPort;
-        private final T payload;
-        private final long registrationTimeUtc;
-        private final ServiceType serviceType;
-        private final UriSpec uriSpec;
-
-        /**
-         * 构造器
-         *
-         * @param instance 实例信息
-         */
-        public WriteAbleInstance(org.apache.curator.x.discovery.ServiceInstance<T> instance) {
-            this.serviceType = instance.getServiceType();
-            this.uriSpec = instance.getUriSpec();
-            this.name = instance.getName();
-            this.id = instance.getId();
-            this.address = instance.getAddress();
-            this.port = instance.getPort();
-            this.sslPort = instance.getSslPort();
-            this.payload = instance.getPayload();
-            this.registrationTimeUtc = instance.getRegistrationTimeUTC();
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getId() {
-            return id;
-        }
-
-        public String getAddress() {
-            return address;
-        }
-
-        public Integer getPort() {
-            return port;
-        }
-
-        public Integer getSslPort() {
-            return sslPort;
-        }
-
-        @JsonTypeInfo(use = Id.CLASS, defaultImpl = Object.class)
-        public T getPayload() {
-            return payload;
-        }
-
-        @JsonProperty(value = "registrationTimeUTC")
-        public long getRegistrationTimeUtc() {
-            return registrationTimeUtc;
-        }
-
-        public ServiceType getServiceType() {
-            return serviceType;
-        }
-
-        public UriSpec getUriSpec() {
-            return uriSpec;
-        }
-
-        @Override
-        public boolean equals(Object target) {
-            if (this == target) {
-                return true;
-            }
-            if (target == null || getClass() != target.getClass()) {
-                return false;
-            }
-            WriteAbleInstance<T> that = (WriteAbleInstance<T>) target;
-            if (registrationTimeUtc != that.registrationTimeUtc) {
-                return false;
-            }
-            if (!Objects.equals(address, that.address)) {
-                return false;
-            }
-            if (!Objects.equals(id, that.id)) {
-                return false;
-            }
-            if (!Objects.equals(name, that.name)) {
-                return false;
-            }
-            if (!Objects.equals(payload, that.payload)) {
-                return false;
-            }
-            if (!Objects.equals(port, that.port)) {
-                return false;
-            }
-            if (serviceType != that.serviceType) {
-                return false;
-            }
-            if (!Objects.equals(sslPort, that.sslPort)) {
-                return false;
-            }
-            return Objects.equals(uriSpec, that.uriSpec);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = name != null ? name.hashCode() : 0;
-            result = 31 * result + (id != null ? id.hashCode() : 0);
-            result = 31 * result + (address != null ? address.hashCode() : 0);
-            result = 31 * result + (port != null ? port.hashCode() : 0);
-            result = 31 * result + (sslPort != null ? sslPort.hashCode() : 0);
-            result = 31 * result + (payload != null ? payload.hashCode() : 0);
-            result = 31 * result + (int) (registrationTimeUtc ^ (registrationTimeUtc >>> 32));
-            result = 31 * result + (serviceType != null ? serviceType.hashCode() : 0);
-            result = 31 * result + (uriSpec != null ? uriSpec.hashCode() : 0);
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "ServiceInstance{" + "name='" + name + '\'' + ", id='" + id + '\'' + ", address='" + address + '\''
-                    + ", port=" + port + ", sslPort=" + sslPort + ", payload=" + payload + ", registrationTimeUTC="
-                    + registrationTimeUtc + ", serviceType=" + serviceType + ", uriSpec=" + uriSpec + '}';
         }
     }
 }
