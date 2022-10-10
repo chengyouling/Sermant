@@ -20,6 +20,7 @@
         <package.plugin.type>service</package.plugin.type>
         <cloud.zk.version>3.1.0</cloud.zk.version>
         <jackson.version>2.13.4</jackson.version>
+        <guava.version>31.1-jre</guava.version>
         <!--Curator 2.x.x兼容Zookeeper的3.4.x和3.5.x
             Curator 3.x.x只兼容Zookeeper 3.5.x-->
         <!--zk  3.4.x, 可向上兼容-->
@@ -130,12 +131,22 @@
                     <groupId>org.apache.zookeeper</groupId>
                     <artifactId>zookeeper</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>${guava.version}</version>
         </dependency>
 
         <dependency>
