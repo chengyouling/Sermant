@@ -31,8 +31,9 @@ import com.huaweicloud.sermant.core.utils.ClassUtils;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.utils.URIUtils;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -69,9 +70,11 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
         if (!isConfigEnable(hostAndPath, httpHost.getHostName())) {
             return context;
         }
-        final Optional<Object> invoke = invokerService.invoke(buildInvokerFunc(hostAndPath, uri, httpRequest, context),
-                buildExFunc(httpRequest), hostAndPath.get(HttpConstants.HTTP_URI_HOST));
-        invoke.ifPresent(context::skip);
+        invokerService.invoke(
+                buildInvokerFunc(hostAndPath, uri, httpRequest, context),
+                buildExFunc(httpRequest),
+                hostAndPath.get(HttpConstants.HTTP_URI_HOST))
+                .ifPresent(context::skip);
         return context;
     }
 
@@ -81,7 +84,8 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
         return invokerContext -> {
             String uriNew = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
                     hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-            context.getArguments()[0] = buildNewRequest(uriNew, method, httpRequest);
+            context.getArguments()[0] = rebuildHttpHost(uriNew);
+            context.getArguments()[1] = rebuildRequest(uriNew, method, httpRequest);
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
     }
@@ -121,16 +125,30 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
         return lowerCaseUrl.startsWith("http") || lowerCaseUrl.startsWith("https");
     }
 
-    private HttpRequest buildNewRequest(String uriNew, String method, HttpRequest httpUriRequest) {
-        if (HttpConstants.HTTP_GET.equals(method)) {
-            return new HttpGet(uriNew);
-        } else if (HttpConstants.HTTP_POST.equals(method)) {
+    private HttpHost rebuildHttpHost(String uriNew) {
+        final Optional<URI> optionalUri = formatUri(uriNew);
+        if (optionalUri.isPresent()) {
+            return URIUtils.extractHost(optionalUri.get());
+        }
+        throw new IllegalArgumentException("Invalid url: " + uriNew);
+    }
+
+    private HttpRequest rebuildRequest(String uriNew, String method, HttpRequest httpUriRequest) {
+        if (httpUriRequest instanceof HttpPost) {
             HttpPost oldHttpPost = (HttpPost) httpUriRequest;
             HttpPost httpPost = new HttpPost(uriNew);
             httpPost.setEntity(oldHttpPost.getEntity());
             return httpPost;
+        } else {
+            final HttpRequestBase httpRequestBase = new HttpRequestBase() {
+                @Override
+                public String getMethod() {
+                    return method;
+                }
+            };
+            httpRequestBase.setURI(URI.create(uriNew));
+            return httpRequestBase;
         }
-        return httpUriRequest;
     }
 
     @Override

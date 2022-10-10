@@ -16,21 +16,24 @@
 
 package com.huawei.discovery.utils;
 
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.retry.InvokerContext;
+
+import com.huaweicloud.sermant.core.common.LoggerFactory;
+import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
+import com.huaweicloud.sermant.core.utils.StringUtils;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.URI;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
-import com.huawei.discovery.entity.ServiceInstance;
-import com.huawei.discovery.retry.InvokerContext;
-import com.huaweicloud.sermant.core.common.LoggerFactory;
-import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
-import com.huaweicloud.sermant.core.utils.StringUtils;
 
 /**
  * 解析url参数、构建公共方法相关工具类
@@ -43,8 +46,8 @@ public class RequestInterceptorUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
     /**
-     * 解析url参数信息
-     * http://gateway.com.cn/serviceName/sayHell?name=1
+     * 解析url参数信息 http://gateway.com.cn/serviceName/sayHell?name=1
+     *
      * @param url
      * @return
      */
@@ -54,7 +57,7 @@ public class RequestInterceptorUtils {
         }
         Map<String, String> result = new HashMap<String, String>();
         String scheme = url.substring(0, url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH));
-        String temp =url.substring(url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH) + 3);
+        String temp = url.substring(url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH) + 3);
         //剔除域名之后的path
         temp = temp.substring(temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH) + 1);
         //服务名
@@ -69,14 +72,20 @@ public class RequestInterceptorUtils {
 
     /**
      * 构建invoke回调方法函数
-     * @param context
-     * @param invokerContext
-     * @return
+     *
+     * @param context 上下文
+     * @param invokerContext 调用上下文
+     * @return 调用器
      */
     public static Supplier<Object> buildFunc(ExecuteContext context, InvokerContext invokerContext) {
         return () -> {
             try {
-                return context.getMethod().invoke(context.getObject(), context.getArguments());
+                final Method method = context.getMethod();
+                AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+                    method.setAccessible(true);
+                    return method;
+                });
+                return method.invoke(context.getObject(), context.getArguments());
             } catch (IllegalAccessException e) {
                 LOGGER.log(Level.SEVERE, String.format(Locale.ENGLISH, "Can not invoke method [%s]",
                         context.getMethod().getName()), e);
@@ -91,6 +100,7 @@ public class RequestInterceptorUtils {
 
     /**
      * 构建ip+端口url
+     *
      * @param urlIfo
      * @param serviceInstance
      * @return
@@ -108,6 +118,7 @@ public class RequestInterceptorUtils {
 
     /**
      * 解析host、path信息
+     *
      * @param path
      * @return
      */
@@ -130,6 +141,7 @@ public class RequestInterceptorUtils {
 
     /**
      * 构建包含ip、端口url
+     *
      * @param uri
      * @param serviceInstance
      * @param path
