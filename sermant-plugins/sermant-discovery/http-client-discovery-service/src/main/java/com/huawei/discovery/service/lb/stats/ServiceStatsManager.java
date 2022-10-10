@@ -46,7 +46,7 @@ public enum ServiceStatsManager {
     ServiceStatsManager() {
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         serverStatsCache = CacheBuilder.newBuilder()
-                .expireAfterWrite(lbConfig.getStatsCacheExpireTime(), TimeUnit.HOURS)
+                .expireAfterWrite(lbConfig.getStatsCacheExpireTime(), TimeUnit.MINUTES)
                 .concurrencyLevel(lbConfig.getCacheConcurrencyLevel())
                 .removalListener(
                         (RemovalListener<String, ServiceStats>) notification -> notification.getValue().cleanUp())
