@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2021-2021 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,12 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
@@ -45,6 +45,8 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.params.HttpParams;
 
+import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
+import com.huawei.discovery.config.RealmNameConfig;
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
@@ -53,7 +55,9 @@ import com.huawei.discovery.utils.HttpConstants;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
+import com.huaweicloud.sermant.core.utils.StringUtils;
 
 /**
  * 拦截获取服务列表
@@ -64,44 +68,45 @@ import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 public class HttpClientInterceptor implements Interceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private final ThreadLocal<Boolean> mark = new ThreadLocal<>();
+    private final ThreadLocal<Boolean> mark = new ThreadLocal<Boolean>();
+
+    private static AtomicInteger count = new AtomicInteger(0);
 
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
-        /*final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-        HttpUriRequest httpUriRequest = (HttpUriRequest) context.getArguments()[0];
-        String method = httpUriRequest.getMethod();
-        URI uri = httpUriRequest.getURI();
-        Map<String, String> hostAndPath = recoverHostAndPath(uri.getPath());
-        String uriNew = buildNewUrl(uri,
-                PluginServiceManager.getPluginService(LbService.class).choose(hostAndPath.get(HttpConstants.HTTP_URI_HOST)).get(),
-                hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-        final Object originUri = context.getArguments()[0];
-        context.getArguments()[0] = builNewRequest(uriNew, method, httpUriRequest);
-        return context;*/
         if (mark.get() != null) {
             return context;
         }
         mark.set(Boolean.TRUE);
         try {
             final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
+            final RealmNameConfig realmNameConfig = PluginConfigManager.getPluginConfig(RealmNameConfig.class);
             HttpUriRequest httpUriRequest = (HttpUriRequest) context.getArguments()[0];
             String method = httpUriRequest.getMethod();
             URI uri = httpUriRequest.getURI();
+            if (!StringUtils.equalsIgnoreCase(uri.getHost(), realmNameConfig.getCurrentRealmName())) {
+                return context;
+            }
             Map<String, String> hostAndPath = recoverHostAndPath(uri.getPath());
+            if (!PlugEffectWhiteBlackConstants.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
+                return context;
+            }
             final Function<InvokerContext, Object> function = invokerContext -> {
                 String uriNew = buildNewUrl(uri, invokerContext.getServiceInstance(),
                         hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-                final Object originUri = context.getArguments()[0];
                 context.getArguments()[0] = builNewRequest(uriNew, method, httpUriRequest);
                 final Object result = buildFunc(context, invokerContext).get();
-                context.getArguments()[0] = originUri;
                 return result;
             };
             final Function<Exception, Object> exFunc = this::buildErrorResponse;
             final Optional<Object> invoke = invokerService
                     .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
             invoke.ifPresent(context::skip);
+            if (PlugEffectWhiteBlackConstants.isOpenLogger()) {
+                count.getAndIncrement();
+                LOGGER.log(Level.SEVERE,
+                        "currentTime: " + HttpConstants.currentTime() + "httpClientInterceptor effect count: " + count);
+            }
             return context;
         } finally {
             mark.remove();

@@ -44,11 +44,6 @@ public class LbConstants {
     public static final long DEFAULT_CACHE_EXPIRE_MS = 30000L;
 
     /**
-     * 统计数据过期时间, 单位小时, 默认两小时
-     */
-    public static final long DEFAULT_STATS_CACHE_EXPIRE = 2L;
-
-    /**
      * 缓存自动刷新时间
      */
     public static final long DEFAULT_REFRESH_INTERVAL_MS = 60000L;
@@ -82,11 +77,6 @@ public class LbConstants {
      * 重试等待时间, 默认一秒
      */
     public static final long DEFAULT_RETRY_WAIT_MS = 1000L;
-
-    /**
-     * 最大的重试配置缓存数
-     */
-    public static final int DEFAULT_MAX_RETRY_CONFIG_CACHE = 9999;
 
     private LbConstants() {
     }

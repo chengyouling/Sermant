@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2021-2021 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,8 +25,8 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
 /**
  * 注册增强
  *
- * @author zhouss
- * @since 2021-12-16
+ * @author chengyouling
+ * @since 2022-9-26
  */
 public class RegistrationDeclarer extends AbstractPluginDeclarer {
     /**

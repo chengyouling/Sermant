@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,41 +16,38 @@
 
 package com.huawei.discovery.declarers;
 
-import com.huawei.discovery.interceptors.OkHttpClientInterceptor;
+import com.huawei.discovery.interceptors.FeignInvokeInterceptor;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
 
 /**
- * 针对okhttp请求方式，从注册中心获取实例列表拦截
+ * 针对feign请求方式，从注册中心获取实例列表拦截
  *
  * @author chengyouling
- * @since 2022-9-17
+ * @since 2022-9-27
  */
-public class OkHttpClientDeclarer extends AbstractPluginDeclarer {
-    /**
-     * 增强类的全限定名 okhttp请求
-     */
-    private static final String[] ENHANCE_CLASSES = {
-            "com.squareup.okhttp.Call"
-    };
+public class FeignInvokeDeclarer extends AbstractPluginDeclarer {
 
-    /**
-     * 拦截类的全限定名
-     */
-    private static final String INTERCEPT_CLASS = OkHttpClientInterceptor.class.getCanonicalName();
+    private static final String[] ENHANCE_CLASS = {"feign.Client$Default",
+            "org.springframework.cloud.openfeign.loadbalancer.FeignBlockingLoadBalancerClient",
+            "org.springframework.cloud.openfeign.loadbalancer.RetryableFeignBlockingLoadBalancerClient",
+            "org.springframework.cloud.openfeign.ribbon.LoadBalancerFeignClient"};
+
+    private static final String INTERCEPT_CLASS = FeignInvokeInterceptor.class.getCanonicalName();
+
+    private static final String METHOD_NAME = "execute";
 
     @Override
     public ClassMatcher getClassMatcher() {
-        return ClassMatcher.nameContains(ENHANCE_CLASSES);
+        return ClassMatcher.nameContains(ENHANCE_CLASS);
     }
 
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[] {
-                InterceptDeclarer.build(MethodMatcher.nameEquals("enqueue"), INTERCEPT_CLASS),
-                InterceptDeclarer.build(MethodMatcher.nameEquals("execute"), INTERCEPT_CLASS)
+                InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME), INTERCEPT_CLASS)
         };
     }
 }

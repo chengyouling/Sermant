@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.declarers;
 
-import com.huawei.discovery.interceptors.OkHttpClientInterceptor;
+import com.huawei.discovery.interceptors.OkHttp3ClientInterceptor;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
@@ -28,18 +28,18 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
  * @author chengyouling
  * @since 2022-9-17
  */
-public class OkHttpClientDeclarer extends AbstractPluginDeclarer {
+public class OkHttp3ClientDeclarer extends AbstractPluginDeclarer {
     /**
      * 增强类的全限定名 okhttp请求
      */
     private static final String[] ENHANCE_CLASSES = {
-            "com.squareup.okhttp.Call"
+            "okhttp3.RealCall"
     };
 
     /**
      * 拦截类的全限定名
      */
-    private static final String INTERCEPT_CLASS = OkHttpClientInterceptor.class.getCanonicalName();
+    private static final String INTERCEPT_CLASS = OkHttp3ClientInterceptor.class.getCanonicalName();
 
     @Override
     public ClassMatcher getClassMatcher() {

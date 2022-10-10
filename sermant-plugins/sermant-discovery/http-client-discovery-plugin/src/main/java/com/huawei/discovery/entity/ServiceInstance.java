@@ -108,11 +108,6 @@ public interface ServiceInstance {
         DOWN,
 
         /**
-         * 重试失败状态
-         */
-        RETRY_FAILED,
-
-        /**
          * 未知
          */
         UN_KNOW;

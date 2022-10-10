@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2021-2021 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,22 @@
 
 package com.huawei.discovery.interceptors;
 
-import com.huawei.discovery.entity.DefaultServiceInstance;
-import com.huawei.discovery.entity.ServiceInstance;
-import com.huawei.discovery.service.RegistryService;
-
-import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
-import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
-import com.huaweicloud.sermant.core.service.ServiceManager;
+import java.util.Map;
 
 import org.springframework.cloud.client.serviceregistry.Registration;
 
-import java.util.Map;
+import com.huawei.discovery.entity.DefaultServiceInstance;
+import com.huawei.discovery.entity.RegisterContext;
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.service.ConfigCenterService;
+import com.huawei.discovery.service.RegistryService;
+import com.huawei.discovery.utils.HostIpAddressUtils;
+import com.huaweicloud.sermant.core.config.ConfigManager;
+import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
+import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
+import com.huaweicloud.sermant.core.plugin.config.ServiceMeta;
+import com.huaweicloud.sermant.core.service.ServiceManager;
+import com.huaweicloud.sermant.core.utils.StringUtils;
 
 /**
  * 拦截获取服务列表
@@ -35,13 +40,16 @@ import java.util.Map;
  * @since 2021-12-13
  */
 public class RegistrationInterceptor implements Interceptor {
-    private final RegistryService registryService;
+
+    private final ConfigCenterService configCenterService;
+
+    private static String SERVICE_NAME = "";
 
     /**
      * 构造方法
      */
     public RegistrationInterceptor() {
-        registryService = ServiceManager.getService(RegistryService.class);
+        configCenterService = ServiceManager.getService(ConfigCenterService.class);
     }
 
     @Override
@@ -49,25 +57,21 @@ public class RegistrationInterceptor implements Interceptor {
         if (!(context.getArguments()[0] instanceof Registration)) {
             return context;
         }
-        String ipAddress = "";
-        String instanceZone = "";
-//        if (context.getRawMemberFieldValue("properties") instanceof ConsulDiscoveryProperties) {
-//            ConsulDiscoveryProperties property = (ConsulDiscoveryProperties)context.getRawMemberFieldValue("properties");
-//            ipAddress = property.getIpAddress();
-//            instanceZone = property.getInstanceZone();
-//        }
         final Registration registration = (Registration) context.getArguments()[0];
-        ipAddress = registration.getHost();
+        SERVICE_NAME = registration.getServiceId();
         Map<String, String> metadata = registration.getMetadata();
-        metadata.putIfAbsent("zone", instanceZone);
-        ServiceInstance serviceInstance = new DefaultServiceInstance(registration.getHost(), ipAddress,
-                registration.getPort(), metadata, registration.getServiceId());
-        registryService.registry(serviceInstance);
+        ServiceMeta serviceMeta = ConfigManager.getConfig(ServiceMeta.class);
+        metadata.putIfAbsent("zone", serviceMeta.getZone());
+        RegisterContext.INSTANCE.getServiceInstance().setMetadata(metadata);
+        RegisterContext.INSTANCE.getServiceInstance().setHost(registration.getHost());
+        RegisterContext.INSTANCE.getServiceInstance().setPort(registration.getPort());
+        RegisterContext.INSTANCE.getServiceInstance().setServiceName(registration.getServiceId());
         return context;
     }
 
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
+        configCenterService.init(SERVICE_NAME);
         return context;
     }
 

@@ -43,11 +43,12 @@ import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.StringUtils;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-import com.squareup.okhttp.Response.Builder;
+
+import okhttp3.HttpUrl;
+import okhttp3.Protocol;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.Response.Builder;
 
 /**
  * 拦截获取服务列表
@@ -55,7 +56,7 @@ import com.squareup.okhttp.Response.Builder;
  * @author chengyouling
  * @since 2022-9-14
  */
-public class OkHttpClientInterceptor implements Interceptor {
+public class OkHttp3ClientInterceptor implements Interceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
@@ -72,7 +73,7 @@ public class OkHttpClientInterceptor implements Interceptor {
         try {
             final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
             Request request = (Request)context.getRawMemberFieldValue("originalRequest");
-            URI uri = request.uri();
+            URI uri = request.url().uri();
             final RealmNameConfig realmNameConfig = PluginConfigManager.getPluginConfig(RealmNameConfig.class);
             if (!StringUtils.equalsIgnoreCase(uri.getHost(), realmNameConfig.getCurrentRealmName())) {
                 return context;
@@ -82,7 +83,7 @@ public class OkHttpClientInterceptor implements Interceptor {
             if (!PlugEffectWhiteBlackConstants.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
                 return context;
             }
-            AtomicReference<Request> rebuildRequest = null;
+            AtomicReference<Request> rebuildRequest = new AtomicReference<>();
             final Function<InvokerContext, Object> function = invokerContext -> {
                 String url = buildNewUrl(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
                 HttpUrl newUrl = HttpUrl.parse(url);
@@ -112,7 +113,7 @@ public class OkHttpClientInterceptor implements Interceptor {
             if (PlugEffectWhiteBlackConstants.isOpenLogger()) {
                 count.getAndIncrement();
                 LOGGER.log(Level.SEVERE,
-                        "currentTime: " + HttpConstants.currentTime() + "okHttpClientInterceptor effect count: " + count);
+                        "currentTime: " + HttpConstants.currentTime() + "okHttp3ClientInterceptor effect count: " + count);
             }
             return context;
         } finally {
@@ -126,7 +127,7 @@ public class OkHttpClientInterceptor implements Interceptor {
      * @return
      */
     private Response buildErrorResponse(Exception ex, Request request) {
-        Response.Builder builder = new Builder();
+        Builder builder = new Builder();
         builder.code(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         builder.message(ex.getMessage());
         builder.protocol(Protocol.HTTP_1_1);

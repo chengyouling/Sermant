@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2021-2022 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package com.huawei.discovery.declarers;
 
 import com.huawei.discovery.interceptors.HttpClientInterceptor;
-
 import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
@@ -31,7 +30,7 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
  */
 public class HttpClientDeclarer extends AbstractPluginDeclarer {
     /**
-     * 增强类的全限定名 restTemplete请求
+     * 增强类的全限定名 http请求
      */
     private static final String[] ENHANCE_CLASSES = {
             "org.apache.http.impl.client.CloseableHttpClient"

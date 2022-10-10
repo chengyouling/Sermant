@@ -16,6 +16,15 @@
 
 package com.huawei.discovery.utils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * 参数标签类
+ *
+ * @author chengyouling
+ * @since 2022-9-14
+ */
 public class HttpConstants {
 
     public static final String HTTP_URI_HOST = "host";
@@ -33,4 +42,12 @@ public class HttpConstants {
     public static final String HTTP_URL_UNKNOWN = "?";
 
     public static final char HTTP_URL_SINGLE_SLASH = '/';
+
+    public static final String HTTP_URL_SCHEME = "scheme";
+
+    public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    public static String currentTime() {
+        return simpleDateFormat.format(new Date());
+    }
 }

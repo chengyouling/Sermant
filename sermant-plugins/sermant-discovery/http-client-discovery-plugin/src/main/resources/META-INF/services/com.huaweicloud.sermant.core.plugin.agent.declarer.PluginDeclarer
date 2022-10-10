@@ -14,7 +14,12 @@
 # limitations under the License.
 #
 #
+com.huawei.discovery.declarers.RestTempleteDeclarer
 com.huawei.discovery.declarers.HttpClientDeclarer
 com.huawei.discovery.declarers.OkHttpClientDeclarer
 com.huawei.discovery.declarers.RegistrationDeclarer
+com.huawei.discovery.declarers.FeignInvokeDeclarer
+com.huawei.discovery.declarers.OkHttp3ClientDeclarer
+com.huawei.discovery.declarers.SpringEnvironmentInfoDeclarer
+com.huawei.discovery.declarers.SpringBootDeclarer
 

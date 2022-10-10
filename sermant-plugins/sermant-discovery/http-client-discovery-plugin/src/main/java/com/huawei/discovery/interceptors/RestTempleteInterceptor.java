@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2021 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,20 +16,22 @@
 
 package com.huawei.discovery.interceptors;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import org.apache.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.ClientHttpResponse;
 
 import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
 import com.huawei.discovery.config.RealmNameConfig;
@@ -43,23 +45,18 @@ import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.StringUtils;
-import com.squareup.okhttp.HttpUrl;
-import com.squareup.okhttp.Protocol;
-import com.squareup.okhttp.Request;
-import com.squareup.okhttp.Response;
-import com.squareup.okhttp.Response.Builder;
 
 /**
  * 拦截获取服务列表
  *
  * @author chengyouling
- * @since 2022-9-14
+ * @since 2022-9-27
  */
-public class OkHttpClientInterceptor implements Interceptor {
+public class RestTempleteInterceptor implements Interceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private final ThreadLocal<Boolean> mark = new ThreadLocal<>();
+    private final ThreadLocal<Boolean> mark = new ThreadLocal<Boolean>();
 
     private static AtomicInteger count = new AtomicInteger(0);
 
@@ -71,48 +68,28 @@ public class OkHttpClientInterceptor implements Interceptor {
         mark.set(Boolean.TRUE);
         try {
             final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-            Request request = (Request)context.getRawMemberFieldValue("originalRequest");
-            URI uri = request.uri();
+            String url = (String)context.getArguments()[0];
             final RealmNameConfig realmNameConfig = PluginConfigManager.getPluginConfig(RealmNameConfig.class);
-            if (!StringUtils.equalsIgnoreCase(uri.getHost(), realmNameConfig.getCurrentRealmName())) {
+            if (!url.contains(realmNameConfig.getCurrentRealmName())) {
                 return context;
             }
-            String method = request.method();
-            Map<String, String> hostAndPath = recoverHostAndPath(uri.getPath());
-            if (!PlugEffectWhiteBlackConstants.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
+            Map<String, String> urlParamers = recovertUrl(url);
+            if (!PlugEffectWhiteBlackConstants.isPlugEffect(urlParamers.get(HttpConstants.HTTP_URI_HOST))) {
                 return context;
             }
-            AtomicReference<Request> rebuildRequest = null;
             final Function<InvokerContext, Object> function = invokerContext -> {
-                String url = buildNewUrl(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-                HttpUrl newUrl = HttpUrl.parse(url);
-                Request newRequest = request
-                        .newBuilder()
-                        .url(newUrl)
-                        .build();
-                rebuildRequest.set(newRequest);
-                try {
-                    context.setRawMemberFieldValue("originalRequest", newRequest);
-                } catch (Exception e) {
-                    LOGGER.warning("setRawMemberFieldValue originalRequest failed");
-                    return context;
-                }
+                context.getArguments()[0] = buildUrl(urlParamers, invokerContext.getServiceInstance());
                 final Object result = buildFunc(context, invokerContext).get();
                 return result;
             };
-            final Function<Exception, Object> exFunc = new Function<Exception, Object>() {
-                @Override
-                public Object apply(Exception e) {
-                    return buildErrorResponse(e, rebuildRequest.get());
-                }
-            };
+            final Function<Exception, Object> exFunc = this::buildErrorResponse;
             final Optional<Object> invoke = invokerService
-                    .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
+                    .invoke(function, exFunc, urlParamers.get(HttpConstants.HTTP_URI_HOST));
             invoke.ifPresent(context::skip);
             if (PlugEffectWhiteBlackConstants.isOpenLogger()) {
                 count.getAndIncrement();
                 LOGGER.log(Level.SEVERE,
-                        "currentTime: " + HttpConstants.currentTime() + "okHttpClientInterceptor effect count: " + count);
+                        "currentTime: " + HttpConstants.currentTime() + "restTempleteInterceptor effect count: " + count);
             }
             return context;
         } finally {
@@ -125,13 +102,39 @@ public class OkHttpClientInterceptor implements Interceptor {
      * @param ex
      * @return
      */
-    private Response buildErrorResponse(Exception ex, Request request) {
-        Response.Builder builder = new Builder();
-        builder.code(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-        builder.message(ex.getMessage());
-        builder.protocol(Protocol.HTTP_1_1);
-        builder.request(request);
-        return builder.build();
+    private ClientHttpResponse buildErrorResponse(Exception ex) {
+        return new ClientHttpResponse() {
+
+            @Override
+            public HttpHeaders getHeaders() {
+                return null;
+            }
+
+            @Override
+            public InputStream getBody() throws IOException {
+                return null;
+            }
+
+            @Override
+            public HttpStatus getStatusCode() throws IOException {
+                return HttpStatus.INTERNAL_SERVER_ERROR;
+            }
+
+            @Override
+            public int getRawStatusCode() throws IOException {
+                return HttpStatus.INTERNAL_SERVER_ERROR.value();
+            }
+
+            @Override
+            public String getStatusText() throws IOException {
+                return null;
+            }
+
+            @Override
+            public void close() {
+
+            }
+        };
     }
 
     private Supplier<Object> buildFunc(ExecuteContext context, InvokerContext invokerContext) {
@@ -150,34 +153,46 @@ public class OkHttpClientInterceptor implements Interceptor {
         };
     }
 
-    public static String buildNewUrl(URI uri, ServiceInstance serviceInstance, String path, String method) {
+    /**
+     * 解析url参数信息
+     * http://gateway.com.cn/serviceName/sayHell?name=1
+     * @param url
+     * @return
+     */
+    public Map<String, String> recovertUrl(String url) {
+        if (StringUtils.isEmpty(url)) {
+            return null;
+        }
+        Map<String, String> result = new HashMap<String, String>();
+        String scheme = url.substring(0, url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH));
+        String temp =url.substring(url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH) + 3);
+        //剔除域名之后的path
+        temp = temp.substring(temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH) + 1);
+        //服务名
+        String host = temp.substring(0, temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH));
+        //请求路径
+        String path = temp.substring(temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH));
+        result.put(HttpConstants.HTTP_URI_HOST, host);
+        result.put(HttpConstants.HTTP_URL_SCHEME, scheme);
+        result.put(HttpConstants.HTTP_URI_PATH, path);
+        return result;
+    }
+
+    /**
+     * 构建ip+端口url
+     * @param urlParamers
+     * @param serviceInstance
+     * @return
+     */
+    private String buildUrl(Map<String, String> urlParamers, ServiceInstance serviceInstance) {
         StringBuilder urlBuild = new StringBuilder();
-        urlBuild.append(uri.getScheme())
+        urlBuild.append(urlParamers.get(HttpConstants.HTTP_URL_SCHEME))
                 .append(HttpConstants.HTTP_URL_DOUBLIE_SLASH)
                 .append(serviceInstance.getIp())
                 .append(HttpConstants.HTTP_URL_COLON)
                 .append(serviceInstance.getPort())
-                .append(path);
-        if (method.equals(HttpConstants.HTTP_GET)) {
-            urlBuild.append(HttpConstants.HTTP_URL_UNKNOWN)
-                    .append(uri.getQuery());
-        }
+                .append(HttpConstants.HTTP_URI_PATH);
         return urlBuild.toString();
-    }
-
-    public static Map<String, String> recoverHostAndPath(String path) {
-        Map<String, String> result = new HashMap<String, String>();
-        if (StringUtils.isEmpty(path)) {
-            return result;
-        }
-        int startIndex = 0;
-        while (startIndex < path.length() && path.charAt(startIndex) == HttpConstants.HTTP_URL_SINGLE_SLASH) {
-            startIndex++;
-        }
-        String tempPath = path.substring(startIndex);
-        result.put(HttpConstants.HTTP_URI_HOST, tempPath.substring(0, tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
-        result.put(HttpConstants.HTTP_URI_PATH, tempPath.substring(tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
-        return result;
     }
 
     @Override

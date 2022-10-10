@@ -14,5 +14,4 @@
 # limitations under the License.
 #
 
-com.huawei.discovery.service.config.ConsulDiscoveryConfig
 com.huawei.discovery.config.LbConfig
