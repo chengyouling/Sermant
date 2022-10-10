@@ -101,14 +101,14 @@ public class DefaultRetryImpl implements Retry {
             final Predicate<Throwable> throwablePredicate = config().getThrowablePredicate();
             if (throwablePredicate != null && throwablePredicate.test(ex)) {
                 final int num = invokeCount.incrementAndGet();
-                if (num < config().getMaxRetry()) {
+                if (num <= config().getMaxRetry()) {
                     waitToRetry();
-                } else {
-                    // 抛出异常
-                    throw new RetryException(ex);
+                    return;
                 }
             }
-            throw ex;
+
+            // 抛出异常
+            throw new RetryException(ex);
         }
 
         @Override
