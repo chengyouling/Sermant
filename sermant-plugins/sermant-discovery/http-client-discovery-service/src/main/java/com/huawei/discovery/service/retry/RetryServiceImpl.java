@@ -82,11 +82,11 @@ public class RetryServiceImpl implements InvokerService {
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         maxSize = lbConfig.getMaxRetryConfigCache();
         defaultRetry = Retry.create(new RetryConfig(
-            retryEx,
-            result -> false,
-            NAME,
-            lbConfig.getRetryWaitMs(),
-            lbConfig.getMaxRetry()));
+                retryEx,
+                result -> false,
+                NAME,
+                lbConfig.getRetryWaitMs(),
+                lbConfig.getMaxRetry()));
     }
 
     @Override
@@ -108,7 +108,7 @@ public class RetryServiceImpl implements InvokerService {
         } catch (RetryException ex) {
             // 走异常处理流程
             return Optional.ofNullable(exFunc.apply(ex.getRealEx()));
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             // 重试最终失败抛出异常, 需对异常进行封装, 返回给上游, 或者作为当前调用返回调用方
             return Optional.ofNullable(exFunc.apply(ex));
         }
@@ -175,9 +175,11 @@ public class RetryServiceImpl implements InvokerService {
 
     private Optional<ServiceInstance> choose(String serviceName, boolean isRetry, ServiceInstance serviceInstance) {
         if (isRetry) {
-            LOGGER.info(String.format(Locale.ENGLISH, "Start retry for invoking service [%s] at time %s",
-                    serviceName, LocalDateTime.now()));
-            return retryPolicy.select(serviceName, serviceInstance);
+            final Optional<ServiceInstance> select = retryPolicy.select(serviceName, serviceInstance);
+            select.ifPresent(instance -> LOGGER.fine(String.format(Locale.ENGLISH,
+                    "Start retry for invoking instance [%s:%s] of service [%s] at time %s",
+                    instance.getHost(), instance.getPort(), serviceName, LocalDateTime.now())));
+            return select;
         }
         return DiscoveryManager.INSTANCE.choose(serviceName);
     }
