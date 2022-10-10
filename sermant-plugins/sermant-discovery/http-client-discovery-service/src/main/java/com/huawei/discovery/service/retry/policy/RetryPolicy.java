@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.retry.policy;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 
 import java.util.Optional;
 

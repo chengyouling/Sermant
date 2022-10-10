@@ -16,10 +16,8 @@
 
 package com.huawei.discovery.service.lb.cache;
 
-import static org.junit.Assert.*;
-
-import com.huawei.discovery.consul.entity.DefaultServiceInstance;
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.DefaultServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 
 import org.junit.Assert;
 import org.junit.Test;

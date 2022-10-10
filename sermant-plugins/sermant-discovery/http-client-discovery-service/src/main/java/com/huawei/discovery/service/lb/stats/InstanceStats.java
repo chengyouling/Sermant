@@ -16,8 +16,8 @@
 
 package com.huawei.discovery.service.lb.stats;
 
-import com.huawei.discovery.consul.config.LbConfig;
-import com.huawei.discovery.consul.entity.Recorder;
+import com.huawei.discovery.config.LbConfig;
+import com.huawei.discovery.entity.Recorder;
 
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 

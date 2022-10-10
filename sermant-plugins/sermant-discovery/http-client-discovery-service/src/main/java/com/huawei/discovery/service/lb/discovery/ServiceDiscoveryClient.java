@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.lb.discovery;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 
 import java.io.Closeable;
 import java.util.Collection;

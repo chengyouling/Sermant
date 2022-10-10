@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.lb.discovery.zk;
 
-import com.huawei.discovery.consul.config.LbConfig;
+import com.huawei.discovery.config.LbConfig;
 
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;

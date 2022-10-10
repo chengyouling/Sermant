@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.lb.rule;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.utils.CommonUtils;
 
 import org.junit.Assert;

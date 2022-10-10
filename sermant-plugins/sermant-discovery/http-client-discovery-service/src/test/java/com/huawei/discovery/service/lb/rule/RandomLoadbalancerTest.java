@@ -16,19 +16,11 @@
 
 package com.huawei.discovery.service.lb.rule;
 
-import com.huawei.discovery.consul.config.LbConfig;
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.utils.CommonUtils;
 
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
-import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
-
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.List;

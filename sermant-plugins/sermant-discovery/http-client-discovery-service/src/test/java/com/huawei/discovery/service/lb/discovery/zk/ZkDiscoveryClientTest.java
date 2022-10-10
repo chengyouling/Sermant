@@ -16,9 +16,8 @@
 
 package com.huawei.discovery.service.lb.discovery.zk;
 
-import com.huawei.discovery.consul.config.LbConfig;
-import com.huawei.discovery.consul.entity.DefaultServiceInstance;
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.config.LbConfig;
+import com.huawei.discovery.entity.DefaultServiceInstance;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
@@ -37,7 +36,6 @@ import org.mockito.Mockito;
 import org.springframework.cloud.zookeeper.discovery.ZookeeperInstance;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;

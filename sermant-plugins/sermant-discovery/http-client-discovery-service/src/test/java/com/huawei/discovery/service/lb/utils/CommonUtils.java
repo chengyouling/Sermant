@@ -16,13 +16,11 @@
 
 package com.huawei.discovery.service.lb.utils;
 
-import com.huawei.discovery.consul.entity.DefaultServiceInstance;
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.DefaultServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 
 import com.huaweicloud.sermant.core.utils.ReflectUtils;
-
-import org.junit.Assert;
 
 import java.util.Collections;
 import java.util.Map;

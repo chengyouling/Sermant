@@ -16,8 +16,8 @@
 
 package com.huawei.discovery.service.lb;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
-import com.huawei.discovery.consul.service.LbService;
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.service.LbService;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 

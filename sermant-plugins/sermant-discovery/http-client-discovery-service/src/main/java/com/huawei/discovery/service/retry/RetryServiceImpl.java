@@ -16,15 +16,15 @@
 
 package com.huawei.discovery.service.retry;
 
-import com.huawei.discovery.consul.config.LbConfig;
-import com.huawei.discovery.consul.entity.Recorder;
-import com.huawei.discovery.consul.entity.ServiceInstance;
-import com.huawei.discovery.consul.retry.InvokerContext;
-import com.huawei.discovery.consul.retry.Retry;
-import com.huawei.discovery.consul.retry.Retry.RetryContext;
-import com.huawei.discovery.consul.retry.RetryConfig;
-import com.huawei.discovery.consul.retry.RetryException;
-import com.huawei.discovery.consul.service.InvokerService;
+import com.huawei.discovery.config.LbConfig;
+import com.huawei.discovery.entity.Recorder;
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.retry.InvokerContext;
+import com.huawei.discovery.retry.Retry;
+import com.huawei.discovery.retry.Retry.RetryContext;
+import com.huawei.discovery.retry.RetryConfig;
+import com.huawei.discovery.retry.RetryException;
+import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.service.ex.ProviderException;
 import com.huawei.discovery.service.lb.DiscoveryManager;
 import com.huawei.discovery.service.lb.stats.InstanceStats;

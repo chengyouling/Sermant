@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.lb.cache;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 
 import java.util.List;
 

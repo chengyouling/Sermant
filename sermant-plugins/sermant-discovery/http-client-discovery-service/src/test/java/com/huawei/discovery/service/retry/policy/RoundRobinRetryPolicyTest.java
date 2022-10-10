@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.retry.policy;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.DiscoveryManager;
 import com.huawei.discovery.service.lb.discovery.zk.ZkService34;
 import com.huawei.discovery.service.lb.rule.BaseTest;

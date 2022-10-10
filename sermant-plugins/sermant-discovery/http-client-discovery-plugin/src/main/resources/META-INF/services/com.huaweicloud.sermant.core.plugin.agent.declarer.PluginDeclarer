@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 #
-com.huawei.discovery.consul.declarers.HttpClientDeclarer
-com.huawei.discovery.consul.declarers.OkHttpClientDeclarer
-com.huawei.discovery.consul.declarers.RegistrationDeclarer
+com.huawei.discovery.declarers.HttpClientDeclarer
+com.huawei.discovery.declarers.OkHttpClientDeclarer
+com.huawei.discovery.declarers.RegistrationDeclarer
 

@@ -16,10 +16,10 @@
 
 package com.huawei.discovery.service.lb.discovery.zk;
 
-import com.huawei.discovery.consul.config.LbConfig;
-import com.huawei.discovery.consul.entity.DefaultServiceInstance;
-import com.huawei.discovery.consul.entity.ServiceInstance;
-import com.huawei.discovery.consul.entity.ServiceInstance.Status;
+import com.huawei.discovery.config.LbConfig;
+import com.huawei.discovery.entity.DefaultServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.entity.ServiceInstance.Status;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;

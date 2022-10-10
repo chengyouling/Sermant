@@ -16,8 +16,8 @@
 
 package com.huawei.discovery.service.registry;
 
-import com.huawei.discovery.consul.entity.ServiceInstance;
-import com.huawei.discovery.consul.service.RegistryService;
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.service.RegistryService;
 import com.huawei.discovery.service.lb.DiscoveryManager;
 
 /**

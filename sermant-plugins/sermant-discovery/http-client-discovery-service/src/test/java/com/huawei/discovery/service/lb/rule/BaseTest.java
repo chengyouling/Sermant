@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.service.lb.rule;
 
-import com.huawei.discovery.consul.config.LbConfig;
+import com.huawei.discovery.config.LbConfig;
 import com.huawei.discovery.service.lb.utils.CommonUtils;
 
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
