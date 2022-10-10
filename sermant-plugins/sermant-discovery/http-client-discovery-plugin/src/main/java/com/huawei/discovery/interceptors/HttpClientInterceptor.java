@@ -17,15 +17,12 @@
 package com.huawei.discovery.interceptors;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -45,7 +42,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.params.HttpParams;
 
-import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
@@ -56,7 +52,6 @@ import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
-import com.huaweicloud.sermant.core.utils.StringUtils;
 
 /**
  * 拦截获取服务列表
