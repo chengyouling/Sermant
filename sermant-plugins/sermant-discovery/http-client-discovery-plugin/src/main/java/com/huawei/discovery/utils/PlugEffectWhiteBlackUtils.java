@@ -58,13 +58,7 @@ public class PlugEffectWhiteBlackUtils {
         return true;
     }
 
-    public static boolean isOpenLogger() {
-        String value = PlugEffectStategyCache.INSTANCE.getConfigContent(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG_LOGGER);
-        return StringUtils.equalsIgnoreCase(PlugEffectWhiteBlackConstants.LOGGER_OPEN_FLAG, value);
-    }
-
-    public static boolean isUrlContainsRealmName(String url) {
-        String realmName = PlugEffectStategyCache.INSTANCE.getConfigContent(PlugEffectWhiteBlackConstants.DYNAMIC_REALM_KEY);
+    public static boolean isUrlContainsRealmName(String url, String realmName) {
         if (StringUtils.isBlank(realmName)) {
             return false;
         }
@@ -80,8 +74,7 @@ public class PlugEffectWhiteBlackUtils {
         return url.contains(realmName);
     }
 
-    public static boolean isHostEqualRealmName(String host) {
-        String realmName = PlugEffectStategyCache.INSTANCE.getConfigContent(PlugEffectWhiteBlackConstants.DYNAMIC_REALM_KEY);
+    public static boolean isHostEqualRealmName(String host, String realmName) {
         if (StringUtils.isBlank(realmName)) {
             return false;
         }

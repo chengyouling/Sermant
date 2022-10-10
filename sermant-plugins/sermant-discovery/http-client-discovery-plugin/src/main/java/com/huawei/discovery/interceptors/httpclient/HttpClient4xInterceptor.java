@@ -16,6 +16,7 @@
 
 package com.huawei.discovery.interceptors.httpclient;
 
+import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.entity.ErrorCloseableHttpResponse;
 import com.huawei.discovery.interceptors.MarkInterceptor;
 import com.huawei.discovery.retry.InvokerContext;
@@ -26,6 +27,7 @@ import com.huawei.discovery.utils.RequestInterceptorUtils;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.ClassUtils;
 
@@ -95,7 +97,8 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
     }
 
     private boolean isConfigEnable(Map<String, String> hostAndPath, String hostName) {
-        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(hostName)) {
+        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(hostName, config.getRealmName())) {
             return false;
         }
         return PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST));

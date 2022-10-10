@@ -16,12 +16,15 @@
 
 package com.huawei.discovery.interceptors;
 
+import com.huawei.discovery.config.DiscoveryPluginConfig;
+import com.huawei.discovery.config.LbConfig;
 import com.huawei.discovery.utils.HttpConstants;
 import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Level;
@@ -49,9 +52,10 @@ public abstract class MarkInterceptor implements Interceptor {
         try {
             return doBefore(context);
         } finally {
-            if (PlugEffectWhiteBlackUtils.isOpenLogger()) {
+            DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+            if (config.isLoggerFlag()) {
                 requestCount.getAndIncrement();
-                LOGGER.log(Level.SEVERE,
+                LOGGER.log(Level.INFO,
                         "currentTime: " + HttpConstants.currentTime() + "httpClientInterceptor effect count: " + requestCount);
             }
             mark.remove();

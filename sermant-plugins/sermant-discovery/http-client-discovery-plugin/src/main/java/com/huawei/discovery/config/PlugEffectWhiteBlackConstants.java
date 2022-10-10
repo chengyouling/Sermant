@@ -64,14 +64,4 @@ public class PlugEffectWhiteBlackConstants {
      */
     public static final String STRATEGY_BLACK = "black";
 
-    /**
-     * 是否打印插件生效统计日志
-     */
-    public static final String LOGGER_OPEN_FLAG = "1";
-
-    /**
-     * 动态配置域名key
-     */
-    public static final String DYNAMIC_REALM_KEY = "realName";
-
 }

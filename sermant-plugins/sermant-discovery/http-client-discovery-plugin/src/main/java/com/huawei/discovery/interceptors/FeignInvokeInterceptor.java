@@ -18,21 +18,18 @@ package com.huawei.discovery.interceptors;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 
+import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
 import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
-import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
-import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 
 import feign.Request;
@@ -44,48 +41,30 @@ import feign.Response;
  * @author chengyouling
  * @since 2022-9-27
  */
-public class FeignInvokeInterceptor implements Interceptor {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger();
-
-    private static AtomicInteger count = new AtomicInteger(0);
-
-    private final ThreadLocal<Boolean> mark = new ThreadLocal<>();
+public class FeignInvokeInterceptor extends MarkInterceptor {
 
     @Override
-    public ExecuteContext before(ExecuteContext context) throws Exception {
-        if (mark.get() != null) {
+    protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
+        final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
+        Request request = (Request)context.getArguments()[0];
+        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(request.url(), config.getRealmName())) {
             return context;
         }
-        mark.set(Boolean.TRUE);
-        try {
-            final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-            Request request = (Request)context.getArguments()[0];
-            if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(request.url())) {
-                return context;
-            }
-            Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(request.url());
-            if (!PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST))) {
-                return context;
-            }
-            final Function<InvokerContext, Object> function = invokerContext -> {
-                context.getArguments()[0] = Request.create(request.httpMethod(),
-                        RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance()), request.headers(), request.requestBody());
-                return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
-            };
-            final Function<Exception, Object> exFunc = this::buildErrorResponse;
-            final Optional<Object> invoke = invokerService
-                    .invoke(function, exFunc, urlInfo.get(HttpConstants.HTTP_URI_HOST));
-            invoke.ifPresent(context::skip);
-            if (PlugEffectWhiteBlackUtils.isOpenLogger()) {
-                count.getAndIncrement();
-                LOGGER.log(Level.INFO,
-                        "currentTime: " + HttpConstants.currentTime() + "feignInvokeInterceptor effect count: " + count);
-            }
+        Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(request.url());
+        if (!PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST))) {
             return context;
-        } finally {
-            mark.remove();
         }
+        final Function<InvokerContext, Object> function = invokerContext -> {
+            context.getArguments()[0] = Request.create(request.httpMethod(),
+                    RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance()), request.headers(), request.requestBody());
+            return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
+        };
+        final Function<Exception, Object> exFunc = this::buildErrorResponse;
+        final Optional<Object> invoke = invokerService
+                .invoke(function, exFunc, urlInfo.get(HttpConstants.HTTP_URI_HOST));
+        invoke.ifPresent(context::skip);
+        return context;
     }
 
     /**

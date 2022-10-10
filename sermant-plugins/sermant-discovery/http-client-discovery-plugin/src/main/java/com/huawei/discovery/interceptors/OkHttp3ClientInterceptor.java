@@ -19,14 +19,13 @@ package com.huawei.discovery.interceptors;
 import java.net.URI;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 
+import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
@@ -34,7 +33,7 @@ import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
-import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 
 import okhttp3.HttpUrl;
@@ -49,67 +48,51 @@ import okhttp3.Response.Builder;
  * @author chengyouling
  * @since 2022-09-14
  */
-public class OkHttp3ClientInterceptor implements Interceptor {
+public class OkHttp3ClientInterceptor extends MarkInterceptor {
 
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private final ThreadLocal<Boolean> mark = new ThreadLocal<>();
-
-    private static AtomicInteger count = new AtomicInteger(0);
-
     @Override
-    public ExecuteContext before(ExecuteContext context) throws Exception {
-        if (mark.get() != null) {
+    protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
+        final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
+        Request request = (Request)context.getRawMemberFieldValue("originalRequest");
+        URI uri = request.url().uri();
+        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost(), config.getRealmName())) {
             return context;
         }
-        mark.set(Boolean.TRUE);
-        try {
-            final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-            Request request = (Request)context.getRawMemberFieldValue("originalRequest");
-            URI uri = request.url().uri();
-            if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost())) {
-                return context;
-            }
-            String method = request.method();
-            Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
-            if (!PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
-                return context;
-            }
-            AtomicReference<Request> rebuildRequest = new AtomicReference<>();
-            final Function<InvokerContext, Object> function = invokerContext -> {
-                String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-                HttpUrl newUrl = HttpUrl.parse(url);
-                Request newRequest = request
-                        .newBuilder()
-                        .url(newUrl)
-                        .build();
-                rebuildRequest.set(newRequest);
-                try {
-                    context.setRawMemberFieldValue("originalRequest", newRequest);
-                } catch (Exception e) {
-                    LOGGER.warning("setRawMemberFieldValue originalRequest failed");
-                    return context;
-                }
-                return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
-            };
-            final Function<Exception, Object> exFunc = new Function<Exception, Object>() {
-                @Override
-                public Object apply(Exception e) {
-                    return buildErrorResponse(e, rebuildRequest.get());
-                }
-            };
-            final Optional<Object> invoke = invokerService
-                    .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
-            invoke.ifPresent(context::skip);
-            if (PlugEffectWhiteBlackUtils.isOpenLogger()) {
-                count.getAndIncrement();
-                LOGGER.log(Level.SEVERE,
-                        "currentTime: " + HttpConstants.currentTime() + "okHttp3ClientInterceptor effect count: " + count);
-            }
+        String method = request.method();
+        Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
+        if (!PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
             return context;
-        } finally {
-            mark.remove();
         }
+        AtomicReference<Request> rebuildRequest = new AtomicReference<>();
+        final Function<InvokerContext, Object> function = invokerContext -> {
+            String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+            HttpUrl newUrl = HttpUrl.parse(url);
+            Request newRequest = request
+                    .newBuilder()
+                    .url(newUrl)
+                    .build();
+            rebuildRequest.set(newRequest);
+            try {
+                context.setRawMemberFieldValue("originalRequest", newRequest);
+            } catch (Exception e) {
+                LOGGER.warning("setRawMemberFieldValue originalRequest failed");
+                return context;
+            }
+            return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
+        };
+        final Function<Exception, Object> exFunc = new Function<Exception, Object>() {
+            @Override
+            public Object apply(Exception e) {
+                return buildErrorResponse(e, rebuildRequest.get());
+            }
+        };
+        final Optional<Object> invoke = invokerService
+                .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
+        invoke.ifPresent(context::skip);
+        return context;
     }
 
     /**
