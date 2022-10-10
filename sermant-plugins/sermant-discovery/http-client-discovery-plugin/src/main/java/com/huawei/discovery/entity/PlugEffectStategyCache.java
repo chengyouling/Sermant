@@ -32,6 +32,9 @@ import com.huaweicloud.sermant.core.service.dynamicconfig.common.DynamicConfigEv
  */
 public enum PlugEffectStategyCache {
 
+    /**
+     * 实例
+     */
     INSTANCE;
 
     private Map<String, String> caches= new HashMap<String, String>();

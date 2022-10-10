@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
  * 针对okhttp请求方式，从注册中心获取实例列表拦截
  *
  * @author chengyouling
- * @since 2022-9-17
+ * @since 2022-09-17
  */
 public class OkHttp3ClientDeclarer extends AbstractPluginDeclarer {
     /**

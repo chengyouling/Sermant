@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2021 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,17 +45,16 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicStatusLine;
 import org.apache.http.params.HttpParams;
 
-import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
-import com.huawei.discovery.config.RealmNameConfig;
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
 
+import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
+import com.huawei.discovery.utils.RequestInterceptorUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.StringUtils;
 
@@ -80,29 +79,27 @@ public class HttpClientInterceptor implements Interceptor {
         mark.set(Boolean.TRUE);
         try {
             final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-            final RealmNameConfig realmNameConfig = PluginConfigManager.getPluginConfig(RealmNameConfig.class);
             HttpUriRequest httpUriRequest = (HttpUriRequest) context.getArguments()[0];
             String method = httpUriRequest.getMethod();
             URI uri = httpUriRequest.getURI();
-            if (!StringUtils.equalsIgnoreCase(uri.getHost(), realmNameConfig.getCurrentRealmName())) {
+            if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost())) {
                 return context;
             }
-            Map<String, String> hostAndPath = recoverHostAndPath(uri.getPath());
-            if (!PlugEffectWhiteBlackConstants.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
+            Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
+            if (!PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
                 return context;
             }
             final Function<InvokerContext, Object> function = invokerContext -> {
-                String uriNew = buildNewUrl(uri, invokerContext.getServiceInstance(),
+                String uriNew = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
                         hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
                 context.getArguments()[0] = builNewRequest(uriNew, method, httpUriRequest);
-                final Object result = buildFunc(context, invokerContext).get();
-                return result;
+                return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
             };
             final Function<Exception, Object> exFunc = this::buildErrorResponse;
             final Optional<Object> invoke = invokerService
                     .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
             invoke.ifPresent(context::skip);
-            if (PlugEffectWhiteBlackConstants.isOpenLogger()) {
+            if (PlugEffectWhiteBlackUtils.isOpenLogger()) {
                 count.getAndIncrement();
                 LOGGER.log(Level.SEVERE,
                         "currentTime: " + HttpConstants.currentTime() + "httpClientInterceptor effect count: " + count);
@@ -111,22 +108,6 @@ public class HttpClientInterceptor implements Interceptor {
         } finally {
             mark.remove();
         }
-    }
-
-    private Supplier<Object> buildFunc(ExecuteContext context, InvokerContext invokerContext) {
-        return () -> {
-            try {
-                return context.getMethod().invoke(context.getObject(), context.getArguments());
-            } catch (IllegalAccessException e) {
-                LOGGER.log(Level.SEVERE, String.format(Locale.ENGLISH, "Can not invoke method [%s]",
-                        context.getMethod().getName()), e);
-            } catch (InvocationTargetException e) {
-                invokerContext.setEx(e.getTargetException());
-                LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "invoke method [%s] failed",
-                        context.getMethod().getName()), e);
-            }
-            return null;
-        };
     }
 
     private HttpUriRequest builNewRequest(String uriNew, String method, HttpUriRequest httpUriRequest) {
@@ -139,38 +120,6 @@ public class HttpClientInterceptor implements Interceptor {
             return httpPost;
         }
         return httpUriRequest;
-    }
-
-    private String buildNewUrl(URI uri, ServiceInstance serviceInstance, String path, String method) {
-        StringBuilder urlBuild = new StringBuilder();
-        urlBuild.append(uri.getScheme())
-                .append(HttpConstants.HTTP_URL_DOUBLIE_SLASH)
-                .append(serviceInstance.getIp())
-                .append(HttpConstants.HTTP_URL_COLON)
-                .append(serviceInstance.getPort())
-                .append(path);
-        if (method.equals(HttpConstants.HTTP_GET)) {
-            urlBuild.append(HttpConstants.HTTP_URL_UNKNOWN)
-                    .append(uri.getQuery());
-        }
-        return urlBuild.toString();
-    }
-
-    private Map<String, String> recoverHostAndPath(String path) {
-        Map<String, String> result = new HashMap<String, String>();
-        if (StringUtils.isEmpty(path)) {
-            return result;
-        }
-        int startIndex = 0;
-        while (startIndex < path.length() && path.charAt(startIndex) == HttpConstants.HTTP_URL_SINGLE_SLASH) {
-            startIndex++;
-        }
-        String tempPath = path.substring(startIndex);
-        result.put(HttpConstants.HTTP_URI_HOST,
-                tempPath.substring(0, tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
-        result.put(HttpConstants.HTTP_URI_PATH,
-                tempPath.substring(tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
-        return result;
     }
 
     @Override

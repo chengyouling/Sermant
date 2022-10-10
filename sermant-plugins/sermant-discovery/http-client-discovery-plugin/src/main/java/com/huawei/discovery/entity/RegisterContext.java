@@ -24,6 +24,9 @@ package com.huawei.discovery.entity;
  */
 public enum RegisterContext {
 
+    /**
+     * 实例
+     */
     INSTANCE;
 
     private final DefaultServiceInstance serviceInstance = new DefaultServiceInstance();

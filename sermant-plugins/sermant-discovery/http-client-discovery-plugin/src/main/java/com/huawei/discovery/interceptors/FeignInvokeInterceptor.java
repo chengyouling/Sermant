@@ -29,16 +29,15 @@ import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 
-import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
-import com.huawei.discovery.config.RealmNameConfig;
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
+import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
+import com.huawei.discovery.utils.RequestInterceptorUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.StringUtils;
 
@@ -67,28 +66,26 @@ public class FeignInvokeInterceptor implements Interceptor {
         mark.set(Boolean.TRUE);
         try {
             final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-            final RealmNameConfig realmNameConfig = PluginConfigManager.getPluginConfig(RealmNameConfig.class);
             Request request = (Request)context.getArguments()[0];
-            if (!request.url().contains(realmNameConfig.getCurrentRealmName())) {
+            if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(request.url())) {
                 return context;
             }
-            Map<String, String> urlParamers = recovertUrl(request.url());
-            if (!PlugEffectWhiteBlackConstants.isPlugEffect(urlParamers.get(HttpConstants.HTTP_URI_HOST))) {
+            Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(request.url());
+            if (!PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST))) {
                 return context;
             }
             final Function<InvokerContext, Object> function = invokerContext -> {
                 context.getArguments()[0] = Request.create(request.httpMethod(),
-                        buildUrl(urlParamers, invokerContext.getServiceInstance()), request.headers(), request.requestBody());
-                final Object result = buildFunc(context, invokerContext).get();
-                return result;
+                        RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance()), request.headers(), request.requestBody());
+                return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
             };
             final Function<Exception, Object> exFunc = this::buildErrorResponse;
             final Optional<Object> invoke = invokerService
-                    .invoke(function, exFunc, urlParamers.get(HttpConstants.HTTP_URI_HOST));
+                    .invoke(function, exFunc, urlInfo.get(HttpConstants.HTTP_URI_HOST));
             invoke.ifPresent(context::skip);
-            if (PlugEffectWhiteBlackConstants.isOpenLogger()) {
+            if (PlugEffectWhiteBlackUtils.isOpenLogger()) {
                 count.getAndIncrement();
-                LOGGER.log(Level.SEVERE,
+                LOGGER.log(Level.INFO,
                         "currentTime: " + HttpConstants.currentTime() + "feignInvokeInterceptor effect count: " + count);
             }
             return context;
@@ -107,64 +104,6 @@ public class FeignInvokeInterceptor implements Interceptor {
         builder.status(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         builder.reason(ex.getMessage());
         return builder.build();
-    }
-
-    private Supplier<Object> buildFunc(ExecuteContext context, InvokerContext invokerContext) {
-        return () -> {
-            try {
-                return context.getMethod().invoke(context.getObject(), context.getArguments());
-            } catch (IllegalAccessException e) {
-                LOGGER.log(Level.SEVERE, String.format(Locale.ENGLISH, "Can not invoke method [%s]",
-                        context.getMethod().getName()), e);
-            } catch (InvocationTargetException e) {
-                invokerContext.setEx(e.getTargetException());
-                LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "invoke method [%s] failed",
-                        context.getMethod().getName()), e);
-            }
-            return null;
-        };
-    }
-
-    /**
-     * 解析url参数信息
-     * http://gateway.com.cn/serviceName/sayHell?name=1
-     * @param url
-     * @return
-     */
-    public Map<String, String> recovertUrl(String url) {
-        if (StringUtils.isEmpty(url)) {
-            return null;
-        }
-        Map<String, String> result = new HashMap<String, String>();
-        String scheme = url.substring(0, url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH));
-        String temp =url.substring(url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH) + 3);
-        //剔除域名之后的path
-        temp = temp.substring(temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH) + 1);
-        //服务名
-        String host = temp.substring(0, temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH));
-        //请求路径
-        String path = temp.substring(temp.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH));
-        result.put(HttpConstants.HTTP_URI_HOST, host);
-        result.put(HttpConstants.HTTP_URL_SCHEME, scheme);
-        result.put(HttpConstants.HTTP_URI_PATH, path);
-        return result;
-    }
-
-    /**
-     * 构建ip+端口url
-     * @param urlParamers
-     * @param serviceInstance
-     * @return
-     */
-    private String buildUrl(Map<String, String> urlParamers, ServiceInstance serviceInstance) {
-        StringBuilder urlBuild = new StringBuilder();
-        urlBuild.append(urlParamers.get(HttpConstants.HTTP_URL_SCHEME))
-                .append(HttpConstants.HTTP_URL_DOUBLIE_SLASH)
-                .append(serviceInstance.getIp())
-                .append(HttpConstants.HTTP_URL_COLON)
-                .append(serviceInstance.getPort())
-                .append(HttpConstants.HTTP_URI_PATH);
-        return urlBuild.toString();
     }
 
     @Override

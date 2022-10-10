@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2021 Huawei Technologies Co., Ltd. All rights reserved.
+ * Copyright (C) 2022-2022 Huawei Technologies Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,16 @@ import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 
-import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
-import com.huawei.discovery.config.RealmNameConfig;
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
+import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
+import com.huawei.discovery.utils.RequestInterceptorUtils;
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
-import com.huaweicloud.sermant.core.utils.StringUtils;
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
@@ -53,7 +51,7 @@ import com.squareup.okhttp.Response.Builder;
  * 拦截获取服务列表
  *
  * @author chengyouling
- * @since 2022-9-14
+ * @since 2022-09-14
  */
 public class OkHttpClientInterceptor implements Interceptor {
 
@@ -73,18 +71,17 @@ public class OkHttpClientInterceptor implements Interceptor {
             final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
             Request request = (Request)context.getRawMemberFieldValue("originalRequest");
             URI uri = request.uri();
-            final RealmNameConfig realmNameConfig = PluginConfigManager.getPluginConfig(RealmNameConfig.class);
-            if (!StringUtils.equalsIgnoreCase(uri.getHost(), realmNameConfig.getCurrentRealmName())) {
+            if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost())) {
                 return context;
             }
             String method = request.method();
-            Map<String, String> hostAndPath = recoverHostAndPath(uri.getPath());
-            if (!PlugEffectWhiteBlackConstants.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
+            Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
+            if (!PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
                 return context;
             }
-            AtomicReference<Request> rebuildRequest = null;
+            AtomicReference<Request> rebuildRequest = new AtomicReference<>();
             final Function<InvokerContext, Object> function = invokerContext -> {
-                String url = buildNewUrl(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+                String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
                 HttpUrl newUrl = HttpUrl.parse(url);
                 Request newRequest = request
                         .newBuilder()
@@ -97,8 +94,7 @@ public class OkHttpClientInterceptor implements Interceptor {
                     LOGGER.warning("setRawMemberFieldValue originalRequest failed");
                     return context;
                 }
-                final Object result = buildFunc(context, invokerContext).get();
-                return result;
+                return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
             };
             final Function<Exception, Object> exFunc = new Function<Exception, Object>() {
                 @Override
@@ -109,7 +105,7 @@ public class OkHttpClientInterceptor implements Interceptor {
             final Optional<Object> invoke = invokerService
                     .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
             invoke.ifPresent(context::skip);
-            if (PlugEffectWhiteBlackConstants.isOpenLogger()) {
+            if (PlugEffectWhiteBlackUtils.isOpenLogger()) {
                 count.getAndIncrement();
                 LOGGER.log(Level.SEVERE,
                         "currentTime: " + HttpConstants.currentTime() + "okHttpClientInterceptor effect count: " + count);
@@ -121,7 +117,7 @@ public class OkHttpClientInterceptor implements Interceptor {
     }
 
     /**
-     * 构建feign响应
+     * 构建okHttp响应
      * @param ex
      * @return
      */
@@ -132,52 +128,6 @@ public class OkHttpClientInterceptor implements Interceptor {
         builder.protocol(Protocol.HTTP_1_1);
         builder.request(request);
         return builder.build();
-    }
-
-    private Supplier<Object> buildFunc(ExecuteContext context, InvokerContext invokerContext) {
-        return () -> {
-            try {
-                return context.getMethod().invoke(context.getObject(), context.getArguments());
-            } catch (IllegalAccessException e) {
-                LOGGER.log(Level.SEVERE, String.format(Locale.ENGLISH, "Can not invoke method [%s]",
-                        context.getMethod().getName()), e);
-            } catch (InvocationTargetException e) {
-                invokerContext.setEx(e.getTargetException());
-                LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "invoke method [%s] failed",
-                        context.getMethod().getName()), e);
-            }
-            return null;
-        };
-    }
-
-    public static String buildNewUrl(URI uri, ServiceInstance serviceInstance, String path, String method) {
-        StringBuilder urlBuild = new StringBuilder();
-        urlBuild.append(uri.getScheme())
-                .append(HttpConstants.HTTP_URL_DOUBLIE_SLASH)
-                .append(serviceInstance.getIp())
-                .append(HttpConstants.HTTP_URL_COLON)
-                .append(serviceInstance.getPort())
-                .append(path);
-        if (method.equals(HttpConstants.HTTP_GET)) {
-            urlBuild.append(HttpConstants.HTTP_URL_UNKNOWN)
-                    .append(uri.getQuery());
-        }
-        return urlBuild.toString();
-    }
-
-    public static Map<String, String> recoverHostAndPath(String path) {
-        Map<String, String> result = new HashMap<String, String>();
-        if (StringUtils.isEmpty(path)) {
-            return result;
-        }
-        int startIndex = 0;
-        while (startIndex < path.length() && path.charAt(startIndex) == HttpConstants.HTTP_URL_SINGLE_SLASH) {
-            startIndex++;
-        }
-        String tempPath = path.substring(startIndex);
-        result.put(HttpConstants.HTTP_URI_HOST, tempPath.substring(0, tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
-        result.put(HttpConstants.HTTP_URI_PATH, tempPath.substring(tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
-        return result;
     }
 
     @Override

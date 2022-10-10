@@ -26,7 +26,7 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
  * 针对feign请求方式，从注册中心获取实例列表拦截
  *
  * @author chengyouling
- * @since 2022-9-27
+ * @since 2022-09-27
  */
 public class FeignInvokeDeclarer extends AbstractPluginDeclarer {
 

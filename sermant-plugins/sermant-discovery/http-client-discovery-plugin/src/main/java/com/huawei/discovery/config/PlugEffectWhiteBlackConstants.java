@@ -16,9 +16,6 @@
 
 package com.huawei.discovery.config;
 
-import com.huawei.discovery.entity.PlugEffectStategyCache;
-import com.huaweicloud.sermant.core.utils.StringUtils;
-
 /**
  * 插件生效、日志打印动态配置相关常量
  *
@@ -72,38 +69,9 @@ public class PlugEffectWhiteBlackConstants {
      */
     public static final String LOGGER_OPEN_FLAG = "1";
 
-    public static boolean isPlugEffect(String serviceName) {
-        String strategy = PlugEffectStategyCache.INSTANCE.getConfigContent(DYNAMIC_CONFIG_STRATEGY);
-        String value = PlugEffectStategyCache.INSTANCE.getConfigContent(DYNAMIC_CONFIG__VALUE);
-        //全部生效
-        if (StringUtils.equalsIgnoreCase(STRATEGY_ALL, strategy)) {
-            return true;
-        }
-        //全部不生效
-        if (StringUtils.equalsIgnoreCase(STRATEGY_NONE, strategy)) {
-            return false;
-        }
-        //白名单-插件生效
-        if (StringUtils.equalsIgnoreCase(STRATEGY_WHITE, strategy)) {
-            if (value.contains(serviceName)) {
-                return true;
-            } else {
-                return false;
-            }
-        }
-        //黑名单-插件不生效
-        if (StringUtils.equalsIgnoreCase(STRATEGY_BLACK, strategy)) {
-            if (value.contains(serviceName)) {
-                return false;
-            } else {
-                return true;
-            }
-        }
-        return true;
-    }
+    /**
+     * 动态配置域名key
+     */
+    public static final String DYNAMIC_REALM_KEY = "realName";
 
-    public static boolean isOpenLogger() {
-        String value = PlugEffectStategyCache.INSTANCE.getConfigContent(DYNAMIC_CONFIG_LOGGER);
-        return StringUtils.equalsIgnoreCase(LOGGER_OPEN_FLAG, value);
-    }
 }

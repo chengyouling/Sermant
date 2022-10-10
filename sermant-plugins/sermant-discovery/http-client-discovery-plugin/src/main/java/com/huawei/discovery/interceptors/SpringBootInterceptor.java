@@ -5,19 +5,19 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package com.huawei.discovery.interceptors;
 
 import com.huawei.discovery.entity.RegisterContext;
+import com.huawei.discovery.service.ConfigCenterService;
 import com.huawei.discovery.service.RegistryService;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
@@ -33,8 +33,11 @@ public class SpringBootInterceptor extends AbstractInterceptor {
 
     private final RegistryService registryService;
 
+    private final ConfigCenterService configCenterService;
+
     public SpringBootInterceptor() {
         registryService = ServiceManager.getService(RegistryService.class);
+        configCenterService = ServiceManager.getService(ConfigCenterService.class);
     }
 
     @Override
@@ -44,6 +47,7 @@ public class SpringBootInterceptor extends AbstractInterceptor {
 
     @Override
     public ExecuteContext after(ExecuteContext context) {
+        configCenterService.init(RegisterContext.INSTANCE.getServiceInstance().serviceName());
         registryService.registry(RegisterContext.INSTANCE.getServiceInstance());
         return context;
     }

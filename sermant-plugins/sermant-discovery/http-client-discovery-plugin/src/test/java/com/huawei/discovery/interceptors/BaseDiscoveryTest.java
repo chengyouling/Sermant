@@ -21,7 +21,6 @@ import org.junit.BeforeClass;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
-import com.huawei.discovery.config.RealmNameConfig;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
@@ -35,7 +34,7 @@ import com.huaweicloud.sermant.core.service.ServiceManager;
  * @since 2022-09-07
  */
 public abstract class BaseDiscoveryTest<T extends Interceptor> {
-    protected static final RealmNameConfig REALM_NAME_CONFIG = new RealmNameConfig();
+//    protected static final RealmNameConfig REALM_NAME_CONFIG = new RealmNameConfig();
 
     protected static MockedStatic<PluginConfigManager> pluginConfigManagerMockedStatic;
 
@@ -52,8 +51,8 @@ public abstract class BaseDiscoveryTest<T extends Interceptor> {
     @BeforeClass
     public static void init() {
         pluginConfigManagerMockedStatic = Mockito.mockStatic(PluginConfigManager.class);
-        pluginConfigManagerMockedStatic.when(() -> PluginConfigManager.getPluginConfig(RealmNameConfig.class))
-                .thenReturn(REALM_NAME_CONFIG);
+//        pluginConfigManagerMockedStatic.when(() -> PluginConfigManager.getPluginConfig(RealmNameConfig.class))
+//                .thenReturn(REALM_NAME_CONFIG);
         pluginServiceManagerMockedStatic = Mockito.mockStatic(PluginServiceManager.class);
         serviceManagerMockedStatic = Mockito.mockStatic(ServiceManager.class);
 
