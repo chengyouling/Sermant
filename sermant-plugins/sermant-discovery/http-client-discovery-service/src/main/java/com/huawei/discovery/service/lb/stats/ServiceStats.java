@@ -19,10 +19,11 @@ package com.huawei.discovery.service.lb.stats;
 import com.huawei.discovery.consul.config.LbConfig;
 import com.huawei.discovery.consul.entity.ServiceInstance;
 
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
+
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -69,12 +70,6 @@ public class ServiceStats {
             instanceStatsCache.asMap().putIfAbsent(serviceInstance, stats);
             return stats;
         }
-    }
-
-    /**
-     * 进行聚合统计, 当前仅响应时间
-     */
-    public void aggregationStats() {
     }
 
     public String getServiceName() {

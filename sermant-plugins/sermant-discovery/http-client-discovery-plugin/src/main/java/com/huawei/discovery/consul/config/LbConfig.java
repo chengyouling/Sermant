@@ -65,6 +65,11 @@ public class LbConfig implements PluginConfig {
     private String registryAddress = "127.0.0.1:2181";
 
     /**
+     * 最大的重试配置缓存数
+     */
+    private int maxRetryConfigCache = LbConstants.DEFAULT_MAX_RETRY_CONFIG_CACHE;
+
+    /**
      * 服务超时后最大重试次数
      */
     private int maxRetry = LbConstants.DEFAULT_MAX_RETRY;
@@ -75,9 +80,14 @@ public class LbConfig implements PluginConfig {
     private long retryWaitMs = LbConstants.DEFAULT_RETRY_WAIT_MS;
 
     /**
-     * 缓存获取时间
+     * 实例缓存过期时间
      */
-    private long cacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
+    private long instanceCacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
+
+    /**
+     * 统计数据过期时间
+     */
+    private long statsCacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
 
     /**
      * 缓存自动刷新时间
@@ -124,6 +134,14 @@ public class LbConfig implements PluginConfig {
 
     public long getActiveRequestTimeoutWindowMs() {
         return activeRequestTimeoutWindowMs;
+    }
+
+    public int getMaxRetryConfigCache() {
+        return maxRetryConfigCache;
+    }
+
+    public void setMaxRetryConfigCache(int maxRetryConfigCache) {
+        this.maxRetryConfigCache = maxRetryConfigCache;
     }
 
     public void setActiveRequestTimeoutWindowMs(long activeRequestTimeoutWindowMs) {
@@ -186,12 +204,12 @@ public class LbConfig implements PluginConfig {
         this.lbType = lbType;
     }
 
-    public long getCacheExpireMs() {
-        return cacheExpireMs;
+    public long getInstanceCacheExpireMs() {
+        return instanceCacheExpireMs;
     }
 
-    public void setCacheExpireMs(long cacheExpireMs) {
-        this.cacheExpireMs = cacheExpireMs;
+    public void setInstanceCacheExpireMs(long instanceCacheExpireMs) {
+        this.instanceCacheExpireMs = instanceCacheExpireMs;
     }
 
     public String getZkBasePath() {

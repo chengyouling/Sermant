@@ -108,7 +108,7 @@ public class InstanceStats implements Recorder {
             activeRequests.set(0);
         }
         final long responseTime = allRequestConsumeTime.addAndGet(consumeTimeMs);
-        responseAvgTime = responseTime * 1d / allRequestCount.get();
+        responseAvgTime = allRequestCount.get() == 0 ? 0 : (responseTime * 1d / allRequestCount.get());
     }
 
     /**
@@ -116,7 +116,6 @@ public class InstanceStats implements Recorder {
      */
     @Override
     public void completeRequest() {
-        allRequestCount.incrementAndGet();
     }
 
     public AtomicLong getAllRequestCount() {

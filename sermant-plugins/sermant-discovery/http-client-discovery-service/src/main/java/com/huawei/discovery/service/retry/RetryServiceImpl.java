@@ -58,11 +58,6 @@ import java.util.logging.Logger;
 public class RetryServiceImpl implements InvokerService {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    /**
-     * 最大配置数量
-     */
-    private static final int MAX_SIZE = 9999;
-
     private static final String NAME = "SERMANT_DEFAULT_RETRY";
 
     private final RetryPolicy retryPolicy = new RoundRobinRetryPolicy();
@@ -75,11 +70,17 @@ public class RetryServiceImpl implements InvokerService {
 
     private final Map<String, Retry> retryCache = new ConcurrentHashMap<>();
 
+    /**
+     * 最大配置数量
+     */
+    private int maxSize;
+
     private Retry defaultRetry;
 
     @Override
     public void start() {
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
+        maxSize = lbConfig.getMaxRetryConfigCache();
         defaultRetry = Retry.create(new RetryConfig(
             retryEx,
             result -> false,
@@ -117,10 +118,10 @@ public class RetryServiceImpl implements InvokerService {
         if (retryConfig == null) {
             return defaultRetry;
         }
-        if (retryCache.size() >= MAX_SIZE) {
+        if (retryCache.size() >= maxSize) {
             LOGGER.warning(String.format(Locale.ENGLISH,
                     "Retry Config [%s] exceed max size [%s], it will replace it with default retry!",
-                    retryConfig.getName(), MAX_SIZE));
+                    retryConfig.getName(), maxSize));
             return defaultRetry;
         }
         return retryCache.computeIfAbsent(retryConfig.getName(), name -> Retry.create(retryConfig));

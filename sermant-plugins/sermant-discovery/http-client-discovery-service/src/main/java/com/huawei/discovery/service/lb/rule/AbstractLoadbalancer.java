@@ -33,6 +33,9 @@ public abstract class AbstractLoadbalancer implements Loadbalancer {
         if (instances == null || instances.isEmpty()) {
             return Optional.empty();
         }
+        if (instances.size() == 1) {
+            return Optional.ofNullable(instances.get(0));
+        }
         return Optional.ofNullable(doChoose(serviceName, instances));
     }
 

@@ -16,15 +16,14 @@
 
 package com.huawei.discovery.service.lb.discovery.zk;
 
-import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
-
-import com.huaweicloud.sermant.core.plugin.service.PluginService;
+import static org.junit.Assert.*;
 
 /**
- * zk服务
+ * zkService34测试
  *
  * @author zhouss
- * @since 2022-10-08
+ * @since 2022-10-09
  */
-public interface ZkService extends ServiceDiscoveryClient {
+public class ZkService34ImplTest extends ZkDiscoveryClientTest{
+
 }

@@ -52,7 +52,7 @@ public class InstanceCacheManager {
         this.discoveryClient = discoveryClient;
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         this.cache = CacheBuilder.newBuilder()
-                .expireAfterWrite(lbConfig.getCacheExpireMs(), TimeUnit.MILLISECONDS)
+                .expireAfterWrite(lbConfig.getInstanceCacheExpireMs(), TimeUnit.MILLISECONDS)
                 .refreshAfterWrite(lbConfig.getRefreshIntervalMs(), TimeUnit.MILLISECONDS)
                 .concurrencyLevel(lbConfig.getCacheConcurrencyLevel())
                 .build(new CacheLoader<String, InstanceCache>() {
@@ -97,5 +97,4 @@ public class InstanceCacheManager {
         }
         return new InstanceCache(serviceName, new ArrayList<>());
     }
-
 }

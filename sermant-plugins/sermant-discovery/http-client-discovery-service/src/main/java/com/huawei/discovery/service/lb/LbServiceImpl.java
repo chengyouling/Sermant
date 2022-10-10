@@ -18,7 +18,6 @@ package com.huawei.discovery.service.lb;
 
 import com.huawei.discovery.consul.entity.ServiceInstance;
 import com.huawei.discovery.consul.service.LbService;
-import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 
@@ -37,11 +36,6 @@ public class LbServiceImpl implements LbService {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
     @Override
-    public void start() {
-        ServiceStatsManager.INSTANCE.start();
-    }
-
-    @Override
     public Optional<ServiceInstance> choose(String serviceName) {
         return DiscoveryManager.INSTANCE.choose(serviceName);
     }
@@ -53,6 +47,5 @@ public class LbServiceImpl implements LbService {
         } catch (IOException ex) {
             LOGGER.log(Level.WARNING, "Stop lb service failed!", ex);
         }
-        ServiceStatsManager.INSTANCE.stop();
     }
 }

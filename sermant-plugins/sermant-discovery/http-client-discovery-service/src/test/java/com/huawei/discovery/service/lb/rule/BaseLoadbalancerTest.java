@@ -14,17 +14,24 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.service.lb.discovery.zk;
+package com.huawei.discovery.service.lb.rule;
 
-import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
-
-import com.huaweicloud.sermant.core.plugin.service.PluginService;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
- * zk服务
+ * 基础负载均衡测试
  *
  * @author zhouss
- * @since 2022-10-08
+ * @since 2022-10-09
  */
-public interface ZkService extends ServiceDiscoveryClient {
+public abstract class BaseLoadbalancerTest extends BaseTest {
+    @Test
+    public void lbType() {
+        Assert.assertEquals(getLb().lbType(), lb());
+    }
+
+    protected abstract AbstractLoadbalancer getLb();
+
+    protected abstract String lb();
 }
