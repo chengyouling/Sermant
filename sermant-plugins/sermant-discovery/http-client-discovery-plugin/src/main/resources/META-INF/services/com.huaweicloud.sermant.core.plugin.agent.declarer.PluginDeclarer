@@ -15,7 +15,7 @@
 #
 
 com.huawei.discovery.declarers.RestTempleteDeclarer
-com.huawei.discovery.declarers.HttpClientDeclarer
+com.huawei.discovery.declarers.httpclient.HttpClient4xDeclarer
 com.huawei.discovery.declarers.OkHttpClientDeclarer
 com.huawei.discovery.declarers.FeignInvokeDeclarer
 com.huawei.discovery.declarers.OkHttp3ClientDeclarer
