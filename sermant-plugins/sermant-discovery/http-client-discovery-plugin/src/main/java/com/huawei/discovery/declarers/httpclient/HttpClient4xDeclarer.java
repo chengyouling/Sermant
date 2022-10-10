@@ -14,32 +14,36 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.declarers;
+package com.huawei.discovery.declarers.httpclient;
 
-import com.huawei.discovery.interceptors.HttpClientInterceptor;
+import com.huawei.discovery.interceptors.httpclient.HttpClient4xInterceptor;
+
 import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
 
 /**
- * 针对http请求方式，从注册中心获取实例列表拦截
+ * 针对http请求方式，从注册中心获取实例列表拦截, <h1>仅针对4.x版本</h1>
  *
  * @author chengyouling
  * @since 2022-09-14
  */
-public class HttpClientDeclarer extends AbstractPluginDeclarer {
+public class HttpClient4xDeclarer extends AbstractPluginDeclarer {
     /**
      * 增强类的全限定名 http请求
      */
     private static final String[] ENHANCE_CLASSES = {
-            "org.apache.http.impl.client.CloseableHttpClient"
+        "org.apache.http.impl.client.AbstractHttpClient",
+        "org.apache.http.impl.client.DefaultRequestDirector",
+        "org.apache.http.impl.client.InternalHttpClient",
+        "org.apache.http.impl.client.MinimalHttpClient"
     };
 
     /**
      * 拦截类的全限定名
      */
-    private static final String INTERCEPT_CLASS = HttpClientInterceptor.class.getCanonicalName();
+    private static final String INTERCEPT_CLASS = HttpClient4xInterceptor.class.getCanonicalName();
 
     @Override
     public ClassMatcher getClassMatcher() {
@@ -48,11 +52,12 @@ public class HttpClientDeclarer extends AbstractPluginDeclarer {
 
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
-        return new InterceptDeclarer[] {
-                InterceptDeclarer.build(MethodMatcher.nameEquals("execute")
-                                .and(MethodMatcher.paramTypesEqual("org.apache.http.client.methods.HttpUriRequest"))
-                        .and(MethodMatcher.paramCountEquals(1))
-                        .and(MethodMatcher.resultTypeEquals("org.apache.http.client.methods.CloseableHttpResponse")),
+        return new InterceptDeclarer[]{
+                InterceptDeclarer.build(MethodMatcher.nameContains("doExecute", "execute")
+                                .and(MethodMatcher.paramTypesEqual(
+                                        "org.apache.http.HttpHost",
+                                        "org.apache.http.HttpRequest",
+                                        "org.apache.http.protocol.HttpContext")),
                         INTERCEPT_CLASS)
         };
     }
