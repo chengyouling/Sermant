@@ -1,14 +1,7 @@
 # consul发现配置
-consul.discovery.plugin:
-  host: localhost # consul服务ip
-  scheme: http # 调用协议http、https
-  port: 8500 # consul访问端口
-  catalogServicesWatchTimeout: 3 # 监听consul服务请求超时时间
-  catalogServicesWatchDelay: 2000 # 监听consul服务实例变化任务延时时间
-  refreshIntervalInMillis: 20000 # 定时拉取服务实例间隔时间
+sermant.discovery.realm:
+  currentRealmName: gateway.t3go.com.cn
 
-dynamic.config:
-  dynamicConfigType: ZOOKEEPER
 sermant.discovery.lb:
   lbType: RoundRobin               # 负载均衡类型, 当前支持轮询(RoundRobin)、随机(Random)、响应时间权重(WeightedResponseTime)、最低并发数(BestAvailable)
   registryAddress: 127.0.0.1:2181  # 注册中心地址
