@@ -49,6 +49,11 @@ public class LbConfig implements PluginConfig {
     private String zkUriSpec = "{scheme}://{address}:{port}";
 
     /**
+     * 服务端版本, 客户端版本需要与服务端版本相匹配才可连接
+     */
+    private String zkServerVersion = "3.4.x";
+
+    /**
      * zookeeper保存数据的根路径
      * ===============Zookeeper注册中心专属配置结束================
      */
@@ -58,6 +63,11 @@ public class LbConfig implements PluginConfig {
      * 注册中心地址
      */
     private String registryAddress = "127.0.0.1:2181";
+
+    /**
+     * 最大的重试配置缓存数
+     */
+    private int maxRetryConfigCache = LbConstants.DEFAULT_MAX_RETRY_CONFIG_CACHE;
 
     /**
      * 服务超时后最大重试次数
@@ -70,9 +80,9 @@ public class LbConfig implements PluginConfig {
     private long retryWaitMs = LbConstants.DEFAULT_RETRY_WAIT_MS;
 
     /**
-     * 缓存获取时间
+     * 实例缓存过期时间
      */
-    private long cacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
+    private long instanceCacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
 
     /**
      * 缓存自动刷新时间
@@ -109,8 +119,24 @@ public class LbConfig implements PluginConfig {
      */
     private long activeRequestTimeoutWindowMs = LbConstants.DEFAULT_ACTIVE_REQUEST_COUNT_WINDOW_MS;
 
+    public String getZkServerVersion() {
+        return zkServerVersion;
+    }
+
+    public void setZkServerVersion(String version) {
+        this.zkServerVersion = version;
+    }
+
     public long getActiveRequestTimeoutWindowMs() {
         return activeRequestTimeoutWindowMs;
+    }
+
+    public int getMaxRetryConfigCache() {
+        return maxRetryConfigCache;
+    }
+
+    public void setMaxRetryConfigCache(int maxRetryConfigCache) {
+        this.maxRetryConfigCache = maxRetryConfigCache;
     }
 
     public void setActiveRequestTimeoutWindowMs(long activeRequestTimeoutWindowMs) {
@@ -173,12 +199,12 @@ public class LbConfig implements PluginConfig {
         this.lbType = lbType;
     }
 
-    public long getCacheExpireMs() {
-        return cacheExpireMs;
+    public long getInstanceCacheExpireMs() {
+        return instanceCacheExpireMs;
     }
 
-    public void setCacheExpireMs(long cacheExpireMs) {
-        this.cacheExpireMs = cacheExpireMs;
+    public void setInstanceCacheExpireMs(long instanceCacheExpireMs) {
+        this.instanceCacheExpireMs = instanceCacheExpireMs;
     }
 
     public String getZkBasePath() {

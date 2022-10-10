@@ -24,6 +24,7 @@ import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.cache.RemovalListener;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,8 @@ public enum ServiceStatsManager {
         serverStatsCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(lbConfig.getStatsCacheExpireTime(), TimeUnit.HOURS)
                 .concurrencyLevel(lbConfig.getCacheConcurrencyLevel())
+                .removalListener(
+                        (RemovalListener<String, ServiceStats>) notification -> notification.getValue().cleanUp())
                 .build(new CacheLoader<String, ServiceStats>() {
                     @Override
                     public ServiceStats load(String serviceName) {

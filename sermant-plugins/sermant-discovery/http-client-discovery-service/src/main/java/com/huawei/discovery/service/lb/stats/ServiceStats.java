@@ -72,6 +72,13 @@ public class ServiceStats {
         }
     }
 
+    /**
+     * 清理所有数据
+     */
+    public void cleanUp() {
+        instanceStatsCache.cleanUp();
+    }
+
     public String getServiceName() {
         return serviceName;
     }

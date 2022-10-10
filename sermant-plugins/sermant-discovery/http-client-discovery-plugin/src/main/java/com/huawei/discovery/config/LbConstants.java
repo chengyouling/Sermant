@@ -78,6 +78,11 @@ public class LbConstants {
      */
     public static final long DEFAULT_RETRY_WAIT_MS = 1000L;
 
+    /**
+     * 最大的重试配置缓存数
+     */
+    public static final int DEFAULT_MAX_RETRY_CONFIG_CACHE = 9999;
+
     private LbConstants() {
     }
 }
