@@ -24,6 +24,7 @@ package com.huawei.discovery.retry;
  */
 public class RetryException extends Exception {
     private final Exception realEx;
+
     /**
      * 重试异常
      *
