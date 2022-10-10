@@ -44,7 +44,6 @@ public enum ServiceStatsManager {
 
     ServiceStatsManager() {
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
-        System.out.println("========" + lbConfig);
         serverStatsCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(lbConfig.getStatsCacheExpireTime(), TimeUnit.HOURS)
                 .concurrencyLevel(lbConfig.getCacheConcurrencyLevel())
@@ -54,7 +53,6 @@ public enum ServiceStatsManager {
                         return new ServiceStats(serviceName);
                     }
                 });
-
     }
 
     /**
