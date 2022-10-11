@@ -62,7 +62,7 @@ public class PlugEffectWhiteBlackUtils {
                 return true;
             }
         }
-        return true;
+        return false;
     }
 
     public static boolean isUrlContainsRealmName(String url) {

@@ -132,6 +132,9 @@ public class RequestInterceptorUtils {
             startIndex++;
         }
         String tempPath = path.substring(startIndex);
+        if (tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH) <= 0) {
+            return result;
+        }
         result.put(HttpConstants.HTTP_URI_HOST,
                 tempPath.substring(0, tempPath.indexOf(HttpConstants.HTTP_URL_SINGLE_SLASH)));
         result.put(HttpConstants.HTTP_URI_PATH,

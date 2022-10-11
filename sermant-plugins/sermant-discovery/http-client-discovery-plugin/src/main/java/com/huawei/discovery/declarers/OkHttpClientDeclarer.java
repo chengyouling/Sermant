@@ -49,8 +49,7 @@ public class OkHttpClientDeclarer extends AbstractPluginDeclarer {
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[] {
-                InterceptDeclarer.build(MethodMatcher.nameEquals("enqueue"), INTERCEPT_CLASS),
-                InterceptDeclarer.build(MethodMatcher.nameEquals("execute"), INTERCEPT_CLASS)
+                InterceptDeclarer.build(MethodMatcher.nameEquals("getResponseWithInterceptorChain"), INTERCEPT_CLASS)
         };
     }
 }
