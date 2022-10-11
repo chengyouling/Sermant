@@ -40,11 +40,6 @@ public class PlugEffectWhiteBlackConstants {
     public static final String DYNAMIC_CONFIG__VALUE = "value";
 
     /**
-     * 是否打印插件生效统计日志key
-     */
-    public static final String DYNAMIC_CONFIG_LOGGER = "logger";
-
-    /**
      * 策略-所有服务生效
      */
     public static final String STRATEGY_ALL = "all";
