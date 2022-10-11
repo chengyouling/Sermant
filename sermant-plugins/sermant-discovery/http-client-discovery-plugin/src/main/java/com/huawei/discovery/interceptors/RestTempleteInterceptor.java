@@ -19,7 +19,6 @@ package com.huawei.discovery.interceptors;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.springframework.http.HttpHeaders;
@@ -48,23 +47,31 @@ public class RestTempleteInterceptor extends MarkInterceptor {
     protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
         String url = (String)context.getArguments()[0];
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(url, config.getRealmName())) {
-            return context;
-        }
         Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(url);
-        if (!PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST))) {
+        if (isNotAllowRun(url, urlInfo)) {
             return context;
         }
-        final Function<InvokerContext, Object> function = invokerContext -> {
+        invokerService.invoke(
+                buildInvokerFunc(urlInfo, context),
+                this::buildErrorResponse,
+                urlInfo.get(HttpConstants.HTTP_URI_HOST))
+                .ifPresent(context::skip);
+        return context;
+    }
+
+    private Function<InvokerContext, Object> buildInvokerFunc(Map<String, String> urlInfo, ExecuteContext context) {
+        return invokerContext -> {
             context.getArguments()[0] = RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance());
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
-        final Function<Exception, Object> exFunc = this::buildErrorResponse;
-        final Optional<Object> invoke = invokerService
-                .invoke(function, exFunc, urlInfo.get(HttpConstants.HTTP_URI_HOST));
-        invoke.ifPresent(context::skip);
-        return context;
+    }
+
+    private boolean isNotAllowRun(String url, Map<String, String> urlInfo) {
+        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(url, config.getRealmName())) {
+            return true;
+        }
+        return !PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST));
     }
 
     /**

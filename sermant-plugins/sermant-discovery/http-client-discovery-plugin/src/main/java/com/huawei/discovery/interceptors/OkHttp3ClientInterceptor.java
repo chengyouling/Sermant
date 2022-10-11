@@ -18,7 +18,6 @@ package com.huawei.discovery.interceptors;
 
 import java.net.URI;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -43,7 +42,7 @@ import okhttp3.Response;
 import okhttp3.Response.Builder;
 
 /**
- * 拦截获取服务列表
+ * 针对okHttp3.x版本以上的拦截
  *
  * @author chengyouling
  * @since 2022-09-14
@@ -55,20 +54,34 @@ public class OkHttp3ClientInterceptor extends MarkInterceptor {
     @Override
     protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-        Request request = (Request)context.getRawMemberFieldValue("originalRequest");
-        URI uri = request.url().uri();
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost(), config.getRealmName())) {
+        if (context.getRawMemberFieldValue("originalRequest") == null) {
             return context;
         }
-        String method = request.method();
+        Request request = (Request)context.getRawMemberFieldValue("originalRequest");
+        URI uri = request.url().uri();
+        final String method = request.method();
         Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
-        if (!PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST))) {
+        if (isNotAllowRun(uri, hostAndPath)) {
             return context;
         }
         AtomicReference<Request> rebuildRequest = new AtomicReference<>();
-        final Function<InvokerContext, Object> function = invokerContext -> {
-            String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(), hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+        invokerService.invoke(
+                buildInvokerFunc(uri, hostAndPath, request, method, rebuildRequest, context),
+                buildExFunc(rebuildRequest),
+                hostAndPath.get(HttpConstants.HTTP_URI_HOST))
+                .ifPresent(context::skip);
+        return context;
+    }
+
+    private Function<Exception, Object> buildExFunc(AtomicReference<Request> rebuildRequest) {
+        return ex -> buildErrorResponse(ex, rebuildRequest.get());
+    }
+
+    private Function<InvokerContext, Object> buildInvokerFunc(URI uri, Map<String, String> hostAndPath, Request request,
+            String method, AtomicReference<Request> rebuildRequest, ExecuteContext context){
+        return invokerContext -> {
+            String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
+                    hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
             HttpUrl newUrl = HttpUrl.parse(url);
             Request newRequest = request
                     .newBuilder()
@@ -83,16 +96,14 @@ public class OkHttp3ClientInterceptor extends MarkInterceptor {
             }
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
-        final Function<Exception, Object> exFunc = new Function<Exception, Object>() {
-            @Override
-            public Object apply(Exception e) {
-                return buildErrorResponse(e, rebuildRequest.get());
-            }
-        };
-        final Optional<Object> invoke = invokerService
-                .invoke(function, exFunc, hostAndPath.get(HttpConstants.HTTP_URI_HOST));
-        invoke.ifPresent(context::skip);
-        return context;
+    }
+
+    private boolean isNotAllowRun(URI uri, Map<String, String> hostAndPath) {
+        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost(), config.getRealmName())) {
+            return true;
+        }
+        return !PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST));
     }
 
     /**

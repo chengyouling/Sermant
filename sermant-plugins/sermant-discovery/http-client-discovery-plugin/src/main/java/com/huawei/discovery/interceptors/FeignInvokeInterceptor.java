@@ -17,7 +17,6 @@
 package com.huawei.discovery.interceptors;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 
 import org.apache.http.HttpStatus;
@@ -47,24 +46,32 @@ public class FeignInvokeInterceptor extends MarkInterceptor {
     protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
         Request request = (Request)context.getArguments()[0];
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(request.url(), config.getRealmName())) {
-            return context;
-        }
         Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(request.url());
-        if (!PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST))) {
+        if (isNotAllowRun(request, urlInfo)) {
             return context;
         }
-        final Function<InvokerContext, Object> function = invokerContext -> {
+        invokerService.invoke(
+                buildInvokerFunc(context, request, urlInfo),
+                this::buildErrorResponse,
+                urlInfo.get(HttpConstants.HTTP_URI_HOST))
+                .ifPresent(context::skip);
+        return context;
+    }
+
+    private Function<InvokerContext, Object> buildInvokerFunc(ExecuteContext context, Request request, Map<String, String> urlInfo) {
+        return invokerContext -> {
             context.getArguments()[0] = Request.create(request.httpMethod(),
                     RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance()), request.headers(), request.requestBody());
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
-        final Function<Exception, Object> exFunc = this::buildErrorResponse;
-        final Optional<Object> invoke = invokerService
-                .invoke(function, exFunc, urlInfo.get(HttpConstants.HTTP_URI_HOST));
-        invoke.ifPresent(context::skip);
-        return context;
+    }
+
+    private boolean isNotAllowRun(Request request, Map<String, String> urlInfo) {
+        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
+        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(request.url(), config.getRealmName())) {
+            return true;
+        }
+        return !PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST));
     }
 
     /**
