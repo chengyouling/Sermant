@@ -22,6 +22,7 @@ import java.util.Map;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import com.huawei.discovery.entity.RegisterContext;
+import com.huawei.discovery.entity.ServiceInstance.Status;
 import com.huawei.discovery.utils.HostIpAddressUtils;
 import com.huaweicloud.sermant.core.config.ConfigManager;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
@@ -69,6 +70,9 @@ public class SpringEnvironmentInfoInterceptor implements Interceptor {
         RegisterContext.INSTANCE.getServiceInstance().setIp(StringUtils.isEmpty(address) ? ipAddress : address);
         RegisterContext.INSTANCE.getServiceInstance().setPort(StringUtils.isEmpty(port)? DEFAULT_PORT : Integer.parseInt(port));
         RegisterContext.INSTANCE.getServiceInstance().setServiceName(StringUtils.isEmpty(applicationName) ? DEFAULT_APPLICATION_NAME : applicationName);
+        RegisterContext.INSTANCE.getServiceInstance().setId(RegisterContext.INSTANCE.getServiceInstance().getIp() +
+                ":" + RegisterContext.INSTANCE.getServiceInstance().getPort());
+        RegisterContext.INSTANCE.getServiceInstance().setStatus(Status.UP.name());
         if (null == RegisterContext.INSTANCE.getServiceInstance().getMetadata()) {
             Map<String, String> metadata = new HashMap<String, String>(8);
             ServiceMeta serviceMeta = ConfigManager.getConfig(ServiceMeta.class);

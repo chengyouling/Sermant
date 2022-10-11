@@ -60,7 +60,7 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
         URI uri = request.uri();
         final String method = request.method();
         Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
-        if (isNotAllowRun(uri, hostAndPath)) {
+        if (PlugEffectWhiteBlackUtils.isNotAllowRun(uri.getHost(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
             return context;
         }
         AtomicReference<Request> rebuildRequest = new AtomicReference<>();
@@ -95,14 +95,6 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
             }
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
-    }
-
-    private boolean isNotAllowRun(URI uri, Map<String, String> hostAndPath) {
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(uri.getHost(), config.getRealmName())) {
-            return true;
-        }
-        return !PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST));
     }
 
     /**

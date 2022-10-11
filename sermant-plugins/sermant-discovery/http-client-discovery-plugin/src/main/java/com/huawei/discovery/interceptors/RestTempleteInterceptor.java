@@ -48,7 +48,7 @@ public class RestTempleteInterceptor extends MarkInterceptor {
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
         String url = (String)context.getArguments()[0];
         Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(url);
-        if (isNotAllowRun(url, urlInfo)) {
+        if (PlugEffectWhiteBlackUtils.isNotAllowRun(url, urlInfo.get(HttpConstants.HTTP_URI_HOST), false)) {
             return context;
         }
         invokerService.invoke(
@@ -64,14 +64,6 @@ public class RestTempleteInterceptor extends MarkInterceptor {
             context.getArguments()[0] = RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance());
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
-    }
-
-    private boolean isNotAllowRun(String url, Map<String, String> urlInfo) {
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(url, config.getRealmName())) {
-            return true;
-        }
-        return !PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST));
     }
 
     /**

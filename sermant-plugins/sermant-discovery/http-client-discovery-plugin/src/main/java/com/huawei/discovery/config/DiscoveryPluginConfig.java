@@ -31,7 +31,7 @@ public class DiscoveryPluginConfig implements PluginConfig {
     /**
      * 拦截的域名
      */
-    private String realmName;
+    private String realmName = "gateway.t3go.com.cn";
 
     /**
      * 是否打印统计日志

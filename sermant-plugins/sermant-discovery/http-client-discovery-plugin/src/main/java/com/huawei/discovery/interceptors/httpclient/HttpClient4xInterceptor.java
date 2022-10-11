@@ -16,7 +16,6 @@
 
 package com.huawei.discovery.interceptors.httpclient;
 
-import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.entity.ErrorCloseableHttpResponse;
 import com.huawei.discovery.interceptors.MarkInterceptor;
 import com.huawei.discovery.retry.InvokerContext;
@@ -27,7 +26,6 @@ import com.huawei.discovery.utils.RequestInterceptorUtils;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.ClassUtils;
 
@@ -69,7 +67,7 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
         }
         URI uri = optionalUri.get();
         Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
-        if (!isConfigEnable(hostAndPath, httpHost.getHostName())) {
+        if (PlugEffectWhiteBlackUtils.isNotAllowRun(httpHost.getHostName(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
             return context;
         }
         invokerService.invoke(
@@ -94,14 +92,6 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
 
     private Function<Exception, Object> buildExFunc(HttpRequest httpRequest) {
         return ex -> new ErrorCloseableHttpResponse(ex, httpRequest.getProtocolVersion());
-    }
-
-    private boolean isConfigEnable(Map<String, String> hostAndPath, String hostName) {
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(hostName, config.getRealmName())) {
-            return false;
-        }
-        return PlugEffectWhiteBlackUtils.isPlugEffect(hostAndPath.get(HttpConstants.HTTP_URI_HOST));
     }
 
     private void checkLoad() {

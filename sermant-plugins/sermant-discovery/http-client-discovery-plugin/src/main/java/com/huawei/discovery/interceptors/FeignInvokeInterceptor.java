@@ -47,7 +47,7 @@ public class FeignInvokeInterceptor extends MarkInterceptor {
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
         Request request = (Request)context.getArguments()[0];
         Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(request.url());
-        if (isNotAllowRun(request, urlInfo)) {
+        if (PlugEffectWhiteBlackUtils.isNotAllowRun(request.url(), urlInfo.get(HttpConstants.HTTP_URI_HOST), false)) {
             return context;
         }
         invokerService.invoke(
@@ -64,14 +64,6 @@ public class FeignInvokeInterceptor extends MarkInterceptor {
                     RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance()), request.headers(), request.requestBody());
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
-    }
-
-    private boolean isNotAllowRun(Request request, Map<String, String> urlInfo) {
-        DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
-        if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(request.url(), config.getRealmName())) {
-            return true;
-        }
-        return !PlugEffectWhiteBlackUtils.isPlugEffect(urlInfo.get(HttpConstants.HTTP_URI_HOST));
     }
 
     /**

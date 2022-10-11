@@ -41,7 +41,7 @@ public class FeignInvokeDeclarer extends AbstractPluginDeclarer {
 
     @Override
     public ClassMatcher getClassMatcher() {
-        return ClassMatcher.nameContains(ENHANCE_CLASS);
+        return ClassMatcher.isExtendedFrom("feign.Client");
     }
 
     @Override

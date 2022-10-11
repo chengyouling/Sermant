@@ -16,8 +16,13 @@
 
 package com.huawei.discovery.utils;
 
+import java.net.URI;
+import java.util.Map;
+
+import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
 import com.huawei.discovery.entity.PlugEffectStategyCache;
+import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.utils.StringUtils;
 
 /**
@@ -27,6 +32,8 @@ import com.huaweicloud.sermant.core.utils.StringUtils;
  * @since 2022-10-09
  */
 public class PlugEffectWhiteBlackUtils {
+
+    private static DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
 
     public static boolean isPlugEffect(String serviceName) {
         String strategy = PlugEffectStategyCache.INSTANCE.getConfigContent(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG_STRATEGY);
@@ -58,7 +65,8 @@ public class PlugEffectWhiteBlackUtils {
         return true;
     }
 
-    public static boolean isUrlContainsRealmName(String url, String realmName) {
+    public static boolean isUrlContainsRealmName(String url) {
+        String realmName = config.getRealmName();
         if (StringUtils.isBlank(realmName)) {
             return false;
         }
@@ -74,7 +82,8 @@ public class PlugEffectWhiteBlackUtils {
         return url.contains(realmName);
     }
 
-    public static boolean isHostEqualRealmName(String host, String realmName) {
+    public static boolean isHostEqualRealmName(String host) {
+        String realmName = config.getRealmName();
         if (StringUtils.isBlank(realmName)) {
             return false;
         }
@@ -88,5 +97,18 @@ public class PlugEffectWhiteBlackUtils {
             return false;
         }
         return StringUtils.equalsIgnoreCase(host, realmName);
+    }
+
+    public static boolean isNotAllowRun(String realmStr, String serviceName, boolean isByEqual) {
+        if (isByEqual) {
+            if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(realmStr)) {
+                return true;
+            }
+        } else {
+            if (!PlugEffectWhiteBlackUtils.isUrlContainsRealmName(realmStr)) {
+                return true;
+            }
+        }
+        return !PlugEffectWhiteBlackUtils.isPlugEffect(serviceName);
     }
 }
