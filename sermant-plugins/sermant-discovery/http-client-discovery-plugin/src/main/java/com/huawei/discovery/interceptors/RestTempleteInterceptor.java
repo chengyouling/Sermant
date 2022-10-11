@@ -18,21 +18,25 @@ package com.huawei.discovery.interceptors;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
+import java.util.logging.Logger;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 
-import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
 import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
+import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
-import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 
 /**
@@ -43,25 +47,50 @@ import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
  */
 public class RestTempleteInterceptor extends MarkInterceptor {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
     @Override
     protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
-        String url = (String)context.getArguments()[0];
-        Map<String, String> urlInfo = RequestInterceptorUtils.recovertUrl(url);
-        if (PlugEffectWhiteBlackUtils.isNotAllowRun(url, urlInfo.get(HttpConstants.HTTP_URI_HOST), false)) {
+        URI uri = (URI)context.getArguments()[0];
+        HttpMethod httpMethod = (HttpMethod)context.getArguments()[1];
+        Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
+        if (PlugEffectWhiteBlackUtils.isNotAllowRun(uri.getHost(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
             return context;
         }
         invokerService.invoke(
-                buildInvokerFunc(urlInfo, context),
+                buildInvokerFunc(uri, hostAndPath, context, httpMethod),
                 this::buildErrorResponse,
-                urlInfo.get(HttpConstants.HTTP_URI_HOST))
+                hostAndPath.get(HttpConstants.HTTP_URI_HOST))
                 .ifPresent(context::skip);
         return context;
     }
 
-    private Function<InvokerContext, Object> buildInvokerFunc(Map<String, String> urlInfo, ExecuteContext context) {
+    private URI rebuildUri(String url, URI uri) {
+        final Optional<URI> optionalUri = formatUri(url, uri);
+        if (optionalUri.isPresent()) {
+            return optionalUri.get();
+        }
+        throw new IllegalArgumentException("Invalid url: " + url);
+    }
+
+    private boolean isValidUrl(String url) {
+        final String lowerCaseUrl = url.toLowerCase(Locale.ROOT);
+        return lowerCaseUrl.startsWith("http") || lowerCaseUrl.startsWith("https");
+    }
+
+    private Optional<URI> formatUri(String url, URI uri) {
+        if (!isValidUrl(url)) {
+            return Optional.empty();
+        }
+        return Optional.of(uri.resolve(url));
+    }
+
+    private Function<InvokerContext, Object> buildInvokerFunc(URI uri, Map<String, String> hostAndPath, ExecuteContext context, HttpMethod httpMethod) {
         return invokerContext -> {
-            context.getArguments()[0] = RequestInterceptorUtils.buildUrl(urlInfo, invokerContext.getServiceInstance());
+            String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
+                    hostAndPath.get(HttpConstants.HTTP_URI_PATH), httpMethod.name());
+            context.getArguments()[0] = rebuildUri(url, uri);
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
     }

@@ -48,7 +48,7 @@ public class RestTempleteDeclarer extends AbstractPluginDeclarer {
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[]{
-                InterceptDeclarer.build(MethodMatcher.nameEquals("execute"), INTERCEPT_CLASS)
+                InterceptDeclarer.build(MethodMatcher.nameEquals("doExecute"), INTERCEPT_CLASS)
         };
     }
 }
