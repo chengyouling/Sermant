@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import com.alibaba.fastjson.JSONObject;
 import com.huawei.discovery.interceptors.BaseTest;
-import com.huaweicloud.sermant.core.service.dynamicconfig.common.DynamicConfigEventType;
 
 /**
  * PlugEffectStategyCache动态配置缓存测试
@@ -35,7 +34,7 @@ public class PlugEffectStategyCacheTest extends BaseTest {
         JSONObject jobject = new JSONObject();
         jobject.put("strategy", "all");
         jobject.put("value", "service1");
-        PlugEffectStategyCache.INSTANCE.resolve(DynamicConfigEventType.MODIFY, jobject.toJSONString());
+        PlugEffectStategyCache.INSTANCE.resolve(jobject.toJSONString());
         Assert.assertEquals(PlugEffectStategyCache.INSTANCE.getConfigContent("strategy"), "all");
     }
 }
