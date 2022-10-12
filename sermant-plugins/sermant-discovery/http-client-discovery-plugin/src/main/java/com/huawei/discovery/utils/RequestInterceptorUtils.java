@@ -57,7 +57,7 @@ public class RequestInterceptorUtils {
         if (StringUtils.isEmpty(url)) {
             return null;
         }
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<>();
         String scheme = url.substring(0, url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH));
         String temp = url.substring(url.indexOf(HttpConstants.HTTP_URL_DOUBLIE_SLASH) + 3);
         //剔除域名之后的path
@@ -160,7 +160,7 @@ public class RequestInterceptorUtils {
      * @return
      */
     public static Map<String, String> recoverHostAndPath(String path) {
-        Map<String, String> result = new HashMap<String, String>();
+        Map<String, String> result = new HashMap<>();
         if (StringUtils.isEmpty(path)) {
             return result;
         }

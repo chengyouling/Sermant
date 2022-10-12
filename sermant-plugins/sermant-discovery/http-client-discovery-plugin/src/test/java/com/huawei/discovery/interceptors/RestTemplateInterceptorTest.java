@@ -17,46 +17,36 @@
 package com.huawei.discovery.interceptors;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 
 import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
-import com.huawei.discovery.entity.DefaultServiceInstance;
 import com.huawei.discovery.entity.PlugEffectStategyCache;
-import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.service.InvokerService;
-import com.huawei.discovery.utils.HttpConstants;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.ReflectUtils;
 
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
-
 /**
- * OkHttp3调用测试
+ * RestTemplate调用测试
  *
  * @author chengyouling
  * @since 2022-10-10
  */
-public class OkHttp3ClientInterceptorTest extends BaseTest{
+public class RestTemplateInterceptorTest extends BaseTest{
 
-    private OkHttp3ClientInterceptor interceptor;
+    private RestTemplateInterceptor interceptor;
 
     private final Object[] arguments;
 
@@ -65,6 +55,8 @@ public class OkHttp3ClientInterceptorTest extends BaseTest{
 
     private final String realmName = "gateway.t3go.com.cn";
 
+    private final String realmNames = "gateway.t3go.com.cn,domain.t3go.com.cn";
+
     private final static String url = "http://gateway.t3go.com.cn/zookeeper-provider-demo/sayHello?name=123";
 
     private final static String convertUrl = "http://127.0.0.1:8010/sayHello?name=123";
@@ -72,24 +64,21 @@ public class OkHttp3ClientInterceptorTest extends BaseTest{
     /**
      * 构造方法
      */
-    public OkHttp3ClientInterceptorTest() {
+    public RestTemplateInterceptorTest() {
         arguments = new Object[2];
     }
 
     @Override
     public void setUp() {
         super.setUp();
-        interceptor = new OkHttp3ClientInterceptor();
+        interceptor = new RestTemplateInterceptor();
         MockitoAnnotations.openMocks(this);
         pluginServiceManagerMockedStatic.when(() -> PluginServiceManager.getPluginService(InvokerService.class))
                 .thenReturn(invokerService);
     }
 
-    private Request createRequest(String url) {
-        HttpUrl newUrl = HttpUrl.parse(url);
-        return new Request.Builder()
-                .url(newUrl)
-                .build();
+    private URI createURI(String url){
+        return URI.create(url);
     }
 
     private void initStrategy(String strategy, String serviceName) {
@@ -102,43 +91,48 @@ public class OkHttp3ClientInterceptorTest extends BaseTest{
 
     @Test
     public void testRestTemplateInterceptor() throws Exception {
-        OkHttpClient client = new OkHttpClient();
-        Request request = createRequest(url);
-        ExecuteContext context = ExecuteContext.forMemberMethod(client.newCall(request), null, arguments, null, null);
-        discoveryPluginConfig.setRealmName(realmName);
-        initStrategy(PlugEffectWhiteBlackConstants.STRATEGY_ALL, "zookeeper-provider-demo");
+        ExecuteContext context = ExecuteContext.forMemberMethod(new Object(), null, arguments, null, null);
+        URI uri = createURI(url);
+        arguments[0] = uri;
+        arguments[1] = HttpMethod.GET;
+
+        //含域名，设置多个域名，未设置黑白名单
+        discoveryPluginConfig.setRealmName(realmNames);
         interceptor.doBefore(context);
-        Request requestNew = (Request)context.getRawMemberFieldValue("originalRequest");
-        Assert.assertEquals(url, requestNew.url().uri().toString());
+        URI uriNew = (URI)context.getArguments()[0];
+        Assert.assertEquals(url, uriNew.toString());
+
+        discoveryPluginConfig.setRealmName(realmName);
+        //含域名，设置全部通过策略
+        initStrategy(PlugEffectWhiteBlackConstants.STRATEGY_ALL, "zookeeper-provider-demo");
+        Mockito.when(invokerService.invoke(null, null, "zookeeper-provider-demo"))
+                .thenReturn(Optional.ofNullable(new Object()));
+        interceptor.doBefore(context);
+        uriNew = (URI)context.getArguments()[0];
+        Assert.assertEquals(url, uriNew.toString());
     }
 
     @Test
-    public void covertRequestTest() {
-        Optional<Method> method = ReflectUtils.findMethod(OkHttp3ClientInterceptor.class, "covertRequest",
-                new Class[] {URI.class, Map.class, Request.class, String.class, ServiceInstance.class});
-        Request request = createRequest(url);
-        URI uri = request.url().uri();
-        Map<String, String> hostAndPath = new HashMap<>();
-        hostAndPath.put(HttpConstants.HTTP_URI_PATH, "/sayHello");
-        ServiceInstance serviceInstance = new DefaultServiceInstance("127.0.0.1", "127.0.0.1", 8010,
-        new HashMap<>(), "zookeeper-provider-demo");
+    public void rebuildUriTest() {
+        Optional<Method> method = ReflectUtils.findMethod(RestTemplateInterceptor.class, "rebuildUri",
+                new Class[] {String.class, URI.class});
+        URI uri = createURI(url);
         if (method.isPresent()) {
-            Optional<Object> requestNew = ReflectUtils
-                    .invokeMethod(interceptor, method.get(), new Object[] {uri, hostAndPath, request, "GET", serviceInstance});
-            Assert.assertEquals(convertUrl, ((Request)requestNew.get()).url().uri().toString());
+            Optional<Object> uriNew = ReflectUtils
+                    .invokeMethod(interceptor, method.get(), new Object[] {convertUrl, uri});
+            Assert.assertEquals(convertUrl, uriNew.get().toString());
         }
     }
 
     @Test
     public void buildErrorResponseTest() throws IOException {
-        Optional<Method> method = ReflectUtils.findMethod(OkHttp3ClientInterceptor.class, "buildErrorResponse",
-                new Class[] {Exception.class, Request.class});
-        Request request = createRequest(url);
-        Exception ex = new Exception("error");
+        Optional<Method> method = ReflectUtils.findMethod(RestTemplateInterceptor.class, "buildErrorResponse",
+                new Class[] {Exception.class});
+        Exception ex = new Exception();
         if (method.isPresent()) {
-            Optional<Object> response = ReflectUtils
-                    .invokeMethod(interceptor, method.get(), new Object[] {ex, request});
-            Assert.assertEquals(HttpStatus.SC_INTERNAL_SERVER_ERROR, ((Response)response.get()).code());
+            Optional<Object> exception = ReflectUtils
+                    .invokeMethod(interceptor, method.get(), new Object[] {ex});
+            Assert.assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ((ClientHttpResponse)exception.get()).getStatusCode());
         }
     }
 }

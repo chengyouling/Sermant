@@ -24,6 +24,9 @@ import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 
+import com.huawei.discovery.entity.Recorder;
+import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.entity.SimpleRequestRecorder;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
@@ -61,6 +64,7 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
         if (PlugEffectWhiteBlackUtils.isNotAllowRun(uri.getHost(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
             return context;
         }
+        RequestInterceptorUtils.printRequestLog("OkHttp", hostAndPath);
         AtomicReference<Request> rebuildRequest = new AtomicReference<>();
         invokerService.invoke(
                 buildInvokerFunc(uri, hostAndPath, request, method, rebuildRequest, context),
@@ -77,13 +81,7 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
     private Function<InvokerContext, Object> buildInvokerFunc(URI uri, Map<String, String> hostAndPath, Request request,
             String method, AtomicReference<Request> rebuildRequest, ExecuteContext context){
         return invokerContext -> {
-            String url = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
-                    hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-            HttpUrl newUrl = HttpUrl.parse(url);
-            Request newRequest = request
-                    .newBuilder()
-                    .url(newUrl)
-                    .build();
+            Request newRequest = covertRequest(uri, hostAndPath, request, method, invokerContext.getServiceInstance());
             rebuildRequest.set(newRequest);
             try {
                 context.setRawMemberFieldValue("originalRequest", newRequest);
@@ -93,6 +91,17 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
             }
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
+    }
+
+    private Request covertRequest(URI uri, Map<String, String> hostAndPath, Request request, String method,
+            ServiceInstance serviceInstance) {
+        String url = RequestInterceptorUtils.buildUrlWithIp(uri, serviceInstance,
+                hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+        HttpUrl newUrl = HttpUrl.parse(url);
+        return request
+                .newBuilder()
+                .url(newUrl)
+                .build();
     }
 
     /**

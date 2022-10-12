@@ -17,9 +17,13 @@
 package com.huawei.discovery.entity;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.operation.OperationManager;
 import com.huaweicloud.sermant.core.operation.converter.api.YamlConverter;
 import com.huaweicloud.sermant.core.service.dynamicconfig.common.DynamicConfigEventType;
@@ -41,13 +45,30 @@ public enum PlugEffectStategyCache {
 
     private final YamlConverter yamlConverter = OperationManager.getOperation(YamlConverter.class);
 
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
+    /**
+     * 将动态配置放入缓存中
+     * @param eventType
+     * @param content
+     */
     public void resolve(DynamicConfigEventType eventType, String content) {
         final Optional<Map<String, String>> dataMap = yamlConverter.convert(content, Map.class);
         if (dataMap.isPresent()) {
             caches = dataMap.get();
+            String operationType = eventType == DynamicConfigEventType.DELETE ? "DELETE" :
+                    eventType == DynamicConfigEventType.MODIFY ? "MODIFY" :
+                    eventType == DynamicConfigEventType.CREATE ? "CREATE" : "INIT";
+            LOGGER.log(Level.INFO, String.format(Locale.ENGLISH,
+                    "dynamic config operation [%s] config content [%s]", operationType, content));
         }
     }
 
+    /**
+     * 获取对应key的配置
+     * @param key
+     * @return
+     */
     public String getConfigContent(String key) {
         return caches.get(key);
     }

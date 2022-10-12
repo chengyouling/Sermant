@@ -17,10 +17,13 @@
 package com.huawei.discovery.interceptors;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 import org.apache.http.HttpStatus;
 
+import com.huawei.discovery.entity.Recorder;
+import com.huawei.discovery.entity.SimpleRequestRecorder;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
@@ -48,9 +51,10 @@ public class FeignInvokeInterceptor extends MarkInterceptor {
         if (PlugEffectWhiteBlackUtils.isNotAllowRun(request.url(), urlInfo.get(HttpConstants.HTTP_URI_HOST), false)) {
             return context;
         }
+        RequestInterceptorUtils.printRequestLog("feign", urlInfo);
         invokerService.invoke(
                 buildInvokerFunc(context, request, urlInfo),
-                this::buildErrorResponse,
+                buildExFunc(request),
                 urlInfo.get(HttpConstants.HTTP_URI_HOST))
                 .ifPresent(context::skip);
         return context;
@@ -64,15 +68,20 @@ public class FeignInvokeInterceptor extends MarkInterceptor {
         };
     }
 
+    private Function<Exception, Object> buildExFunc(Request request) {
+        return ex -> buildErrorResponse(ex, request);
+    }
+
     /**
      * 构建feign响应
      * @param ex
      * @return
      */
-    private Response buildErrorResponse(Exception ex) {
+    private Response buildErrorResponse(Exception ex, Request request) {
         Response.Builder builder = Response.builder();
         builder.status(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         builder.reason(ex.getMessage());
+        builder.request(request);
         return builder.build();
     }
 

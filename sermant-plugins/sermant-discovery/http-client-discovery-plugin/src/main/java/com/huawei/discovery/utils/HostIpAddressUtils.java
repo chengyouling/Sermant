@@ -36,6 +36,11 @@ public class HostIpAddressUtils {
 
     private static final String DEFAULT_ADDRESS = "127.0.0.1";
 
+    /**
+     * 获取本机ip
+     * @return
+     * @throws SocketException
+     */
     public static String getHostAddress() throws SocketException {
         try {
             Enumeration<NetworkInterface> networkInterface = NetworkInterface.getNetworkInterfaces();

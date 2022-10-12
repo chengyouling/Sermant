@@ -27,6 +27,9 @@ import java.util.Date;
  */
 public class HttpConstants {
 
+    /**
+     * 主句key
+     */
     public static final String HTTP_URI_HOST = "host";
 
     public static final String HTTP_URI_PATH = "path";
@@ -47,6 +50,10 @@ public class HttpConstants {
 
     public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * 获取当前时间
+     * @return
+     */
     public static String currentTime() {
         return simpleDateFormat.format(new Date());
     }

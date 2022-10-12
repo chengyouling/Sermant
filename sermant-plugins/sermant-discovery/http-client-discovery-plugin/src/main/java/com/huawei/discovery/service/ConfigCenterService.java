@@ -34,6 +34,10 @@ public class ConfigCenterService implements PluginService {
 
     private final AtomicBoolean isRun = new AtomicBoolean();
 
+    /**
+     * 实例化动态配置监听
+     * @param serviceName
+     */
     public void init(String serviceName) {
         if (StringUtils.isBlank(serviceName)) {
             return;

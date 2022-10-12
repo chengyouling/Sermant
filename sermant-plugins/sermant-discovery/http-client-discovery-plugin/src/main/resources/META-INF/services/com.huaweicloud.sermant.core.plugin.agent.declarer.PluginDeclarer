@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-com.huawei.discovery.declarers.RestTempleteDeclarer
+com.huawei.discovery.declarers.RestTemplateDeclarer
 com.huawei.discovery.declarers.httpclient.HttpClient4xDeclarer
 com.huawei.discovery.declarers.httpclient.HttpAsyncClient4xDeclarer
 com.huawei.discovery.declarers.httpclient.HttpAsyncClient4xHandlerDeclarer

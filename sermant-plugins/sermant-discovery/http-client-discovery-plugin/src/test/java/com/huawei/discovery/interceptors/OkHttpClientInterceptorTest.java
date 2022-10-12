@@ -17,21 +17,17 @@
 package com.huawei.discovery.interceptors;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.http.HttpStatus;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
-import org.springframework.http.client.ClientHttpResponse;
 
 import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
 import com.huawei.discovery.entity.DefaultServiceInstance;
@@ -42,21 +38,20 @@ import com.huawei.discovery.utils.HttpConstants;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.ReflectUtils;
-
-import okhttp3.HttpUrl;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import com.squareup.okhttp.HttpUrl;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
 
 /**
- * OkHttp3调用测试
+ * OkHttp调用测试
  *
  * @author chengyouling
  * @since 2022-10-10
  */
-public class OkHttp3ClientInterceptorTest extends BaseTest{
+public class OkHttpClientInterceptorTest extends BaseTest{
 
-    private OkHttp3ClientInterceptor interceptor;
+    private OkHttpClientInterceptor interceptor;
 
     private final Object[] arguments;
 
@@ -72,14 +67,14 @@ public class OkHttp3ClientInterceptorTest extends BaseTest{
     /**
      * 构造方法
      */
-    public OkHttp3ClientInterceptorTest() {
+    public OkHttpClientInterceptorTest() {
         arguments = new Object[2];
     }
 
     @Override
     public void setUp() {
         super.setUp();
-        interceptor = new OkHttp3ClientInterceptor();
+        interceptor = new OkHttpClientInterceptor();
         MockitoAnnotations.openMocks(this);
         pluginServiceManagerMockedStatic.when(() -> PluginServiceManager.getPluginService(InvokerService.class))
                 .thenReturn(invokerService);
@@ -109,15 +104,15 @@ public class OkHttp3ClientInterceptorTest extends BaseTest{
         initStrategy(PlugEffectWhiteBlackConstants.STRATEGY_ALL, "zookeeper-provider-demo");
         interceptor.doBefore(context);
         Request requestNew = (Request)context.getRawMemberFieldValue("originalRequest");
-        Assert.assertEquals(url, requestNew.url().uri().toString());
+        Assert.assertEquals(url, requestNew.uri().toString());
     }
 
     @Test
-    public void covertRequestTest() {
-        Optional<Method> method = ReflectUtils.findMethod(OkHttp3ClientInterceptor.class, "covertRequest",
+    public void covertRequestTest() throws IOException {
+        Optional<Method> method = ReflectUtils.findMethod(OkHttpClientInterceptor.class, "covertRequest",
                 new Class[] {URI.class, Map.class, Request.class, String.class, ServiceInstance.class});
         Request request = createRequest(url);
-        URI uri = request.url().uri();
+        URI uri = request.uri();
         Map<String, String> hostAndPath = new HashMap<>();
         hostAndPath.put(HttpConstants.HTTP_URI_PATH, "/sayHello");
         ServiceInstance serviceInstance = new DefaultServiceInstance("127.0.0.1", "127.0.0.1", 8010,
@@ -125,13 +120,13 @@ public class OkHttp3ClientInterceptorTest extends BaseTest{
         if (method.isPresent()) {
             Optional<Object> requestNew = ReflectUtils
                     .invokeMethod(interceptor, method.get(), new Object[] {uri, hostAndPath, request, "GET", serviceInstance});
-            Assert.assertEquals(convertUrl, ((Request)requestNew.get()).url().uri().toString());
+            Assert.assertEquals(convertUrl, ((Request)requestNew.get()).uri().toString());
         }
     }
 
     @Test
     public void buildErrorResponseTest() throws IOException {
-        Optional<Method> method = ReflectUtils.findMethod(OkHttp3ClientInterceptor.class, "buildErrorResponse",
+        Optional<Method> method = ReflectUtils.findMethod(OkHttpClientInterceptor.class, "buildErrorResponse",
                 new Class[] {Exception.class, Request.class});
         Request request = createRequest(url);
         Exception ex = new Exception("error");

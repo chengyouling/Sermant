@@ -30,12 +30,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 
+import com.huawei.discovery.entity.Recorder;
+import com.huawei.discovery.entity.SimpleRequestRecorder;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
 import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
-import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 
@@ -45,9 +46,7 @@ import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
  * @author chengyouling
  * @since 2022-9-27
  */
-public class RestTempleteInterceptor extends MarkInterceptor {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger();
+public class RestTemplateInterceptor extends MarkInterceptor {
 
     @Override
     protected ExecuteContext doBefore(ExecuteContext context) throws Exception {
@@ -58,6 +57,7 @@ public class RestTempleteInterceptor extends MarkInterceptor {
         if (PlugEffectWhiteBlackUtils.isNotAllowRun(uri.getHost(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
             return context;
         }
+        RequestInterceptorUtils.printRequestLog("OkHttp", hostAndPath);
         invokerService.invoke(
                 buildInvokerFunc(uri, hostAndPath, context, httpMethod),
                 this::buildErrorResponse,

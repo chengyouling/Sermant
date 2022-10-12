@@ -31,6 +31,10 @@ public enum RegisterContext {
 
     private final DefaultServiceInstance serviceInstance = new DefaultServiceInstance();
 
+    /**
+     * 获取服务实例
+     * @return
+     */
     public DefaultServiceInstance getServiceInstance() {
         return this.serviceInstance;
     }

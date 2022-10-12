@@ -35,6 +35,11 @@ public class PlugEffectWhiteBlackUtils {
 
     private static DiscoveryPluginConfig config = PluginConfigManager.getPluginConfig(DiscoveryPluginConfig.class);
 
+    /**
+     * 判断对应服务插件是否执行
+     * @param serviceName
+     * @return
+     */
     public static boolean isPlugEffect(String serviceName) {
         String strategy = PlugEffectStategyCache.INSTANCE.getConfigContent(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG_STRATEGY);
         String value = PlugEffectStategyCache.INSTANCE.getConfigContent(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG__VALUE);
@@ -65,6 +70,11 @@ public class PlugEffectWhiteBlackUtils {
         return false;
     }
 
+    /**
+     * 判断url是否包含指定域名
+     * @param url
+     * @return
+     */
     public static boolean isUrlContainsRealmName(String url) {
         String realmName = config.getRealmName();
         if (StringUtils.isBlank(realmName)) {
@@ -82,6 +92,11 @@ public class PlugEffectWhiteBlackUtils {
         return url.contains(realmName);
     }
 
+    /**
+     * 判断主机名称是否为设置的域名
+     * @param host
+     * @return
+     */
     public static boolean isHostEqualRealmName(String host) {
         String realmName = config.getRealmName();
         if (StringUtils.isBlank(realmName)) {
@@ -99,6 +114,13 @@ public class PlugEffectWhiteBlackUtils {
         return StringUtils.equalsIgnoreCase(host, realmName);
     }
 
+    /**
+     * 判断是否允许请求通过插件
+     * @param realmStr
+     * @param serviceName
+     * @param isByEqual
+     * @return
+     */
     public static boolean isNotAllowRun(String realmStr, String serviceName, boolean isByEqual) {
         if (isByEqual) {
             if (!PlugEffectWhiteBlackUtils.isHostEqualRealmName(realmStr)) {

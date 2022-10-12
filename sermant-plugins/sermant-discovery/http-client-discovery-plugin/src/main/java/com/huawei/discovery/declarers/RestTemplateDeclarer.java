@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.declarers;
 
-import com.huawei.discovery.interceptors.RestTempleteInterceptor;
+import com.huawei.discovery.interceptors.RestTemplateInterceptor;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
@@ -28,7 +28,7 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
  * @author chengyouling
  * @since 2022-09-27
  */
-public class RestTempleteDeclarer extends AbstractPluginDeclarer {
+public class RestTemplateDeclarer extends AbstractPluginDeclarer {
 
     /**
      * 增强类的全限定名
@@ -38,7 +38,7 @@ public class RestTempleteDeclarer extends AbstractPluginDeclarer {
     /**
      * 拦截类的全限定名
      */
-    private static final String INTERCEPT_CLASS = RestTempleteInterceptor.class.getCanonicalName();
+    private static final String INTERCEPT_CLASS = RestTemplateInterceptor.class.getCanonicalName();
 
     @Override
     public ClassMatcher getClassMatcher() {

@@ -18,7 +18,6 @@ package com.huawei.discovery.interceptors;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -27,25 +26,36 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import com.huawei.discovery.config.DiscoveryPluginConfig;
-import com.huawei.discovery.config.LbConfig;
-import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
 import com.huawei.discovery.entity.PlugEffectStategyCache;
+import com.huaweicloud.sermant.core.config.ConfigManager;
+import com.huaweicloud.sermant.core.operation.OperationManager;
+import com.huaweicloud.sermant.core.operation.converter.api.YamlConverter;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
+import com.huaweicloud.sermant.core.plugin.config.ServiceMeta;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.ReflectUtils;
+import com.huaweicloud.sermant.implement.operation.converter.YamlConverterImpl;
 
 /**
  * 基础测试
  *
- * @author zhouss
+ * @author chengyouling
  * @since 2022-10-09
  */
 public class BaseTest {
     protected final DiscoveryPluginConfig discoveryPluginConfig = new DiscoveryPluginConfig();
 
+    protected final YamlConverter yamlConverter = new YamlConverterImpl();
+
+    protected final ServiceMeta serviceMeta = new ServiceMeta();
+
     protected MockedStatic<PluginServiceManager> pluginServiceManagerMockedStatic;
 
     protected MockedStatic<PluginConfigManager> pluginConfigManagerMockedStatic;
+
+    protected MockedStatic<OperationManager> operationManagerMockedStatic;
+
+    protected MockedStatic<ConfigManager> configManagerMockedStatic;
 
     @Before
     public void setUp() {
@@ -55,14 +65,14 @@ public class BaseTest {
                 .thenReturn(discoveryPluginConfig);
         pluginServiceManagerMockedStatic = Mockito
                 .mockStatic(PluginServiceManager.class);
-        init();
-    }
-
-    private void init() {
-        final Optional<Object> dynamicConfig = ReflectUtils.getFieldValue(PlugEffectStategyCache.INSTANCE, "caches");
-        Assert.assertTrue(dynamicConfig.isPresent() && dynamicConfig.get() instanceof Map);
-        ((Map) dynamicConfig.get()).put(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG_STRATEGY, PlugEffectWhiteBlackConstants.STRATEGY_ALL);
-        ((Map) dynamicConfig.get()).put(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG__VALUE, "service1");
+        operationManagerMockedStatic = Mockito
+                .mockStatic(OperationManager.class);
+        operationManagerMockedStatic.when(() -> OperationManager.getOperation(YamlConverter.class))
+                .thenReturn(yamlConverter);
+        configManagerMockedStatic = Mockito
+                .mockStatic(ConfigManager.class);
+        configManagerMockedStatic.when(() -> ConfigManager.getConfig(ServiceMeta.class))
+                .thenReturn(serviceMeta);
     }
 
     @After
@@ -70,6 +80,8 @@ public class BaseTest {
         clearCache();
         pluginConfigManagerMockedStatic.close();
         pluginServiceManagerMockedStatic.close();
+        operationManagerMockedStatic.close();
+        configManagerMockedStatic.close();
     }
 
     private void clearCache() {
