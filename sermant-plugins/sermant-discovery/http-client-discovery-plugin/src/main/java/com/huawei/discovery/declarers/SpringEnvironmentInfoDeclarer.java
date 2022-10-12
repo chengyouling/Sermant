@@ -33,7 +33,7 @@ public class SpringEnvironmentInfoDeclarer extends AbstractPluginDeclarer {
 
     private static final String INTERCEPT_CLASS = SpringEnvironmentInfoInterceptor.class.getCanonicalName();
 
-    private static final String METHOD_NAME = "configureIgnoreBeanInfo";
+    private static final String METHOD_NAME = "prepareEnvironment";
 
     @Override
     public ClassMatcher getClassMatcher() {

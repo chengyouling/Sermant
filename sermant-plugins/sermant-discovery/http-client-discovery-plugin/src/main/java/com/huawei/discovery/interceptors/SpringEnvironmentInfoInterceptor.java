@@ -16,19 +16,20 @@
 
 package com.huawei.discovery.interceptors;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.springframework.core.env.ConfigurableEnvironment;
-
 import com.huawei.discovery.entity.RegisterContext;
 import com.huawei.discovery.entity.ServiceInstance.Status;
 import com.huawei.discovery.utils.HostIpAddressUtils;
+
 import com.huaweicloud.sermant.core.config.ConfigManager;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.config.ServiceMeta;
 import com.huaweicloud.sermant.core.utils.StringUtils;
+
+import org.springframework.core.env.ConfigurableEnvironment;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 结束阶段设置服务相关信息
@@ -48,11 +49,11 @@ public class SpringEnvironmentInfoInterceptor implements Interceptor {
     }
 
     @Override
-    public ExecuteContext after(ExecuteContext context) throws Exception{
-        Object[] arguments = context.getArguments();
+    public ExecuteContext after(ExecuteContext context) throws Exception {
+        Object result = context.getResult();
         String ipAddress = HostIpAddressUtils.getHostAddress();
-        if (arguments.length > 0 && arguments[0] instanceof ConfigurableEnvironment) {
-            this.setClientInfo((ConfigurableEnvironment)arguments[0], ipAddress);
+        if (result instanceof ConfigurableEnvironment) {
+            this.setClientInfo((ConfigurableEnvironment) result, ipAddress);
         }
         return context;
     }
@@ -68,10 +69,12 @@ public class SpringEnvironmentInfoInterceptor implements Interceptor {
         String applicationName = environment.getProperty("spring.application.name");
         RegisterContext.INSTANCE.getServiceInstance().setHost(StringUtils.isEmpty(address) ? ipAddress : address);
         RegisterContext.INSTANCE.getServiceInstance().setIp(StringUtils.isEmpty(address) ? ipAddress : address);
-        RegisterContext.INSTANCE.getServiceInstance().setPort(StringUtils.isEmpty(port)? DEFAULT_PORT : Integer.parseInt(port));
-        RegisterContext.INSTANCE.getServiceInstance().setServiceName(StringUtils.isEmpty(applicationName) ? DEFAULT_APPLICATION_NAME : applicationName);
-        RegisterContext.INSTANCE.getServiceInstance().setId(RegisterContext.INSTANCE.getServiceInstance().getIp() +
-                ":" + RegisterContext.INSTANCE.getServiceInstance().getPort());
+        RegisterContext.INSTANCE.getServiceInstance()
+                .setPort(StringUtils.isEmpty(port) ? DEFAULT_PORT : Integer.parseInt(port));
+        RegisterContext.INSTANCE.getServiceInstance()
+                .setServiceName(StringUtils.isEmpty(applicationName) ? DEFAULT_APPLICATION_NAME : applicationName);
+        RegisterContext.INSTANCE.getServiceInstance().setId(RegisterContext.INSTANCE.getServiceInstance().getIp()
+                + ":" + RegisterContext.INSTANCE.getServiceInstance().getPort());
         RegisterContext.INSTANCE.getServiceInstance().setStatus(Status.UP.name());
         if (null == RegisterContext.INSTANCE.getServiceInstance().getMetadata()) {
             Map<String, String> metadata = new HashMap<String, String>(8);
