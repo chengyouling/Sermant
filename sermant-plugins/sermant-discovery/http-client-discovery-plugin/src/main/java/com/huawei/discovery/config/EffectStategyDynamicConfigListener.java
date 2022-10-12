@@ -37,8 +37,8 @@ public class EffectStategyDynamicConfigListener implements DynamicConfigListener
 
     @Override
     public void process(DynamicConfigEvent event) {
-        LOGGER.log(Level.INFO, String.format(Locale.ENGLISH, "Config [%s] has been received, operator type: [%s] ",
-            event.getKey(), event.getEventType()));
+        LOGGER.log(Level.INFO, String.format(Locale.ENGLISH, "Config [%s] has been received, operator type: [%s], content [%s] ",
+            event.getKey(), event.getEventType(), event.getContent()));
         if (StringUtils.equalsIgnoreCase(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG_LISTENER_KEY, event.getKey())) {
             PlugEffectStategyCache.INSTANCE.resolve(event.getEventType(), event.getContent());
         }

@@ -56,11 +56,6 @@ public enum PlugEffectStategyCache {
         final Optional<Map<String, String>> dataMap = yamlConverter.convert(content, Map.class);
         if (dataMap.isPresent()) {
             caches = dataMap.get();
-            String operationType = eventType == DynamicConfigEventType.DELETE ? "DELETE" :
-                    eventType == DynamicConfigEventType.MODIFY ? "MODIFY" :
-                    eventType == DynamicConfigEventType.CREATE ? "CREATE" : "INIT";
-            LOGGER.log(Level.INFO, String.format(Locale.ENGLISH,
-                    "dynamic config operation [%s] config content [%s]", operationType, content));
         }
     }
 
