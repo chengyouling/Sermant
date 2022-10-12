@@ -36,7 +36,7 @@ public enum PlugEffectStategyCache {
      */
     INSTANCE;
 
-    private Map<String, String> caches= new HashMap<String, String>();
+    private Map<String, String> caches = new HashMap<String, String>();
 
     private final YamlConverter yamlConverter = OperationManager.getOperation(YamlConverter.class);
 
