@@ -44,7 +44,7 @@ import com.huaweicloud.sermant.core.utils.ReflectUtils;
  * @author chengyouling
  * @since 2022-10-10
  */
-public class RestTemplateInterceptorTest extends BaseTest{
+public class RestTemplateInterceptorTest extends BaseTest {
 
     private RestTemplateInterceptor interceptor;
 

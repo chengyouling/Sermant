@@ -47,7 +47,7 @@ import feign.Response;
  * @author chengyouling
  * @since 2022-10-10
  */
-public class FeignInvokeInterceptorTest extends BaseTest{
+public class FeignInvokeInterceptorTest extends BaseTest {
 
     private FeignInvokeInterceptor interceptor;
 

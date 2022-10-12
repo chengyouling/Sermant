@@ -24,7 +24,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 import com.huawei.discovery.entity.RegisterContext;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 
-public class SpringEnvironmentInfoInterceptorTest extends BaseTest{
+public class SpringEnvironmentInfoInterceptorTest extends BaseTest {
     private SpringEnvironmentInfoInterceptor interceptor;
 
     private final Object[] arguments;

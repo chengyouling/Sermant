@@ -49,7 +49,7 @@ import com.squareup.okhttp.Response;
  * @author chengyouling
  * @since 2022-10-10
  */
-public class OkHttpClientInterceptorTest extends BaseTest{
+public class OkHttpClientInterceptorTest extends BaseTest {
 
     private OkHttpClientInterceptor interceptor;
 

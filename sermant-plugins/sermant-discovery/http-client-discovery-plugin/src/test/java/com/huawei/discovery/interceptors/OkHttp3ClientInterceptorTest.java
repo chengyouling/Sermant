@@ -54,7 +54,7 @@ import okhttp3.Response;
  * @author chengyouling
  * @since 2022-10-10
  */
-public class OkHttp3ClientInterceptorTest extends BaseTest{
+public class OkHttp3ClientInterceptorTest extends BaseTest {
 
     private OkHttp3ClientInterceptor interceptor;
 
