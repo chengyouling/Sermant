@@ -26,19 +26,22 @@ import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
  * @since 2022-10-10
  */
 public abstract class MarkInterceptor implements Interceptor {
-    private final ThreadLocal<Boolean> mark = new ThreadLocal<>();
+    /**
+     * 多个拦截器共享
+     */
+    private static final ThreadLocal<Boolean> MARK = new ThreadLocal<>();
 
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
-        if (mark.get() != null) {
+        if (MARK.get() != null) {
             return context;
         }
-        mark.set(Boolean.TRUE);
+        MARK.set(Boolean.TRUE);
         try {
             ready();
             return doBefore(context);
         } finally {
-            mark.remove();
+            MARK.remove();
         }
     }
 

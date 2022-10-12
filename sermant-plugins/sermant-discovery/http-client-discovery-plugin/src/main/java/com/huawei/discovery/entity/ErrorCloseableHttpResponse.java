@@ -26,7 +26,10 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHeaderIterator;
 import org.apache.http.message.BasicStatusLine;
+import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 
 import java.io.IOException;
@@ -97,7 +100,6 @@ public class ErrorCloseableHttpResponse implements CloseableHttpResponse {
 
     @Override
     public void setEntity(HttpEntity entity) {
-
     }
 
     @Override
@@ -107,7 +109,6 @@ public class ErrorCloseableHttpResponse implements CloseableHttpResponse {
 
     @Override
     public void setLocale(Locale loc) {
-
     }
 
     @Override
@@ -127,12 +128,12 @@ public class ErrorCloseableHttpResponse implements CloseableHttpResponse {
 
     @Override
     public Header getFirstHeader(String name) {
-        return null;
+        return new BasicHeader("type", "SermantErrorResponse");
     }
 
     @Override
     public Header getLastHeader(String name) {
-        return null;
+        return getFirstHeader(name);
     }
 
     @Override
@@ -177,21 +178,20 @@ public class ErrorCloseableHttpResponse implements CloseableHttpResponse {
 
     @Override
     public HeaderIterator headerIterator() {
-        return null;
+        return this.headerIterator("errorHeaders");
     }
 
     @Override
     public HeaderIterator headerIterator(String name) {
-        return null;
+        return new BasicHeaderIterator(new Header[0], name);
     }
 
     @Override
     public HttpParams getParams() {
-        return null;
+        return new BasicHttpParams();
     }
 
     @Override
     public void setParams(HttpParams params) {
-
     }
 }

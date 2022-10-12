@@ -27,6 +27,7 @@ import com.huawei.discovery.retry.RetryException;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.service.ex.ProviderException;
 import com.huawei.discovery.service.lb.DiscoveryManager;
+import com.huawei.discovery.service.lb.LbConstants;
 import com.huawei.discovery.service.lb.stats.InstanceStats;
 import com.huawei.discovery.service.lb.stats.ServiceStatsManager;
 import com.huawei.discovery.service.retry.policy.RetryPolicy;
@@ -82,11 +83,11 @@ public class RetryServiceImpl implements InvokerService {
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         maxSize = lbConfig.getMaxRetryConfigCache();
         defaultRetry = Retry.create(new RetryConfig(
-                retryEx,
-                result -> false,
-                NAME,
-                lbConfig.getRetryWaitMs(),
-                lbConfig.getMaxRetry()));
+            retryEx,
+            result -> false,
+            NAME,
+            lbConfig.getRetryWaitMs(),
+            lbConfig.getMaxRetry()));
     }
 
     @Override
@@ -177,8 +178,8 @@ public class RetryServiceImpl implements InvokerService {
         if (isRetry) {
             final Optional<ServiceInstance> select = retryPolicy.select(serviceName, serviceInstance);
             select.ifPresent(instance -> LOGGER.fine(String.format(Locale.ENGLISH,
-                    "Start retry for invoking instance [%s:%s] of service [%s] at time %s",
-                    instance.getHost(), instance.getPort(), serviceName, LocalDateTime.now())));
+                    "Start retry for invoking instance [id: %s] of service [%s] at time %s",
+                    instance.getMetadata().get(LbConstants.SERMANT_DISCOVERY), serviceName, LocalDateTime.now())));
             return select;
         }
         return DiscoveryManager.INSTANCE.choose(serviceName);

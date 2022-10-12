@@ -76,6 +76,7 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
         if (!isConfigEnable(hostAndPath, httpHost.getHostName())) {
             return context;
         }
+        RequestInterceptorUtils.printRequestLog("HttpClient", hostAndPath);
         requestRecorder.beforeRequest();
         invokerService.invoke(
                 buildInvokerFunc(hostAndPath, uri, httpRequest, context),

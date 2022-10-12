@@ -101,7 +101,9 @@ public enum DiscoveryManager {
      */
     public void registry(ServiceInstance serviceInstance) {
         checkStats();
-        serviceDiscoveryClient.registry(serviceInstance);
+        if (serviceDiscoveryClient.registry(serviceInstance)) {
+            LOGGER.info("Registry instance to registry center success!");
+        }
     }
 
     /**
@@ -129,7 +131,9 @@ public enum DiscoveryManager {
     public void stop() throws IOException {
         lbCache.clear();
         serviceLbCache.clear();
-        serviceDiscoveryClient.unRegistry();
+        if (serviceDiscoveryClient.unRegistry()) {
+            LOGGER.info("Cur instance has been un registry from registry center success!");
+        }
         serviceDiscoveryClient.close();
     }
 

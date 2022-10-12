@@ -20,6 +20,7 @@ import com.huawei.discovery.config.LbConfig;
 import com.huawei.discovery.entity.DefaultServiceInstance;
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.entity.ServiceInstance.Status;
+import com.huawei.discovery.service.lb.LbConstants;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
@@ -45,6 +46,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -91,7 +93,7 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
     public boolean registry(ServiceInstance serviceInstance) {
         final String id = UUID.randomUUID().toString();
         final HashMap<String, String> metadata = new HashMap<>(serviceInstance.getMetadata());
-        metadata.put("sermant-discovery", "zk");
+        metadata.put(LbConstants.SERMANT_DISCOVERY, "zk-" + id);
         final ZookeeperInstance zookeeperServiceInstance =
                 new ZookeeperInstance(getAddress(serviceInstance) + ":" + serviceInstance.getPort(),
                         serviceInstance.getServiceName(), metadata);
@@ -132,7 +134,9 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
         if (serviceInstances == null || serviceInstances.isEmpty()) {
             return Collections.emptyList();
         }
-        return serviceInstances.stream().map(this::convert).collect(Collectors.toList());
+
+        return serviceInstances.stream().filter(this.predicate()).map(this::convert).distinct()
+                .collect(Collectors.toList());
     }
 
     private ServiceInstance convert(org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> curInstance) {
@@ -148,6 +152,16 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
         }
         serviceInstance.setId(curInstance.getAddress() + ":" + curInstance.getPort());
         return serviceInstance;
+    }
+
+    private Predicate<org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance>> predicate() {
+        return serviceInstance -> {
+            final ZookeeperInstance payload = serviceInstance.getPayload();
+            if (payload.getMetadata() == null) {
+                return false;
+            }
+            return payload.getMetadata().get(LbConstants.SERMANT_DISCOVERY) != null;
+        };
     }
 
     @Override

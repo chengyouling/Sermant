@@ -73,6 +73,18 @@ public class RequestInterceptorUtils {
     }
 
     /**
+     * 打印请求路径
+     *
+     * @param hostAndPath 请求路径与服务名
+     * @param source 请求原， 例如httpclient/http async client
+     */
+    public static void printRequestLog(String source, Map<String, String> hostAndPath) {
+        String path = String.format(Locale.ENGLISH, "/%s%s", hostAndPath.get(HttpConstants.HTTP_URI_HOST),
+                hostAndPath.get(HttpConstants.HTTP_URI_PATH));
+        LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[%s] request [%s] has been intercepted!", source, path));
+    }
+
+    /**
      * 格式化uri
      *
      * @param uri 目标uri

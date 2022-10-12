@@ -28,6 +28,7 @@ import com.huawei.discovery.utils.HttpConstants;
 import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
 
+import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
@@ -53,6 +54,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 /**
  * 仅针对4.x版本得http拦截
@@ -61,6 +63,8 @@ import java.util.function.Supplier;
  * @since 2022-10-10
  */
 public class HttpAsyncClient4xInterceptor implements Interceptor {
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
     private static final String COMMON_REQUEST_CLASS = "com.huawei.discovery.entity.HttpCommonRequest";
 
     private static final String PRODUCER_CLASS = "com.huawei.discovery.entity.HttpAsyncRequestProducerDecorator";
@@ -106,6 +110,8 @@ public class HttpAsyncClient4xInterceptor implements Interceptor {
             if (HttpAsyncUtils.getOrCreateContext().getSelectedInstance() != null) {
                 return context;
             }
+            RequestInterceptorUtils.printRequestLog("HttpAsyncClient", HttpAsyncUtils.getOrCreateContext()
+                    .getHostAndPath());
             recorder.beforeRequest();
             final Object result = context.getResult();
             if (!(result instanceof Future)) {
