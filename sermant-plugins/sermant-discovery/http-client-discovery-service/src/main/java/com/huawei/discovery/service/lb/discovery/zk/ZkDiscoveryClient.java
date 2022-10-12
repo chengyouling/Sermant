@@ -17,9 +17,7 @@
 package com.huawei.discovery.service.lb.discovery.zk;
 
 import com.huawei.discovery.config.LbConfig;
-import com.huawei.discovery.entity.DefaultServiceInstance;
 import com.huawei.discovery.entity.ServiceInstance;
-import com.huawei.discovery.entity.ServiceInstance.Status;
 import com.huawei.discovery.service.lb.LbConstants;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
@@ -59,8 +57,6 @@ import java.util.stream.Collectors;
  */
 public class ZkDiscoveryClient implements ServiceDiscoveryClient {
     private static final Logger LOGGER = LoggerFactory.getLogger();
-
-    private static final String STATUS_KEY = "instance_status";
 
     private final LbConfig lbConfig;
 
@@ -135,33 +131,11 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
             return Collections.emptyList();
         }
 
-        return serviceInstances.stream().filter(this.predicate()).map(this::convert).distinct()
+        return serviceInstances.stream()
+                .filter(serviceInstance -> ZkInstanceHelper.predicate(lbConfig.isOnlyCurRegisterInstances())
+                        .test(serviceInstance))
+                .map(ZkInstanceHelper::convert2Instance).distinct()
                 .collect(Collectors.toList());
-    }
-
-    private ServiceInstance convert(org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance> curInstance) {
-        final DefaultServiceInstance serviceInstance = new DefaultServiceInstance();
-        serviceInstance.setHost(curInstance.getAddress());
-        serviceInstance.setIp(curInstance.getAddress());
-        serviceInstance.setServiceName(curInstance.getName());
-        serviceInstance.setPort(curInstance.getPort());
-        if (curInstance.getPayload() != null) {
-            final ZookeeperInstance payload = curInstance.getPayload();
-            serviceInstance.setMetadata(payload.getMetadata());
-            serviceInstance.setStatus(payload.getMetadata().getOrDefault(STATUS_KEY, Status.UP.name()));
-        }
-        serviceInstance.setId(curInstance.getAddress() + ":" + curInstance.getPort());
-        return serviceInstance;
-    }
-
-    private Predicate<org.apache.curator.x.discovery.ServiceInstance<ZookeeperInstance>> predicate() {
-        return serviceInstance -> {
-            final ZookeeperInstance payload = serviceInstance.getPayload();
-            if (payload.getMetadata() == null) {
-                return false;
-            }
-            return payload.getMetadata().get(LbConstants.SERMANT_DISCOVERY) != null;
-        };
     }
 
     @Override
@@ -185,6 +159,11 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
             }
         }
         return false;
+    }
+
+    @Override
+    public String name() {
+        return "Zookeeper";
     }
 
     private ServiceDiscovery<ZookeeperInstance> build() {
@@ -217,12 +196,17 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
      * @param <T> 实例类型
      * @since 2022-10-08
      */
-    static class ZkInstanceSerializer<T> implements InstanceSerializer<T> {
+    public static class ZkInstanceSerializer<T> implements InstanceSerializer<T> {
         private final ObjectMapper mapper;
         private final Class<T> payloadClass;
         private final JavaType type;
 
-        ZkInstanceSerializer(Class<T> payloadClass) {
+        /**
+         * 构造器
+         *
+         * @param payloadClass 指定payload类型
+         */
+        public ZkInstanceSerializer(Class<T> payloadClass) {
             this.payloadClass = payloadClass;
             mapper = new ObjectMapper();
             type = mapper.getTypeFactory().constructType(WriteAbleServiceInstance.class);

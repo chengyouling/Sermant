@@ -65,6 +65,16 @@ public class LbConfig implements PluginConfig {
     private String registryAddress = "127.0.0.1:2181";
 
     /**
+     * 注册中心类型, 当前仅支持ZK
+     */
+    private String registryCenterType = "Zookeeper";
+
+    /**
+     * 是否仅仅查询本插件注册的实例, 开启时, 如果其他注册中心与本插件注册中心一致, 同时注册到注册中心, 查询时会自动排除非本插件注册的注册中心
+     */
+    private boolean onlyCurRegisterInstances = true;
+
+    /**
      * 最大的重试配置缓存数
      */
     private int maxRetryConfigCache = LbConstants.DEFAULT_MAX_RETRY_CONFIG_CACHE;
@@ -83,11 +93,6 @@ public class LbConfig implements PluginConfig {
      * 实例缓存过期时间
      */
     private long instanceCacheExpireMs = LbConstants.DEFAULT_CACHE_EXPIRE_MS;
-
-    /**
-     * 缓存自动刷新时间
-     */
-    private long refreshIntervalMs = LbConstants.DEFAULT_REFRESH_INTERVAL_MS;
 
     /**
      * 缓存并发度, 影响从缓存获取实例的效率
@@ -118,6 +123,22 @@ public class LbConfig implements PluginConfig {
      * 统计并发数的时间窗口, 默认10分钟, 并发数仅在时间窗口内统计生效, 超出则清0
      */
     private long activeRequestTimeoutWindowMs = LbConstants.DEFAULT_ACTIVE_REQUEST_COUNT_WINDOW_MS;
+
+    public boolean isOnlyCurRegisterInstances() {
+        return onlyCurRegisterInstances;
+    }
+
+    public void setOnlyCurRegisterInstances(boolean onlyCurRegisterInstances) {
+        this.onlyCurRegisterInstances = onlyCurRegisterInstances;
+    }
+
+    public String getRegistryCenterType() {
+        return registryCenterType;
+    }
+
+    public void setRegistryCenterType(String registryCenterType) {
+        this.registryCenterType = registryCenterType;
+    }
 
     public String getZkServerVersion() {
         return zkServerVersion;
@@ -165,14 +186,6 @@ public class LbConfig implements PluginConfig {
 
     public void setStatsCacheExpireTime(long statsCacheExpireTime) {
         this.statsCacheExpireTime = statsCacheExpireTime;
-    }
-
-    public long getRefreshIntervalMs() {
-        return refreshIntervalMs;
-    }
-
-    public void setRefreshIntervalMs(long refreshIntervalMs) {
-        this.refreshIntervalMs = refreshIntervalMs;
     }
 
     public int getCacheConcurrencyLevel() {

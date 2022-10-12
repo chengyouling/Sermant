@@ -70,7 +70,7 @@ public class InstanceCacheManagerTest {
     public void getInstances() {
         final ServiceDiscoveryClient client = Mockito.mock(ServiceDiscoveryClient.class);
         Mockito.when(client.getInstances(serviceName)).thenReturn(instances);
-        final InstanceCacheManager instanceCacheManager = new InstanceCacheManager(client);
+        final InstanceCacheManager instanceCacheManager = new InstanceCacheManager(client, null);
         Assert.assertEquals(instanceCacheManager.getInstances(serviceName), instances);
 
         final Optional<Object> tryUpdateInstances = ReflectUtils
@@ -87,7 +87,7 @@ public class InstanceCacheManagerTest {
         Assert.assertEquals(((InstanceCache) createCache.get()).getServiceName(), serviceName);
 
         Mockito.when(client.getInstances(serviceName)).thenReturn(Collections.emptyList());
-        final InstanceCacheManager emptyManager = new InstanceCacheManager(client);
+        final InstanceCacheManager emptyManager = new InstanceCacheManager(client, null);
         final Optional<Object> emptyCache = ReflectUtils
                 .invokeMethod(emptyManager, "createCache", new Class[]{String.class},
                         new Object[]{serviceName});

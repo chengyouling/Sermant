@@ -16,55 +16,33 @@
 
 package com.huawei.discovery.service.lb.discovery;
 
-import com.huawei.discovery.entity.ServiceInstance;
-
-import java.io.Closeable;
-import java.util.Collection;
-
 /**
- * 客户端
+ * 实例监听变更, 此功能将与{@link com.huawei.discovery.service.lb.cache.InstanceCacheManager 绑定}
  *
  * @author zhouss
- * @since 2022-09-26
+ * @since 2022-10-12
  */
-public interface ServiceDiscoveryClient extends Closeable {
+public interface InstanceListenable {
     /**
      * 初始化
      */
     void init();
 
     /**
-     * 注册方法
+     * 增加监听指定服务实例
      *
-     * @param serviceInstance 注册
-     * @return true注册成功
+     * @param serviceName 指定服务名
+     * @param listener 监听器
      */
-    boolean registry(ServiceInstance serviceInstance);
+    void add(String serviceName, InstanceChangeListener listener);
 
     /**
-     * 查询实例列表
-     *
-     * @param serviceId 服务名
-     * @return 实例列表
+     * 关闭监听器
      */
-    Collection<ServiceInstance> getInstances(String serviceId);
+    void close();
 
     /**
-     * 查询所有服务名
-     *
-     * @return 所有服务名列表
-     */
-    Collection<String> getServices();
-
-    /**
-     * 当前实例下线
-     *
-     * @return 是否注册成功
-     */
-    boolean unRegistry();
-
-    /**
-     * 服务发现名称, 与注册中心类型关联
+     * 该监听器名称
      *
      * @return 名称
      */

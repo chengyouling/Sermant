@@ -57,6 +57,11 @@ public class ZkDiscoveryClientProxy implements ServiceDiscoveryClient {
     }
 
     @Override
+    public String name() {
+        return "Zookeeper";
+    }
+
+    @Override
     public void close() throws IOException {
         zkServiceManager.chooseService().close();
     }

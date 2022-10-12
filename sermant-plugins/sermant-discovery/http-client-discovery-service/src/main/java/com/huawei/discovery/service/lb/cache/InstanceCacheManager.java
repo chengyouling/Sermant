@@ -18,6 +18,8 @@ package com.huawei.discovery.service.lb.cache;
 
 import com.huawei.discovery.config.LbConfig;
 import com.huawei.discovery.entity.ServiceInstance;
+import com.huawei.discovery.service.lb.discovery.InstanceChangeListener;
+import com.huawei.discovery.service.lb.discovery.InstanceListenable;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
 
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
@@ -39,21 +41,27 @@ import java.util.concurrent.TimeUnit;
  * @since 2022-09-26
  */
 public class InstanceCacheManager {
+    private final InstanceChangeListener listener = new InstanceUpdater();
+
     private final LoadingCache<String, InstanceCache> cache;
 
     private final ServiceDiscoveryClient discoveryClient;
+
+    private final InstanceListenable instanceListenable;
 
     /**
      * 构造器
      *
      * @param discoveryClient 查询客户端
+     * @param instanceListenable 监听
      */
-    public InstanceCacheManager(ServiceDiscoveryClient discoveryClient) {
+    public InstanceCacheManager(ServiceDiscoveryClient discoveryClient,
+            InstanceListenable instanceListenable) {
         this.discoveryClient = discoveryClient;
+        this.instanceListenable = instanceListenable;
         final LbConfig lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         this.cache = CacheBuilder.newBuilder()
                 .expireAfterWrite(lbConfig.getInstanceCacheExpireMs(), TimeUnit.MILLISECONDS)
-                .refreshAfterWrite(lbConfig.getRefreshIntervalMs(), TimeUnit.MILLISECONDS)
                 .concurrencyLevel(lbConfig.getCacheConcurrencyLevel())
                 .build(new CacheLoader<String, InstanceCache>() {
                     @Override
@@ -79,9 +87,16 @@ public class InstanceCacheManager {
 
     private InstanceCache getInstanceCache(String serviceName) {
         try {
+            tryAddListen(serviceName);
             return cache.get(serviceName);
         } catch (ExecutionException e) {
             return createCache(serviceName);
+        }
+    }
+
+    private void tryAddListen(String serviceName) {
+        if (instanceListenable != null) {
+            instanceListenable.add(serviceName, listener);
         }
     }
 
@@ -96,5 +111,35 @@ public class InstanceCacheManager {
             return new InstanceCache(serviceName, new ArrayList<>(instances));
         }
         return new InstanceCache(serviceName, new ArrayList<>());
+    }
+
+    /**
+     * 实例更新器, 使数据更加实时
+     *
+     * @since 2022-10-12
+     */
+    class InstanceUpdater implements InstanceChangeListener {
+        @Override
+        public void notify(EventType eventType, ServiceInstance serviceInstance) {
+            final String serviceName = serviceInstance.getServiceName();
+            final InstanceCache instanceCache = getInstanceCache(serviceName);
+            final List<ServiceInstance> instances = instanceCache.getInstances();
+            if (eventType == EventType.DELETED) {
+                removeInstance(instances, serviceInstance);
+            } else if (eventType == EventType.ADDED) {
+                if (!instances.contains(serviceInstance)) {
+                    instances.add(serviceInstance);
+                }
+            } else {
+                removeInstance(instances, serviceInstance);
+                instances.add(serviceInstance);
+            }
+            cache.put(serviceName, instanceCache);
+        }
+
+        private void removeInstance(List<ServiceInstance> instances, ServiceInstance serviceInstance) {
+            instances.removeIf(instance -> instance.getIp().equals(serviceInstance.getIp()) && instance.getPort()
+                    == serviceInstance.getPort());
+        }
     }
 }

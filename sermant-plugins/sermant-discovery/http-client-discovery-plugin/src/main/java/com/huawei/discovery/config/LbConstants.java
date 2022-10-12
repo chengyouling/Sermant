@@ -44,11 +44,6 @@ public class LbConstants {
     public static final long DEFAULT_CACHE_EXPIRE_MS = 30000L;
 
     /**
-     * 缓存自动刷新时间
-     */
-    public static final long DEFAULT_REFRESH_INTERVAL_MS = 60000L;
-
-    /**
      * 缓存并发度, 影响从缓存获取实例的效率
      */
     public static final int DEFAULT_CACHE_CONCURRENCY_LEVEL = 16;

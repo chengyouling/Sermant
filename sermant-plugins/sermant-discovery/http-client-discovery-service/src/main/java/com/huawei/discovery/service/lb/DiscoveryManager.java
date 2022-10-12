@@ -19,8 +19,8 @@ package com.huawei.discovery.service.lb;
 import com.huawei.discovery.config.LbConfig;
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.service.lb.cache.InstanceCacheManager;
+import com.huawei.discovery.service.lb.discovery.InstanceListenable;
 import com.huawei.discovery.service.lb.discovery.ServiceDiscoveryClient;
-import com.huawei.discovery.service.lb.discovery.zk.ZkDiscoveryClientProxy;
 import com.huawei.discovery.service.lb.filter.InstanceFilter;
 import com.huawei.discovery.service.lb.rule.AbstractLoadbalancer;
 import com.huawei.discovery.service.lb.rule.Loadbalancer;
@@ -72,9 +72,11 @@ public enum DiscoveryManager {
 
     private final AtomicBoolean isStarted = new AtomicBoolean();
 
-    private LbConfig lbConfig;
+    private final LbConfig lbConfig;
 
     private ServiceDiscoveryClient serviceDiscoveryClient;
+
+    private InstanceListenable instanceListenable;
 
     private InstanceCacheManager cacheManager;
 
@@ -83,8 +85,18 @@ public enum DiscoveryManager {
     }
 
     private void initServiceDiscoveryClient() {
-        serviceDiscoveryClient = new ZkDiscoveryClientProxy();
-        serviceDiscoveryClient.init();
+        final String registryCenterType = lbConfig.getRegistryCenterType();
+        for (ServiceDiscoveryClient discoveryClient : ServiceLoader.load(ServiceDiscoveryClient.class, this.getClass()
+                .getClassLoader())) {
+            if (discoveryClient.name().equalsIgnoreCase(lbConfig.getRegistryCenterType())) {
+                this.serviceDiscoveryClient = discoveryClient;
+                break;
+            }
+        }
+        if (this.serviceDiscoveryClient == null) {
+            throw new IllegalStateException("Can not support register center type: " + registryCenterType);
+        }
+        this.serviceDiscoveryClient.init();
     }
 
     private void loadLb() {
@@ -92,6 +104,30 @@ public enum DiscoveryManager {
                 .getClassLoader())) {
             lbCache.put(loadbalancer.lbType(), loadbalancer.getClass());
         }
+    }
+
+    private void loadListen() {
+        for (InstanceListenable listenable : ServiceLoader.load(InstanceListenable.class, this.getClass()
+                .getClassLoader())) {
+            if (listenable.name().equalsIgnoreCase(lbConfig.getRegistryCenterType())) {
+                this.instanceListenable = listenable;
+                break;
+            }
+        }
+        if (this.instanceListenable != null) {
+            this.instanceListenable.init();
+        }
+    }
+
+    /**
+     * 启动方法
+     */
+    public void start() {
+        initServiceDiscoveryClient();
+        loadLb();
+        loadFilter();
+        loadListen();
+        cacheManager = new InstanceCacheManager(serviceDiscoveryClient, instanceListenable);
     }
 
     /**
@@ -104,16 +140,6 @@ public enum DiscoveryManager {
         if (serviceDiscoveryClient.registry(serviceInstance)) {
             LOGGER.info("Registry instance to registry center success!");
         }
-    }
-
-    /**
-     * 启动方法
-     */
-    public void start() {
-        initServiceDiscoveryClient();
-        loadLb();
-        loadFilter();
-        cacheManager = new InstanceCacheManager(serviceDiscoveryClient);
     }
 
     private void loadFilter() {
@@ -135,6 +161,9 @@ public enum DiscoveryManager {
             LOGGER.info("Cur instance has been un registry from registry center success!");
         }
         serviceDiscoveryClient.close();
+        if (instanceListenable != null) {
+            instanceListenable.close();
+        }
     }
 
     /**
