@@ -28,26 +28,48 @@ import java.util.Date;
 public class HttpConstants {
 
     /**
-     * 主句key
+     * 主机名
      */
     public static final String HTTP_URI_HOST = "host";
 
+    /**
+     * 路径
+     */
     public static final String HTTP_URI_PATH = "path";
 
+    /**
+     * get请求
+     */
     public static final String HTTP_GET = "GET";
 
-    public static final String HTTP_POST = "POST";
-
+    /**
+     * 双斜杠
+     */
     public static final String HTTP_URL_DOUBLIE_SLASH = "://";
 
+    /**
+     * 冒号
+     */
     public static final String HTTP_URL_COLON = ":";
 
+    /**
+     * 问号
+     */
     public static final String HTTP_URL_UNKNOWN = "?";
 
+    /**
+     * 单斜杠
+     */
     public static final char HTTP_URL_SINGLE_SLASH = '/';
 
+    /**
+     * 协议
+     */
     public static final String HTTP_URL_SCHEME = "scheme";
 
+    /**
+     * 时间格式
+     */
     public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
