@@ -14,46 +14,35 @@
  * limitations under the License.
  */
 
-package com.huawei.discovery.interceptors;
+package com.huawei.discovery.interceptors.httpclient;
+
+import com.huawei.discovery.utils.HttpAsyncUtils;
 
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 
 /**
- * 用于标记拦截器调用, 仅用于调用{@link com.huawei.discovery.service.InvokerService}得拦截器使用
+ * 仅针对4.x版本得http拦截
  *
  * @author zhouss
  * @since 2022-10-10
  */
-public abstract class MarkInterceptor implements Interceptor {
-    private final ThreadLocal<Boolean> mark = new ThreadLocal<>();
-
+public class HttpAsyncClient4xHandlerInterceptor implements Interceptor {
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
-        if (mark.get() != null) {
-            return context;
-        }
-        mark.set(Boolean.TRUE);
-        try {
-            ready();
-            return doBefore(context);
-        } finally {
-            mark.remove();
-        }
+        return context;
     }
 
-    /**
-     * 调用逻辑
-     *
-     * @param context 上下文
-     * @return 上下文
-     * @throws Exception 执行异常抛出
-     */
-    protected abstract ExecuteContext doBefore(ExecuteContext context) throws Exception;
+    @Override
+    public ExecuteContext after(ExecuteContext context) throws Exception {
+        if (HttpAsyncUtils.getContext() != null) {
+            HttpAsyncUtils.saveHandler(context.getObject());
+        }
+        return context;
+    }
 
-    /**
-     * 调用前的准备
-     */
-    protected void ready() {
+    @Override
+    public ExecuteContext onThrow(ExecuteContext context) {
+        return context;
     }
 }

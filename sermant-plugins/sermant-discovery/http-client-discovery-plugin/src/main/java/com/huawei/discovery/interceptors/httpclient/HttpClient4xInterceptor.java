@@ -16,7 +16,7 @@
 
 package com.huawei.discovery.interceptors.httpclient;
 
-import com.huawei.discovery.entity.ErrorCloseableHttpResponse;
+import com.huawei.discovery.entity.SimpleRequestRecorder;
 import com.huawei.discovery.interceptors.MarkInterceptor;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
@@ -28,15 +28,16 @@ import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.ClassUtils;
+import com.huaweicloud.sermant.core.utils.ReflectUtils;
 
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
+import org.apache.http.ProtocolVersion;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.URIUtils;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -53,23 +54,29 @@ import java.util.logging.Logger;
 public class HttpClient4xInterceptor extends MarkInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
+    private static final String ERROR_RESPONSE_CLASS = "com.huawei.discovery.entity.ErrorCloseableHttpResponse";
+
+    private static final String COMMON_REQUEST_CLASS = "com.huawei.discovery.entity.HttpCommonRequest";
+
     private final AtomicBoolean isLoaded = new AtomicBoolean();
+
+    private final SimpleRequestRecorder requestRecorder = new SimpleRequestRecorder();
 
     @Override
     public ExecuteContext doBefore(ExecuteContext context) {
-        checkLoad();
         final InvokerService invokerService = PluginServiceManager.getPluginService(InvokerService.class);
         HttpHost httpHost = (HttpHost) context.getArguments()[0];
         final HttpRequest httpRequest = (HttpRequest) context.getArguments()[1];
-        final Optional<URI> optionalUri = formatUri(httpRequest.getRequestLine().getUri());
+        final Optional<URI> optionalUri = RequestInterceptorUtils.formatUri(httpRequest.getRequestLine().getUri());
         if (!optionalUri.isPresent()) {
             return context;
         }
         URI uri = optionalUri.get();
         Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
-        if (PlugEffectWhiteBlackUtils.isNotAllowRun(httpHost.getHostName(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
+        if (!isConfigEnable(hostAndPath, httpHost.getHostName())) {
             return context;
         }
+        requestRecorder.beforeRequest();
         invokerService.invoke(
                 buildInvokerFunc(hostAndPath, uri, httpRequest, context),
                 buildExFunc(httpRequest),
@@ -81,45 +88,60 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
     private Function<InvokerContext, Object> buildInvokerFunc(Map<String, String> hostAndPath, URI uri,
             HttpRequest httpRequest, ExecuteContext context) {
         final String method = httpRequest.getRequestLine().getMethod();
+        final ClassLoader appClassloader = Thread.currentThread().getContextClassLoader();
         return invokerContext -> {
-            String uriNew = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
-                    hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
-            context.getArguments()[0] = rebuildHttpHost(uriNew);
-            context.getArguments()[1] = rebuildRequest(uriNew, method, httpRequest);
+            final ClassLoader pluginClassloader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(appClassloader);
+            try {
+                String uriNew = RequestInterceptorUtils.buildUrlWithIp(uri, invokerContext.getServiceInstance(),
+                        hostAndPath.get(HttpConstants.HTTP_URI_PATH), method);
+                final HttpRequest curRequest = rebuildRequest(uriNew, method, httpRequest);
+                if (curRequest == null) {
+                    LOGGER.warning(String.format(Locale.ENGLISH,
+                            "Can not rebuild request for replaced url [%s], it will not change origin url", uriNew));
+                    return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
+                }
+                context.getArguments()[1] = curRequest;
+                context.getArguments()[0] = rebuildHttpHost(uriNew);
+            } finally {
+                Thread.currentThread().setContextClassLoader(pluginClassloader);
+            }
             return RequestInterceptorUtils.buildFunc(context, invokerContext).get();
         };
     }
 
     private Function<Exception, Object> buildExFunc(HttpRequest httpRequest) {
-        return ex -> new ErrorCloseableHttpResponse(ex, httpRequest.getProtocolVersion());
+        final ClassLoader appClassloader = Thread.currentThread().getContextClassLoader();
+        return ex -> {
+            final ClassLoader pluginClassloader = Thread.currentThread().getContextClassLoader();
+            Thread.currentThread().setContextClassLoader(appClassloader);
+            try {
+                return ReflectUtils.buildWithConstructor(
+                        "com.huawei.discovery.entity.ErrorCloseableHttpResponse",
+                        new Class[] {Exception.class, ProtocolVersion.class},
+                        new Object[] {ex, httpRequest.getProtocolVersion()})
+                        .orElse(null);
+            } finally {
+                Thread.currentThread().setContextClassLoader(pluginClassloader);
+            }
+        };
     }
 
-    private void checkLoad() {
+    private boolean isConfigEnable(Map<String, String> hostAndPath, String hostName) {
+        return !PlugEffectWhiteBlackUtils.isNotAllowRun(hostName, hostAndPath.get(HttpConstants.HTTP_URI_HOST), true);
+    }
+
+    @Override
+    protected void ready() {
         if (isLoaded.compareAndSet(false, true)) {
-            ClassUtils.defineClass("com.huawei.discovery.entity.ErrorCloseableHttpResponse",
-                    Thread.currentThread().getContextClassLoader());
+            final ClassLoader classLoader = HttpClient.class.getClassLoader();
+            ClassUtils.defineClass(ERROR_RESPONSE_CLASS, classLoader);
+            ClassUtils.defineClass(COMMON_REQUEST_CLASS, classLoader);
         }
-    }
-
-    private Optional<URI> formatUri(String uri) {
-        if (!isValidUrl(uri)) {
-            return Optional.empty();
-        }
-        try {
-            return Optional.of(new URI(uri));
-        } catch (URISyntaxException e) {
-            LOGGER.fine(String.format(Locale.ENGLISH, "%s is not valid uri!", uri));
-            return Optional.empty();
-        }
-    }
-
-    private boolean isValidUrl(String url) {
-        final String lowerCaseUrl = url.toLowerCase(Locale.ROOT);
-        return lowerCaseUrl.startsWith("http") || lowerCaseUrl.startsWith("https");
     }
 
     private HttpHost rebuildHttpHost(String uriNew) {
-        final Optional<URI> optionalUri = formatUri(uriNew);
+        final Optional<URI> optionalUri = RequestInterceptorUtils.formatUri(uriNew);
         if (optionalUri.isPresent()) {
             return URIUtils.extractHost(optionalUri.get());
         }
@@ -133,14 +155,10 @@ public class HttpClient4xInterceptor extends MarkInterceptor {
             httpPost.setEntity(oldHttpPost.getEntity());
             return httpPost;
         } else {
-            final HttpRequestBase httpRequestBase = new HttpRequestBase() {
-                @Override
-                public String getMethod() {
-                    return method;
-                }
-            };
-            httpRequestBase.setURI(URI.create(uriNew));
-            return httpRequestBase;
+            final Optional<Object> result = ReflectUtils
+                    .buildWithConstructor(COMMON_REQUEST_CLASS,
+                            new Class[]{String.class, String.class}, new Object[]{method, uriNew});
+            return (HttpRequest) result.orElse(null);
         }
     }
 

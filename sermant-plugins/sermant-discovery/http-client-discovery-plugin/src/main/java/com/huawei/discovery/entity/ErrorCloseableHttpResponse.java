@@ -91,7 +91,8 @@ public class ErrorCloseableHttpResponse implements CloseableHttpResponse {
 
     @Override
     public HttpEntity getEntity() {
-        return new StringEntity(ex.getMessage(), ContentType.APPLICATION_JSON);
+        return new StringEntity(ex.getMessage() == null ? "unKnow error" : ex.getMessage(),
+                ContentType.APPLICATION_JSON);
     }
 
     @Override

@@ -78,6 +78,10 @@ public enum DiscoveryManager {
 
     private InstanceCacheManager cacheManager;
 
+    DiscoveryManager() {
+        lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
+    }
+
     private void initServiceDiscoveryClient() {
         serviceDiscoveryClient = new ZkDiscoveryClientProxy();
         serviceDiscoveryClient.init();
@@ -107,7 +111,6 @@ public enum DiscoveryManager {
         initServiceDiscoveryClient();
         loadLb();
         loadFilter();
-        lbConfig = PluginConfigManager.getPluginConfig(LbConfig.class);
         cacheManager = new InstanceCacheManager(serviceDiscoveryClient);
     }
 
@@ -178,6 +181,7 @@ public enum DiscoveryManager {
     }
 
     private Loadbalancer getLoadbalancer(String serviceName) {
+        checkStats();
         return serviceLbCache.computeIfAbsent(serviceName, curService -> {
             final Class<? extends AbstractLoadbalancer> lbClazz = lbCache
                     .getOrDefault(lbConfig.getLbType(), RoundRobinLoadbalancer.class);

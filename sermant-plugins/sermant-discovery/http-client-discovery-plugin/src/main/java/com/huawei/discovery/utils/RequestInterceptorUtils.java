@@ -26,11 +26,13 @@ import com.huaweicloud.sermant.core.utils.StringUtils;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -68,6 +70,29 @@ public class RequestInterceptorUtils {
         result.put(HttpConstants.HTTP_URL_SCHEME, scheme);
         result.put(HttpConstants.HTTP_URI_PATH, path);
         return result;
+    }
+
+    /**
+     * 格式化uri
+     *
+     * @param uri 目标uri
+     * @return URI
+     */
+    public static Optional<URI> formatUri(String uri) {
+        if (!isValidUrl(uri)) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new URI(uri));
+        } catch (URISyntaxException e) {
+            LOGGER.fine(String.format(Locale.ENGLISH, "%s is not valid uri!", uri));
+            return Optional.empty();
+        }
+    }
+
+    private static boolean isValidUrl(String url) {
+        final String lowerCaseUrl = url.toLowerCase(Locale.ROOT);
+        return lowerCaseUrl.startsWith("http") || lowerCaseUrl.startsWith("https");
     }
 
     /**

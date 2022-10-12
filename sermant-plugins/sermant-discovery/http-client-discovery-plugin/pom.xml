@@ -22,6 +22,7 @@
         <package.plugin.type>plugin</package.plugin.type>
         <spring-boot.version>2.3.4.RELEASE</spring-boot.version>
         <spring-cloud.version>2.2.1.RELEASE</spring-cloud.version>
+        <http.client.async.verion>4.1.5</http.client.async.verion>
     </properties>
 
     <dependencies>
@@ -60,6 +61,13 @@
             <version>${spring-cloud.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpasyncclient</artifactId>
+            <version>${http.client.async.verion}</version>
+            <scope>provided</scope>
+        </dependency>
+
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
