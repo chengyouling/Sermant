@@ -20,6 +20,7 @@ import com.huawei.discovery.utils.HttpAsyncUtils;
 
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -41,6 +42,11 @@ public class HttpAsyncClient4xHandlerInterceptorTest {
         Assert.assertNull(HttpAsyncUtils.getOrCreateContext().getHandler());
         interceptor.after(executeContext);
         Assert.assertEquals(HttpAsyncUtils.getOrCreateContext().getHandler(), target);
+    }
+
+    @After
+    public void tearDown() throws Exception {
+        HttpAsyncUtils.remove();
     }
 
     private ExecuteContext buildContext(Object target) throws NoSuchMethodException {

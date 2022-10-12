@@ -85,9 +85,7 @@ public class DefaultRetryImpl implements Retry {
             final Predicate<Object> resultPredicate = config().getResultPredicate();
             if (resultPredicate != null && resultPredicate.test(result)) {
                 final int num = invokeCount.incrementAndGet();
-                if (num >= config().getMaxRetry()) {
-                    return false;
-                } else {
+                if (num <= config().getMaxRetry()) {
                     waitToRetry();
                     return true;
                 }

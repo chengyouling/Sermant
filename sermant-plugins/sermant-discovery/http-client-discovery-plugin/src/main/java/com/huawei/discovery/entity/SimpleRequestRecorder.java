@@ -49,7 +49,7 @@ public class SimpleRequestRecorder implements Recorder {
 
     @Override
     public void beforeRequest() {
-        final long allRequest = allRequestCount.getAndIncrement();
+        final long allRequest = allRequestCount.incrementAndGet();
         if (allRequest <= 0) {
             allRequestCount.set(0);
             LOGGER.info("SimpleRequestRecorder has over the max num of long, it has been reset to 0!");
