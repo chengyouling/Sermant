@@ -94,9 +94,9 @@ public class ZkDiscoveryClient implements ServiceDiscoveryClient {
         metadata.put("sermant-discovery", "zk");
         final ZookeeperInstance zookeeperServiceInstance =
                 new ZookeeperInstance(getAddress(serviceInstance) + ":" + serviceInstance.getPort(),
-                        serviceInstance.serviceName(), metadata);
+                        serviceInstance.getServiceName(), metadata);
         instance = new org.apache.curator.x.discovery.ServiceInstance<>(
-                serviceInstance.serviceName(), id,
+                serviceInstance.getServiceName(), id,
                 getAddress(serviceInstance),
                 serviceInstance.getPort(),
                 null, zookeeperServiceInstance, System.currentTimeMillis(), ServiceType.DYNAMIC,

@@ -37,7 +37,7 @@ public interface ServiceInstance {
      *
      * @return 服务名
      */
-    String serviceName();
+    String getServiceName();
 
     /**
      * 获取域名

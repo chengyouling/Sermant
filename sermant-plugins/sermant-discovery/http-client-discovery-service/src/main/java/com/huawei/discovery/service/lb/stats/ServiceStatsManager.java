@@ -82,7 +82,7 @@ public enum ServiceStatsManager {
      * @return 获取该实例的状态数据
      */
     public InstanceStats getInstanceStats(ServiceInstance serviceInstance) {
-        final ServiceStats serviceStats = getServiceStats(serviceInstance.serviceName());
+        final ServiceStats serviceStats = getServiceStats(serviceInstance.getServiceName());
         return serviceStats.getStats(serviceInstance);
     }
 }

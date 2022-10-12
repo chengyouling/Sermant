@@ -91,7 +91,7 @@ public class DefaultServiceInstance extends HashedServiceInstance {
     }
 
     @Override
-    public String serviceName() {
+    public String getServiceName() {
         return serviceName;
     }
 
