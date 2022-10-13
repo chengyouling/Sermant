@@ -29,7 +29,7 @@ public class PlugEffectWhiteBlackConstants {
     /**
      * 监听配置key
      */
-    public static final String DYNAMIC_CONFIG_LISTENER_KEY = "sermant.plugin.discovery";
+    public static final String DYNAMIC_CONFIG_LISTENER_KEY = "sermant.plugin.registry";
 
     /**
      * 插件生效--策略

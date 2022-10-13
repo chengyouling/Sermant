@@ -43,7 +43,7 @@ public class EffectStategyDynamicConfigListener implements DynamicConfigListener
         LOGGER.log(Level.INFO, String.format(Locale.ENGLISH, "Config [%s] has been received, operator type: "
                 + "[%s], " + "content [%s] ",event.getKey(), event.getEventType(), event.getContent()));
         if (StringUtils.equalsIgnoreCase(PlugEffectWhiteBlackConstants.DYNAMIC_CONFIG_LISTENER_KEY, event.getKey())) {
-            PlugEffectStategyCache.INSTANCE.resolve(event.getContent());
+            PlugEffectStategyCache.INSTANCE.resolve(event.getEventType(), event.getContent());
         }
     }
 }

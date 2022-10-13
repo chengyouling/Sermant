@@ -23,6 +23,7 @@ import java.util.Optional;
 import com.huaweicloud.sermant.core.operation.OperationManager;
 
 import com.huaweicloud.sermant.core.operation.converter.api.YamlConverter;
+import com.huaweicloud.sermant.core.service.dynamicconfig.common.DynamicConfigEventType;
 
 /**
  * 插件生效策略缓存
@@ -44,12 +45,19 @@ public enum PlugEffectStategyCache {
     /**
      * 将动态配置放入缓存中
      *
+     * @param eventType
      * @param content
      */
-    public void resolve(String content) {
+    public void resolve(DynamicConfigEventType eventType, String content) {
         final Optional<Map<String, String>> dataMap = yamlConverter.convert(content, Map.class);
-        if (dataMap.isPresent()) {
-            caches = dataMap.get();
+        if (eventType == DynamicConfigEventType.DELETE) {
+            caches.clear();
+        } else {
+            if (dataMap.isPresent()) {
+                caches = dataMap.get();
+            } else {
+                caches.clear();
+            }
         }
     }
 
