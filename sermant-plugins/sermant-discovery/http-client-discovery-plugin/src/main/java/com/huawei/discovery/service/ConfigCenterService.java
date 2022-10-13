@@ -37,7 +37,7 @@ public class ConfigCenterService implements PluginService {
 
     /**
      * 实例化动态配置监听
-     * 
+     *
      * @param serviceName
      */
     public void init(String serviceName) {
@@ -46,7 +46,7 @@ public class ConfigCenterService implements PluginService {
         }
         if (isRun.compareAndSet(false, true)) {
             ConfigSubscriber configSubscriber = new CseGroupConfigSubscriber(
-                    serviceName, new EffectStategyDynamicConfigListener(), "serment-discovery");
+                    serviceName, new EffectStategyDynamicConfigListener(), "serment-springboot-registry");
             configSubscriber.subscribe();
         }
     }
