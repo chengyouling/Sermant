@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import com.huaweicloud.sermant.core.operation.OperationManager;
+
 import com.huaweicloud.sermant.core.operation.converter.api.YamlConverter;
 
 /**
@@ -36,12 +37,13 @@ public enum PlugEffectStategyCache {
      */
     INSTANCE;
 
-    private Map<String, String> caches = new HashMap<String, String>();
+    private Map<String, String> caches = new HashMap<>();
 
     private final YamlConverter yamlConverter = OperationManager.getOperation(YamlConverter.class);
 
     /**
      * 将动态配置放入缓存中
+     *
      * @param content
      */
     public void resolve(String content) {
@@ -53,8 +55,9 @@ public enum PlugEffectStategyCache {
 
     /**
      * 获取对应key的配置
+     *
      * @param key
-     * @return
+     * @return 动态配置值
      */
     public String getConfigContent(String key) {
         return caches.get(key);

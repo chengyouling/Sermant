@@ -24,17 +24,18 @@ import java.util.logging.Logger;
 
 import org.apache.http.HttpStatus;
 
-import com.huawei.discovery.entity.Recorder;
 import com.huawei.discovery.entity.ServiceInstance;
-import com.huawei.discovery.entity.SimpleRequestRecorder;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
 import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
+
 import com.huaweicloud.sermant.core.common.LoggerFactory;
+
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
+
 import com.squareup.okhttp.HttpUrl;
 import com.squareup.okhttp.Protocol;
 import com.squareup.okhttp.Request;
@@ -61,7 +62,8 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
         URI uri = request.uri();
         final String method = request.method();
         Map<String, String> hostAndPath = RequestInterceptorUtils.recoverHostAndPath(uri.getPath());
-        if (PlugEffectWhiteBlackUtils.isNotAllowRun(uri.getHost(), hostAndPath.get(HttpConstants.HTTP_URI_HOST), true)) {
+        if (!PlugEffectWhiteBlackUtils.isAllowRun(uri.getHost(), hostAndPath.get(HttpConstants.HTTP_URI_HOST),
+            true)) {
             return context;
         }
         RequestInterceptorUtils.printRequestLog("OkHttp", hostAndPath);
@@ -78,14 +80,17 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
         return ex -> buildErrorResponse(ex, rebuildRequest.get());
     }
 
-    private Function<InvokerContext, Object> buildInvokerFunc(URI uri, Map<String, String> hostAndPath, Request request,
-            String method, AtomicReference<Request> rebuildRequest, ExecuteContext context){
+    private Function<InvokerContext, Object> buildInvokerFunc(URI uri, Map<String, String> hostAndPath,
+            Request request, String method, AtomicReference<Request> rebuildRequest, ExecuteContext context){
         return invokerContext -> {
             Request newRequest = covertRequest(uri, hostAndPath, request, method, invokerContext.getServiceInstance());
             rebuildRequest.set(newRequest);
             try {
                 context.setRawMemberFieldValue("originalRequest", newRequest);
-            } catch (Exception e) {
+            } catch (NoSuchFieldException e) {
+                LOGGER.warning("setRawMemberFieldValue originalRequest failed");
+                return context;
+            } catch (IllegalAccessException e) {
                 LOGGER.warning("setRawMemberFieldValue originalRequest failed");
                 return context;
             }
@@ -106,8 +111,9 @@ public class OkHttpClientInterceptor extends MarkInterceptor {
 
     /**
      * 构建okHttp响应
+     *
      * @param ex
-     * @return
+     * @return 响应
      */
     private Response buildErrorResponse(Exception ex, Request request) {
         Response.Builder builder = new Builder();

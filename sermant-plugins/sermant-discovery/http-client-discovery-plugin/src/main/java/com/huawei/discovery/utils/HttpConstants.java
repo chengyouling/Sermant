@@ -27,6 +27,8 @@ import java.util.Date;
  */
 public class HttpConstants {
 
+    private HttpConstants() {}
+
     /**
      * 主机名
      */
@@ -70,13 +72,13 @@ public class HttpConstants {
     /**
      * 时间格式
      */
-    public static final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     /**
      * 获取当前时间
-     * @return
+     * @return 时间
      */
     public static String currentTime() {
-        return simpleDateFormat.format(new Date());
+        return SIMPLE_DATE_FORMAT.format(new Date());
     }
 }

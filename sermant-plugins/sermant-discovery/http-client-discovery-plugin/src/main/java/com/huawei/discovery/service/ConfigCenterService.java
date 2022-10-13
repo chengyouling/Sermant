@@ -19,6 +19,7 @@ package com.huawei.discovery.service;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.huawei.discovery.config.EffectStategyDynamicConfigListener;
+
 import com.huaweicloud.sermant.core.plugin.service.PluginService;
 import com.huaweicloud.sermant.core.plugin.subscribe.ConfigSubscriber;
 import com.huaweicloud.sermant.core.plugin.subscribe.CseGroupConfigSubscriber;
@@ -36,6 +37,7 @@ public class ConfigCenterService implements PluginService {
 
     /**
      * 实例化动态配置监听
+     * 
      * @param serviceName
      */
     public void init(String serviceName) {
