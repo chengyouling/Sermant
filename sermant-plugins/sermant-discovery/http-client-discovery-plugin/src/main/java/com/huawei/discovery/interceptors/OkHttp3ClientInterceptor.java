@@ -16,14 +16,6 @@
 
 package com.huawei.discovery.interceptors;
 
-import java.net.URI;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
-import java.util.logging.Logger;
-
-import org.apache.http.HttpStatus;
-
 import com.huawei.discovery.entity.ServiceInstance;
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
@@ -32,7 +24,6 @@ import com.huawei.discovery.utils.PlugEffectWhiteBlackUtils;
 import com.huawei.discovery.utils.RequestInterceptorUtils;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
-
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 
@@ -41,6 +32,14 @@ import okhttp3.Protocol;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.Response.Builder;
+
+import org.apache.http.HttpStatus;
+
+import java.net.URI;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
+import java.util.logging.Logger;
 
 /**
  * 针对okHttp3.x版本以上的拦截

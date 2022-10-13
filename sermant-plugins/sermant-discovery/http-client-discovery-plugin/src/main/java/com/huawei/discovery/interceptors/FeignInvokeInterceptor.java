@@ -16,11 +16,6 @@
 
 package com.huawei.discovery.interceptors;
 
-import java.util.Map;
-import java.util.function.Function;
-
-import org.apache.http.HttpStatus;
-
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
@@ -32,6 +27,11 @@ import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 
 import feign.Request;
 import feign.Response;
+
+import org.apache.http.HttpStatus;
+
+import java.util.Map;
+import java.util.function.Function;
 
 /**
  * 拦截获取服务列表

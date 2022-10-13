@@ -24,8 +24,6 @@ package com.huawei.discovery.config;
  */
 public class PlugEffectWhiteBlackConstants {
 
-    private PlugEffectWhiteBlackConstants() {}
-
     /**
      * 监听配置key
      */
@@ -61,4 +59,8 @@ public class PlugEffectWhiteBlackConstants {
      */
     public static final String STRATEGY_BLACK = "black";
 
+
+    private PlugEffectWhiteBlackConstants() {
+
+    }
 }

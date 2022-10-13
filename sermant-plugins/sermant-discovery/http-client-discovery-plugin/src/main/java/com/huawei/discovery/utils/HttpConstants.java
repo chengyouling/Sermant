@@ -27,7 +27,10 @@ import java.util.Date;
  */
 public class HttpConstants {
 
-    private HttpConstants() {}
+    /**
+     * get请求
+     */
+    public static final String HTTP_GET = "GET";
 
     /**
      * 主机名
@@ -38,11 +41,6 @@ public class HttpConstants {
      * 路径
      */
     public static final String HTTP_URI_PATH = "path";
-
-    /**
-     * get请求
-     */
-    public static final String HTTP_GET = "GET";
 
     /**
      * 双斜杠
@@ -74,8 +72,15 @@ public class HttpConstants {
      */
     public static final SimpleDateFormat SIMPLE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+
+    private HttpConstants() {
+
+    }
+
     /**
+     *
      * 获取当前时间
+     *
      * @return 时间
      */
     public static String currentTime() {

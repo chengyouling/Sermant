@@ -16,19 +16,6 @@
 
 package com.huawei.discovery.interceptors;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpResponse;
-
 import com.huawei.discovery.retry.InvokerContext;
 import com.huawei.discovery.service.InvokerService;
 import com.huawei.discovery.utils.HttpConstants;
@@ -37,6 +24,19 @@ import com.huawei.discovery.utils.RequestInterceptorUtils;
 
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
+
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.client.ClientHttpResponse;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * 拦截获取服务列表

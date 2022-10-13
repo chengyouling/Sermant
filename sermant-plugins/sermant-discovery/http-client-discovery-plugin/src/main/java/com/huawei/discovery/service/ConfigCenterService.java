@@ -16,14 +16,14 @@
 
 package com.huawei.discovery.service;
 
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import com.huawei.discovery.config.EffectStategyDynamicConfigListener;
 
 import com.huaweicloud.sermant.core.plugin.service.PluginService;
 import com.huaweicloud.sermant.core.plugin.subscribe.ConfigSubscriber;
 import com.huaweicloud.sermant.core.plugin.subscribe.CseGroupConfigSubscriber;
 import com.huaweicloud.sermant.core.utils.StringUtils;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 插件生效动态配置服务

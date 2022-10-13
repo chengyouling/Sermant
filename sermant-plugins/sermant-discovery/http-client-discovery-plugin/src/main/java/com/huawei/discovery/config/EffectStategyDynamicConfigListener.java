@@ -16,17 +16,16 @@
 
 package com.huawei.discovery.config;
 
-import java.util.Locale;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
 import com.huawei.discovery.entity.PlugEffectStategyCache;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
-
 import com.huaweicloud.sermant.core.service.dynamicconfig.common.DynamicConfigEvent;
 import com.huaweicloud.sermant.core.service.dynamicconfig.common.DynamicConfigListener;
 import com.huaweicloud.sermant.core.utils.StringUtils;
+
+import java.util.Locale;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * 插件生效规则同步监听器

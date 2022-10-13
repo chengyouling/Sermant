@@ -16,14 +16,14 @@
 
 package com.huawei.discovery.utils;
 
+import com.huaweicloud.sermant.core.common.LoggerFactory;
+
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.logging.Logger;
-
-import com.huaweicloud.sermant.core.common.LoggerFactory;
 
 /**
  * 获取当前主机ip地址
@@ -70,7 +70,8 @@ public class HostIpAddressUtils {
             }
 
             // 如果出去loopback回环地之外无其它地址了，那就InetAddress直接获取
-            return candidateAddress == null ? InetAddress.getLocalHost().getHostAddress() : candidateAddress.getHostAddress();
+            return candidateAddress == null ? InetAddress.getLocalHost().getHostAddress()
+                    : candidateAddress.getHostAddress();
         } catch (UnknownHostException e) {
             LOGGER.warning("get host address error");
         }

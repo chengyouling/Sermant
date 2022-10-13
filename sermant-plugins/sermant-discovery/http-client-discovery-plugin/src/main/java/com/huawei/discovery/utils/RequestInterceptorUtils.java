@@ -47,7 +47,9 @@ public class RequestInterceptorUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private RequestInterceptorUtils() {}
+    private RequestInterceptorUtils() {
+
+    }
 
     /**
      * 解析url参数信息 http://gateway.com.cn/serviceName/sayHell?name=1
@@ -138,7 +140,7 @@ public class RequestInterceptorUtils {
                 LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "invoke method [%s] failed",
                         context.getMethod().getName()), e);
             }
-            return null;
+            return Optional.empty();
         };
     }
 

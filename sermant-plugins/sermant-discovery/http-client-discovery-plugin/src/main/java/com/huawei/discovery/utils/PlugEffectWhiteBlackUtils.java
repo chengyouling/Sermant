@@ -16,6 +16,11 @@
 
 package com.huawei.discovery.utils;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
 import com.huawei.discovery.config.DiscoveryPluginConfig;
 import com.huawei.discovery.config.PlugEffectWhiteBlackConstants;
 import com.huawei.discovery.entity.PlugEffectStategyCache;
@@ -58,21 +63,24 @@ public class PlugEffectWhiteBlackUtils {
         if (StringUtils.equalsIgnoreCase(PlugEffectWhiteBlackConstants.STRATEGY_NONE, strategy)) {
             return false;
         }
+        List<String> serviceNames = Optional.ofNullable(value).map(str -> Arrays.asList(str.split(COMMA)))
+                .orElseGet(Collections::emptyList);
 
         // 白名单-插件生效
         if (StringUtils.equalsIgnoreCase(PlugEffectWhiteBlackConstants.STRATEGY_WHITE, strategy)) {
-            if (value.contains(serviceName)) {
-                return true;
-            } else {
-                return false;
-            }
+            return checkServiceName(serviceName, serviceNames);
         }
 
         // 黑名单-插件不生效
         if (StringUtils.equalsIgnoreCase(PlugEffectWhiteBlackConstants.STRATEGY_BLACK, strategy)) {
-            if (value.contains(serviceName)) {
-                return false;
-            } else {
+            return !checkServiceName(serviceName, serviceNames);
+        }
+        return false;
+    }
+
+    private static boolean checkServiceName(String serviceName, List<String> serviceNames) {
+        for (String name : serviceNames) {
+            if (StringUtils.equalsIgnoreCase(serviceName, name)) {
                 return true;
             }
         }
