@@ -24,8 +24,6 @@ import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 
-import org.springframework.core.io.support.SpringFactoriesLoader;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,31 +43,13 @@ public class SpringFactoriesVolvoInterceptor extends RegisterSwitchSupport {
 
     private static final String VOLVO_RETRY_AUTOCONFIGURE = "wiki.xsx.core.config.ConsulRetryAutoConfiguration";
 
-    private volatile Boolean hasMethodLoadSpringFactories;
-
     @Override
     public ExecuteContext doAfter(ExecuteContext context) {
-        if (isHasMethodLoadSpringFactories()) {
-            Object result = context.getResult();
-            if (result instanceof Map) {
-                injectConfigurations((Map<String, List<String>>)result);
-            }
+        Object result = context.getResult();
+        if (result instanceof Map) {
+            injectConfigurations((Map<String, List<String>>)result);
         }
         return context;
-    }
-
-    private boolean isHasMethodLoadSpringFactories() {
-        if (hasMethodLoadSpringFactories == null) {
-            try {
-                SpringFactoriesLoader.class.getDeclaredMethod("loadSpringFactories", ClassLoader.class);
-                hasMethodLoadSpringFactories = Boolean.TRUE;
-            } catch (NoSuchMethodException ex) {
-                LoggerFactory.getLogger().fine(
-                        "It is low version spring framework, class will be injected by loadFactoryNames");
-                hasMethodLoadSpringFactories = Boolean.FALSE;
-            }
-        }
-        return hasMethodLoadSpringFactories;
     }
 
     private void injectConfigurations(Map<String, List<String>> result) {
