@@ -42,3 +42,6 @@ com.huawei.registry.grace.declarers.SpringCacheManagerDeclarer
 com.huawei.registry.grace.declarers.SpringLoadbalancerFeignResponseDeclarer
 com.huawei.registry.grace.declarers.SpringLoadbalancerRestTemplateResponseDeclarer
 com.huawei.registry.grace.declarers.SpringZuulResponseDeclarer
+
+# special
+com.huawei.registry.declarers.SpringFactoriesVovDeclarer

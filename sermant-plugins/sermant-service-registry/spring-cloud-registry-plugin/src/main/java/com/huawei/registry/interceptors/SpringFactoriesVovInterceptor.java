@@ -30,12 +30,12 @@ import java.util.Map;
 import java.util.logging.Logger;
 
 /**
- * 拦截loadFactories注入自定义配置源
+ * 定制化处理
  *
- * @author zhouss
- * @since 2022-04-08
+ * @author chengyouling
+ * @since 2022-12-21
  */
-public class SpringFactoriesVolvoInterceptor extends RegisterSwitchSupport {
+public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
     private static final String SPRING_BOOT_AUTOCONFIGURE =
