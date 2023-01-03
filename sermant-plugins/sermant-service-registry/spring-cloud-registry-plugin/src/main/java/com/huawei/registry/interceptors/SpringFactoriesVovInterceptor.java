@@ -18,6 +18,7 @@
 package com.huawei.registry.interceptors;
 
 import com.huawei.registry.config.GraceConfig;
+import com.huawei.registry.config.RegisterConfig;
 import com.huawei.registry.support.RegisterSwitchSupport;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
@@ -45,8 +46,9 @@ public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
 
     @Override
     public ExecuteContext doAfter(ExecuteContext context) {
+        final RegisterConfig registerConfig = PluginConfigManager.getPluginConfig(RegisterConfig.class);
         Object result = context.getResult();
-        if (result instanceof Map) {
+        if (!registerConfig.isOpenMigration() && result instanceof Map) {
             injectConfigurations((Map<String, List<String>>)result);
         }
         return context;
