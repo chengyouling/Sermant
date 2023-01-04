@@ -46,9 +46,8 @@ public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
 
     @Override
     public ExecuteContext doAfter(ExecuteContext context) {
-        final RegisterConfig registerConfig = PluginConfigManager.getPluginConfig(RegisterConfig.class);
         Object result = context.getResult();
-        if (registerConfig.isEnableSpringRegister() && !registerConfig.isOpenMigration() && result instanceof Map) {
+        if (result instanceof Map) {
             injectConfigurations((Map<String, List<String>>)result);
         }
         return context;

@@ -19,7 +19,6 @@ package com.huawei.registry.declarers;
 
 import com.huawei.registry.interceptors.SpringFactoriesVovInterceptor;
 
-import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
@@ -30,7 +29,7 @@ import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
  * @author chengyouling
  * @since 2022-12-21
  */
-public class SpringFactoriesVovDeclarer extends AbstractPluginDeclarer {
+public class SpringFactoriesVovDeclarer extends AbstractBaseConfigDeclarer {
     private static final String ENHANCE_CLASS = "org.springframework.core.io.support.SpringFactoriesLoader";
 
     private static final String INTERCEPTOR_CLASS = SpringFactoriesVovInterceptor.class.getCanonicalName();
@@ -46,5 +45,10 @@ public class SpringFactoriesVovDeclarer extends AbstractPluginDeclarer {
             InterceptDeclarer.build(MethodMatcher.nameContains("loadSpringFactories", "loadFactoryNames"),
                     INTERCEPTOR_CLASS)
         };
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isEnableSpringRegistry();
     }
 }
