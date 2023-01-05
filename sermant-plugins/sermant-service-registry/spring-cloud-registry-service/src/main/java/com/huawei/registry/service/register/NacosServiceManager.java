@@ -51,11 +51,9 @@ public class NacosServiceManager {
 
     /**
      * 构造方法
-     *
-     * @param nacosRegisterConfig nacos配置信息
      */
-    public NacosServiceManager(NacosRegisterConfig nacosRegisterConfig) {
-        this.nacosRegisterConfig = nacosRegisterConfig;
+    public NacosServiceManager() {
+        nacosRegisterConfig = PluginConfigManager.getPluginConfig(NacosRegisterConfig.class);
         commonConfig = PluginConfigManager.getPluginConfig(RegisterServiceCommonConfig.class);
     }
 
@@ -131,7 +129,6 @@ public class NacosServiceManager {
         }
         instance.setMetadata(metadata);
         instance.setEphemeral(nacosRegisterConfig.isEphemeral());
-        nacosRegisterConfig.setMetadata(metadata);
         return instance;
     }
 }

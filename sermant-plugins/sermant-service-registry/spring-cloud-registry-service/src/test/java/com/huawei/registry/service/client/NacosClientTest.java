@@ -72,7 +72,7 @@ public class NacosClientTest {
                 .thenReturn(commonConfig);
         RegisterContext.INSTANCE.getClientInfo().setServiceId("test");
         nacosClient = new NacosClient();
-        nacosServiceManager = new NacosServiceManager(registerConfig);
+        nacosServiceManager = new NacosServiceManager();
         Map<String, String> map = new HashMap<>();
         map.put("foo", "123");
         RegisterContext.INSTANCE.getClientInfo().setMeta(map);
