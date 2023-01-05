@@ -100,4 +100,9 @@ public class ServicecombServiceInstance implements MicroServiceInstance {
     public Map<String, String> getMetadata() {
         return microserviceInstance.getProperties();
     }
+
+    @Override
+    public boolean isSecure() {
+        return false;
+    }
 }

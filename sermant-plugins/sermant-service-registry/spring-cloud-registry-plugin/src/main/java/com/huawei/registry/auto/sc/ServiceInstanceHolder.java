@@ -91,4 +91,9 @@ public class ServiceInstanceHolder implements MicroServiceInstance {
     public Map<String, String> getMetadata() {
         return this.metadata;
     }
+
+    @Override
+    public boolean isSecure() {
+        return false;
+    }
 }
