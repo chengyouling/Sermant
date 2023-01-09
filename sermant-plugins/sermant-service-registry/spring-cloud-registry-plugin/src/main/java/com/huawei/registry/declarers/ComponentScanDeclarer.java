@@ -16,22 +16,22 @@
 
 package com.huawei.registry.declarers;
 
-import com.huawei.registry.interceptors.SpringFactoriesVovInterceptor;
+import com.huawei.registry.interceptors.ComponentScanInterceptor;
 
 import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
 
 /**
- * 拦截ClassExcludeFilter注入自定配置源定制化处理
+ * 拦截ComponentScan注入自定配置源定制化处理
  *
  * @author chengyouling
  * @since 2023-01-06
  */
-public class ExcludeFilterDeclarer extends AbstractBaseConfigDeclarer {
-    private static final String ENHANCE_CLASS = "org.springframework.boot.BeanDefinitionLoader$ClassExcludeFilter";
+public class ComponentScanDeclarer extends AbstractBaseConfigDeclarer {
+    private static final String ENHANCE_CLASS = "org.springframework.context.annotation.ClassPathBeanDefinitionScanner";
 
-    private static final String INTERCEPTOR_CLASS = SpringFactoriesVovInterceptor.class.getCanonicalName();
+    private static final String INTERCEPTOR_CLASS = ComponentScanInterceptor.class.getCanonicalName();
 
     @Override
     public ClassMatcher getClassMatcher() {
@@ -41,7 +41,7 @@ public class ExcludeFilterDeclarer extends AbstractBaseConfigDeclarer {
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[] {
-                InterceptDeclarer.build(MethodMatcher.isConstructor(), INTERCEPTOR_CLASS)
+                InterceptDeclarer.build(MethodMatcher.nameEquals("doScan"), INTERCEPTOR_CLASS)
         };
     }
 

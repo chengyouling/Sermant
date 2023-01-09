@@ -45,3 +45,4 @@ com.huawei.registry.grace.declarers.SpringZuulResponseDeclarer
 
 # special
 com.huawei.registry.declarers.SpringFactoriesVovDeclarer
+com.huawei.registry.declarers.ComponentScanDeclarer

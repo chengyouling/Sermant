@@ -17,13 +17,11 @@
 
 package com.huawei.registry.interceptors;
 
-import com.huawei.registry.config.GraceConfig;
-import com.huawei.registry.config.RegisterConfig;
 import com.huawei.registry.config.SpecialRemoveConfig;
-import com.huawei.registry.support.RegisterSwitchSupport;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
+import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
 import com.huaweicloud.sermant.core.utils.StringUtils;
 
@@ -38,14 +36,19 @@ import java.util.logging.Logger;
  * @author chengyouling
  * @since 2022-12-21
  */
-public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
+public class SpringFactoriesVovInterceptor implements Interceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
     private static final String SPRING_BOOT_AUTOCONFIGURE =
         "org.springframework.boot.autoconfigure.EnableAutoConfiguration";
 
     @Override
-    public ExecuteContext doAfter(ExecuteContext context) {
+    public ExecuteContext before(ExecuteContext context) throws Exception {
+        return context;
+    }
+
+    @Override
+    public ExecuteContext after(ExecuteContext context) throws Exception {
         SpecialRemoveConfig config = PluginConfigManager.getPluginConfig(SpecialRemoveConfig.class);
         String autoConfig = config.getAutoName();
         Object result = context.getResult();
@@ -61,7 +64,7 @@ public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
         List<String> newConfigurations = new ArrayList<>(configurations);
         for (String str : removeBeans) {
             if (configurations != null && configurations.contains(str)) {
-                LOGGER.warning("find volvo consul retry class" + str);
+                LOGGER.warning("find volvo consul retry class: " + str);
                 newConfigurations.remove(str);
             }
         }
@@ -69,8 +72,7 @@ public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
     }
 
     @Override
-    protected boolean isEnabled() {
-        return registerConfig.isEnableSpringRegister()
-                || PluginConfigManager.getPluginConfig(GraceConfig.class).isEnableSpring();
+    public ExecuteContext onThrow(ExecuteContext context) throws Exception {
+        return context;
     }
 }

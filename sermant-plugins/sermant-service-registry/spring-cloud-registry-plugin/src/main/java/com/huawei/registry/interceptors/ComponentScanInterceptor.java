@@ -16,40 +16,45 @@
 
 package com.huawei.registry.interceptors;
 
-import java.util.Set;
-
 import com.huawei.registry.config.SpecialRemoveConfig;
+
+import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.Interceptor;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
-import com.huaweicloud.sermant.core.utils.ReflectUtils;
-import com.huaweicloud.sermant.core.utils.StringUtils;
+
+import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.core.type.filter.AssignableTypeFilter;
+
+import java.util.logging.Logger;
 
 /**
- * 拦截ClassExcludeFilter注入自定配置源定制化处理
+ * 拦截ComponentScan注入自定配置源定制化处理
  *
  * @author chengyouling
  * @since 2023-01-06
  */
-public class ExcludeFilterInterceptor implements Interceptor {
+public class ComponentScanInterceptor implements Interceptor {
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
     @Override
-    public ExecuteContext before(ExecuteContext context) throws Exception {
+    public ExecuteContext before(ExecuteContext context) {
+        ClassPathBeanDefinitionScanner scanner = (ClassPathBeanDefinitionScanner) context.getObject();
+        SpecialRemoveConfig config = PluginConfigManager.getPluginConfig(SpecialRemoveConfig.class);
+        String[] componentBean = config.getComponentName().split(",");
+        for (String className : componentBean) {
+            try {
+                Class<?> clazz = Class.forName(className);
+                scanner.addExcludeFilter(new AssignableTypeFilter(clazz));
+            } catch (ClassNotFoundException e) {
+                LOGGER.warning("ComponentScanInterceptor can not find class: " + className);
+            }
+        }
         return context;
     }
 
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
-        Object object = context.getObject();
-        Set<String> set = (Set<String>)ReflectUtils.getFieldValue(object, "classNames").get();
-        SpecialRemoveConfig config = PluginConfigManager.getPluginConfig(SpecialRemoveConfig.class);
-        String componentBean = config.getComponentName();
-        if (!StringUtils.isEmpty(componentBean)) {
-            String[] names = componentBean.split(",");
-            for (String name : names) {
-                set.add(name);
-            }
-        }
-        ReflectUtils.setFieldValue(object, "classNames", set);
         return context;
     }
 
