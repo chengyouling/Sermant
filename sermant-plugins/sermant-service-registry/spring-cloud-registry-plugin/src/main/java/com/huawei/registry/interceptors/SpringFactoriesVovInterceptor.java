@@ -19,11 +19,13 @@ package com.huawei.registry.interceptors;
 
 import com.huawei.registry.config.GraceConfig;
 import com.huawei.registry.config.RegisterConfig;
+import com.huawei.registry.config.SpecialRemoveConfig;
 import com.huawei.registry.support.RegisterSwitchSupport;
 
 import com.huaweicloud.sermant.core.common.LoggerFactory;
 import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.config.PluginConfigManager;
+import com.huaweicloud.sermant.core.utils.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,25 +44,28 @@ public class SpringFactoriesVovInterceptor extends RegisterSwitchSupport {
     private static final String SPRING_BOOT_AUTOCONFIGURE =
         "org.springframework.boot.autoconfigure.EnableAutoConfiguration";
 
-    private static final String VOLVO_RETRY_AUTOCONFIGURE = "wiki.xsx.core.config.ConsulRetryAutoConfiguration";
-
     @Override
     public ExecuteContext doAfter(ExecuteContext context) {
+        SpecialRemoveConfig config = PluginConfigManager.getPluginConfig(SpecialRemoveConfig.class);
+        String autoConfig = config.getAutoName();
         Object result = context.getResult();
-        if (result instanceof Map) {
-            injectConfigurations((Map<String, List<String>>)result);
+        if (!StringUtils.isEmpty(autoConfig) && result instanceof Map) {
+            injectConfigurations((Map<String, List<String>>)result, autoConfig);
         }
         return context;
     }
 
-    private void injectConfigurations(Map<String, List<String>> result) {
+    private void injectConfigurations(Map<String, List<String>> result, String autoConfig) {
         List<String> configurations = result.get(SPRING_BOOT_AUTOCONFIGURE);
-        if (configurations != null && configurations.contains(VOLVO_RETRY_AUTOCONFIGURE)) {
-            LOGGER.warning("find volvo consul retry class");
-            List<String> newConfigurations = new ArrayList<>(configurations);
-            newConfigurations.remove(VOLVO_RETRY_AUTOCONFIGURE);
-            result.put(SPRING_BOOT_AUTOCONFIGURE, newConfigurations);
+        String[] removeBeans = autoConfig.split(",");
+        List<String> newConfigurations = new ArrayList<>(configurations);
+        for (String str : removeBeans) {
+            if (configurations != null && configurations.contains(str)) {
+                LOGGER.warning("find volvo consul retry class" + str);
+                newConfigurations.remove(str);
+            }
         }
+        result.put(SPRING_BOOT_AUTOCONFIGURE, newConfigurations);
     }
 
     @Override

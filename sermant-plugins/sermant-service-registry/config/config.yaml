@@ -27,3 +27,6 @@ nacos.service:
   weight: 1 # 服务实例权重值
   clusterName: DEFAULT # 集群名称
   ephemeral: true # 是否是临时节点，true为是，false为否
+remove.bean:
+  autoName: "" # wiki.xsx.core.config.ConsulRetryAutoConfiguration,com.volvo.retry.config.ConsulRetryAutoConfiguration
+  componentName: "" # com.volvo.cms.customer.ZookeeperEventListener
