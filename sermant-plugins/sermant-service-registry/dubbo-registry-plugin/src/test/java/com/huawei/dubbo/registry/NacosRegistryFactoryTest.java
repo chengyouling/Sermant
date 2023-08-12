@@ -76,6 +76,11 @@ public class NacosRegistryFactoryTest {
             public boolean isAvailable() {
                 return true;
             }
+
+            @Override
+            public boolean exists(Object url) {
+                return true;
+            }
         });
     }
 

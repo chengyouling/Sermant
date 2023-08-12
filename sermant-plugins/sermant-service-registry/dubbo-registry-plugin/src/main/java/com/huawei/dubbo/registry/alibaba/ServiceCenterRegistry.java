@@ -20,6 +20,7 @@ import com.huawei.dubbo.registry.service.RegistryService;
 
 import com.huaweicloud.sermant.core.service.ServiceManager;
 
+import com.alibaba.dubbo.common.URL;
 import com.alibaba.dubbo.registry.NotifyListener;
 import com.alibaba.dubbo.registry.support.FailbackRegistry;
 
@@ -64,6 +65,16 @@ public class ServiceCenterRegistry extends FailbackRegistry {
 
     @Override
     public boolean isAvailable() {
+        return true;
+    }
+
+    /**
+     * 判断是否已注册
+     *
+     * @param url
+     * @return 服务是否注册
+     */
+    public boolean exists(URL url) {
         return true;
     }
 }

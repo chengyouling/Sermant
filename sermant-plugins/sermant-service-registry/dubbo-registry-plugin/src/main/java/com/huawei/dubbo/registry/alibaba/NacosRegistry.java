@@ -67,4 +67,14 @@ public class NacosRegistry extends FailbackRegistry {
     public boolean isAvailable() {
         return registryService.isAvailable();
     }
+
+    /**
+     * 判断是否已注册
+     *
+     * @param url
+     * @return 服务是否注册
+     */
+    public boolean exists(URL url) {
+        return registryService.exists(url);
+    }
 }
