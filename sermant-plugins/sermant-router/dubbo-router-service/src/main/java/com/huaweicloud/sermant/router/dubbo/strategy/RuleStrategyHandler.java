@@ -16,6 +16,8 @@
 
 package com.huaweicloud.sermant.router.dubbo.strategy;
 
+import com.huaweicloud.sermant.router.common.mapper.DefaultMapper;
+import com.huaweicloud.sermant.router.common.mapper.Dubbo3InstanceMapper;
 import com.huaweicloud.sermant.router.config.entity.Rule;
 import com.huaweicloud.sermant.router.config.strategy.RuleStrategy;
 import com.huaweicloud.sermant.router.dubbo.strategy.rule.InvokerRuleStrategy;
@@ -35,10 +37,13 @@ public enum RuleStrategyHandler {
      */
     INSTANCE;
 
-    private final RuleStrategy<Object> ruleStrategy;
+    private RuleStrategy<Object> ruleStrategy = new InvokerRuleStrategy(new DefaultMapper());
 
-    RuleStrategyHandler() {
-        this.ruleStrategy = new InvokerRuleStrategy();
+    /**
+     * 构建dubbo3.x应用注册时的metadata处理类
+     */
+    public void builedDubbo3Mapper() {
+        ruleStrategy = new InvokerRuleStrategy(new Dubbo3InstanceMapper());
     }
 
     /**

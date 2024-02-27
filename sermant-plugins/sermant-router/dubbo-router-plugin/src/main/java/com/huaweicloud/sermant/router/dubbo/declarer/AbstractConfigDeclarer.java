@@ -17,6 +17,7 @@
 package com.huaweicloud.sermant.router.dubbo.declarer;
 
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
+import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
 
 /**
  * 增强AbstractConfig类的appendParameters方法，增加路由标签

@@ -20,7 +20,7 @@ import com.huaweicloud.sermant.core.plugin.agent.entity.ExecuteContext;
 import com.huaweicloud.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
 import com.huaweicloud.sermant.core.plugin.service.PluginServiceManager;
 import com.huaweicloud.sermant.core.utils.LogUtils;
-import com.huaweicloud.sermant.router.dubbo.service.AbstractDirectoryService;
+import com.huaweicloud.sermant.router.common.service.AbstractDirectoryService;
 
 /**
  * 增强AbstractDirectory的子类的doList方法，筛选标签应用的地址
@@ -29,6 +29,7 @@ import com.huaweicloud.sermant.router.dubbo.service.AbstractDirectoryService;
  * @since 2021-06-28
  */
 public class AbstractDirectoryInterceptor extends AbstractInterceptor {
+    private static final int INDEX = 0;
     private final AbstractDirectoryService abstractDirectoryService;
 
     /**
@@ -46,7 +47,8 @@ public class AbstractDirectoryInterceptor extends AbstractInterceptor {
 
     @Override
     public ExecuteContext after(ExecuteContext context) {
-        context.changeResult(abstractDirectoryService.selectInvokers(context.getObject(), context.getArguments(),
+        Object[] arguments = context.getArguments();
+        context.changeResult(abstractDirectoryService.selectInvokers(context.getObject(), arguments[INDEX],
                 context.getResult()));
         LogUtils.printDubboRequestAfterPoint(context);
         return context;
