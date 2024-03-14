@@ -202,14 +202,11 @@ jobs:
           echo "javaVersion=8" >> $GITHUB_ENV
       - name: common operations
         uses: ./.github/actions/common/dubbo
-      - name: (dubbo lane) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
-        if: env.enableDubboLane == 'true'
-        uses: ./.github/actions/scenarios/dubbo/lane
       - name: (dubbo router) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
         if: env.enableDubboRouter == 'true'
         uses: ./.github/actions/scenarios/dubbo/router
       - name: monitor test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
-        if: env.enableMonitor == 'true'
+        if: env.enableMonitor == 'true' && matrix.dubbo-version != '3-0' && matrix.dubbo-version != '3-1' && matrix.dubbo-version != '3-2'
         uses: ./.github/actions/scenarios/dubbo/monitor
       - name: visibility test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
         if: env.enableVisibility == 'true' && matrix.dubbo-version != '3-0' && matrix.dubbo-version != '3-1' && matrix.dubbo-version != '3-2'
@@ -217,9 +214,12 @@ jobs:
       - name: (dubbo common) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
         if: env.enableDubboCommon == 'true' && matrix.dubbo-version != '3-0' && matrix.dubbo-version != '3-1' && matrix.dubbo-version != '3-2'
         uses: ./.github/actions/scenarios/dubbo/dubbo-common
-#      - name: (dubbo lane) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
-#        if: env.enableDubboLane == 'true'
-#        uses: ./.github/actions/scenarios/dubbo/lane
+      - name: (dubbo2.x lane) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
+        if: env.enableDubboLane == 'true' && matrix.dubbo-version != '3-0' && matrix.dubbo-version != '3-1' && matrix.dubbo-version != '3-2'
+        uses: ./.github/actions/scenarios/dubbo/lane
+      - name: (dubbo3.x lane) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
+        if: env.enableDubboLane == 'true' && matrix.dubbo-version == '3-0' && matrix.dubbo-version == '3-1' && matrix.dubbo-version == '3-2'
+        uses: ./.github/actions/scenarios/dubbo/lane-dubbo3
       - name: removal test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
         if: env.enableRemoval == 'true'
         uses: ./.github/actions/scenarios/dubbo/removal
