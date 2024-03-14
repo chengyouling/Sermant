@@ -18,7 +18,6 @@ package com.huaweicloud.sermant.router.dubbo.declarer;
 
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
-import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
 
 /**
  * 增强AbstractDirectory的子类的doList方法，筛选标签应用的地址

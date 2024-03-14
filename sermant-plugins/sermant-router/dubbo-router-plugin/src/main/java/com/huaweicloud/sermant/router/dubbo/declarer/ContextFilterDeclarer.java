@@ -16,8 +16,6 @@
 
 package com.huaweicloud.sermant.router.dubbo.declarer;
 
-import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
-
 /**
  * 增强ContextFilter类的invoke方法
  *

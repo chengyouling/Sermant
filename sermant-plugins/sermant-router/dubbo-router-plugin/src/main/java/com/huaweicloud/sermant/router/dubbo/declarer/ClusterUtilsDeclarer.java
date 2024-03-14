@@ -17,7 +17,6 @@
 package com.huaweicloud.sermant.router.dubbo.declarer;
 
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
-import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
 
 /**
  * 增强ClusterUtils类的mergeUrl方法
