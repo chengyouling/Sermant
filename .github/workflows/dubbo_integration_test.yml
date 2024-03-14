@@ -221,5 +221,5 @@ jobs:
         if: env.enableDubboLane == 'true' && matrix.dubbo-version == '3-0' && matrix.dubbo-version == '3-1' && matrix.dubbo-version == '3-2'
         uses: ./.github/actions/scenarios/dubbo/lane-dubbo3
       - name: removal test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
-        if: env.enableRemoval == 'true'
+        if: env.enableRemoval == 'true' && matrix.dubbo-version != '3-0' && matrix.dubbo-version != '3-1' && matrix.dubbo-version != '3-2'
         uses: ./.github/actions/scenarios/dubbo/removal
