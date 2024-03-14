@@ -1,0 +1,300 @@
+name: "Dubbo Router Test"
+description: "Auto test for dubbo route for plugin sermant-router"
+runs:
+  using: "composite"
+  steps:
+    - name: entry
+      uses: ./.github/actions/common/entry
+      with:
+        log-dir: ./logs/dubbo-router
+    - name: package dubbo 3.0.x tests
+      shell: bash
+      if: matrix.dubbo-version == '3-0'
+      run: mvn package -Ddubbo.version=3.0.${{ matrix.dubbo-versions }} -DskipTests --file sermant-integration-tests/dubbo-test/pom.xml
+    - name: package dubbo 3.1.x tests
+      shell: bash
+      if: matrix.dubbo-version == '3-1'
+      run: mvn package -Ddubbo.version=3.1.${{ matrix.dubbo-versions }} -DskipTests --file sermant-integration-tests/dubbo-test/pom.xml
+    - name: package dubbo 3.2.x tests
+      shell: bash
+      if: matrix.dubbo-version == '3-2'
+      run: mvn package -Ddubbo.version=3.2.${{ matrix.dubbo-versions }} -DskipTests --file sermant-integration-tests/dubbo-test/pom.xml
+    - name: post config to zookeeper
+      shell: bash
+      run: bash ./sermant-integration-tests/scripts/createStrategy.sh all
+    - name: post config to local-cse
+      shell: bash
+      env:
+        TEST_TYPE: router-config
+      run: mvn test --file sermant-integration-tests/dubbo-test/pom.xml
+    - name: start zookeeper provider service all
+      shell: bash
+      if: matrix.registry-model == 'all'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_VERSION: 1.0.0
+        SERVICE_META_ZONE: az1
+        SERVER_PORT: 28021
+        DUBBO_PROTOCOL_PORT: 28821
+        DUBBO_REGISTRY_MODE: all
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider.log 2>&1 &
+    - name: start zookeeper provider service interface
+      shell: bash
+      if: matrix.registry-model == 'interface'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_VERSION: 1.0.0
+        SERVICE_META_ZONE: az1
+        SERVER_PORT: 28021
+        DUBBO_PROTOCOL_PORT: 28821
+        DUBBO_REGISTRY_MODE: interface
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider.log 2>&1 &
+    - name: start zookeeper provider service instance
+      shell: bash
+      if: matrix.registry-model == 'instance'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_VERSION: 1.0.0
+        SERVICE_META_ZONE: az1
+        SERVER_PORT: 28021
+        DUBBO_PROTOCOL_PORT: 28821
+        DUBBO_REGISTRY_MODE: instance
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider.log 2>&1 &
+    - name: start second zookeeper provider service all
+      shell: bash
+      if: matrix.registry-model == 'all'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:gray
+        SERVICE_META_ZONE: az1
+        SERVICE_META_VERSION: 1.0.1
+        SERVER_PORT: 28022
+        DUBBO_PROTOCOL_PORT: 28822
+        DUBBO_REGISTRY_MODE: all
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider2.log 2>&1 &
+    - name: start second zookeeper provider service interface
+      shell: bash
+      if: matrix.registry-model == 'interface'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:gray
+        SERVICE_META_ZONE: az1
+        SERVICE_META_VERSION: 1.0.1
+        SERVER_PORT: 28022
+        DUBBO_PROTOCOL_PORT: 28822
+        DUBBO_REGISTRY_MODE: interface
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider2.log 2>&1 &
+    - name: start second zookeeper provider service instance
+      shell: bash
+      if: matrix.registry-model == 'instance'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:gray
+        SERVICE_META_ZONE: az1
+        SERVICE_META_VERSION: 1.0.1
+        SERVER_PORT: 28022
+        DUBBO_PROTOCOL_PORT: 28822
+        DUBBO_REGISTRY_MODE: instance
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider2.log 2>&1 &
+    - name: start third zookeeper provider service all
+      shell: bash
+      if: matrix.registry-model == 'all'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:red
+        SERVICE_META_ZONE: az2
+        SERVICE_META_VERSION: 1.0.1
+        SERVER_PORT: 28023
+        DUBBO_PROTOCOL_PORT: 28823
+        DUBBO_REGISTRY_MODE: all
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider3.log 2>&1 &
+    - name: start third zookeeper provider service interface
+      shell: bash
+      if: matrix.registry-model == 'interface'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:red
+        SERVICE_META_ZONE: az2
+        SERVICE_META_VERSION: 1.0.1
+        SERVER_PORT: 28023
+        DUBBO_PROTOCOL_PORT: 28823
+        DUBBO_REGISTRY_MODE: interface
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider3.log 2>&1 &
+    - name: start third zookeeper provider service instance
+      shell: bash
+      if: matrix.registry-model == 'instance'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:red
+        SERVICE_META_ZONE: az2
+        SERVICE_META_VERSION: 1.0.1
+        SERVER_PORT: 28023
+        DUBBO_PROTOCOL_PORT: 28823
+        DUBBO_REGISTRY_MODE: instance
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider3.log 2>&1 &
+    - name: waiting for zookeeper provider start
+      shell: bash
+      run: |
+        bash ./sermant-integration-tests/scripts/checkService.sh http://127.0.0.1:28021/actuator/health 120
+        bash ./sermant-integration-tests/scripts/checkService.sh http://127.0.0.1:28022/actuator/health 120
+        bash ./sermant-integration-tests/scripts/checkService.sh http://127.0.0.1:28023/actuator/health 120
+    - name: start zookeeper consumer service all
+      shell: bash
+      if: matrix.registry-model == 'all'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:gray
+        SERVICE_META_ZONE: az1
+        SERVER_PORT: 28020
+        DUBBO_PROTOCOL_PORT: 28820
+        DUBBO_REGISTRY_MODE: all
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/zookeeper-consumer.log 2>&1 &
+    - name: start zookeeper consumer service interface
+      shell: bash
+      if: matrix.registry-model == 'interface'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:gray
+        SERVICE_META_ZONE: az1
+        SERVER_PORT: 28020
+        DUBBO_PROTOCOL_PORT: 28820
+        DUBBO_REGISTRY_MODE: interface
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/zookeeper-consumer.log 2>&1 &
+    - name: start zookeeper consumer service instance
+      shell: bash
+      if: matrix.registry-model == 'instance'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVICE_META_PARAMETERS: group-test:gray
+        SERVICE_META_ZONE: az1
+        SERVER_PORT: 28020
+        DUBBO_PROTOCOL_PORT: 28820
+        DUBBO_REGISTRY_MODE: instance
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/zookeeper-consumer.log 2>&1 &
+    - name: waiting for zookeeper consumer start
+      shell: bash
+      run: |
+        bash ./sermant-integration-tests/scripts/checkService.sh http://127.0.0.1:28020/actuator/health 120
+    - name: start zookeeper controller service all
+      shell: bash
+      if: matrix.registry-model == 'all'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVER_PORT: 38019
+        DUBBO_REGISTRY_MODE: all
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-controller/target/dubbo-integration-controller.jar > ${{ env.logDir }}/cse-controller.log 2>&1 &
+    - name: start zookeeper controller service interface
+      shell: bash
+      if: matrix.registry-model == 'interface'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVER_PORT: 38019
+        DUBBO_REGISTRY_MODE: interface
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-controller/target/dubbo-integration-controller.jar > ${{ env.logDir }}/cse-controller.log 2>&1 &
+    - name: start zookeeper controller service instance
+      shell: bash
+      if: matrix.registry-model == 'instance'
+      env:
+        dynamic.config.dynamicConfigType: KIE
+        dynamic.config.serverAddress: 127.0.0.1:30110
+        SERVICE_META_ENVIRONMENT: development
+        ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
+        SERVER_PORT: 38019
+        DUBBO_REGISTRY_MODE: instance
+      run: |
+        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -jar \
+        sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-controller/target/dubbo-integration-controller.jar > ${{ env.logDir }}/cse-controller.log 2>&1 &
+    - name: waiting for zookeeper services start
+      shell: bash
+      run: |
+        bash ./sermant-integration-tests/scripts/checkService.sh http://127.0.0.1:38019/actuator/health 120
+    - name: integration test
+      shell: bash
+      env:
+        TEST_TYPE: router
+      run: mvn -Dcontroller.port=38019 test --file sermant-integration-tests/dubbo-test/pom.xml
+    - name: exit
+      if: always()
+      uses: ./.github/actions/common/exit
+      with:
+        processor-keyword: dubbo
+    - name: if failure then upload error log
+      uses: actions/upload-artifact@v3
+      if: ${{ failure() || cancelled() }}
+      with:
+        name: (test-for-dubbo-router)-(${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }})-logs
+        path: |
+          ./*.log
+          ./logs/**/*.log
+        if-no-files-found: warn
+        retention-days: 2
