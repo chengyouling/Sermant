@@ -122,16 +122,16 @@ public class LaneTest {
     public void testFeign() {
         if (isExecuteSpringTest){
             testBySpring("Feign");
+            testByDubbo("Feign");
         }
-        testByDubbo("Feign");
     }
 
     @Test
     public void testRest() {
         if (isExecuteSpringTest){
             testBySpring("Rest");
+            testByDubbo("Rest");
         }
-        testByDubbo("Rest");
     }
 
     /**

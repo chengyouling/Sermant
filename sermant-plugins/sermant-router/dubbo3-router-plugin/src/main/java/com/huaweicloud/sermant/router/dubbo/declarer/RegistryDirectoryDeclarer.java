@@ -16,8 +16,11 @@
 
 package com.huaweicloud.sermant.router.dubbo.declarer;
 
+import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
+import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
+import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
-import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
+import com.huaweicloud.sermant.router.dubbo.interceptor.RegistryDirectoryInterceptor;
 
 /**
  * dubbo3.x all注册类型，增强RegistryDirectoryDeclarer类的overrideWithConfigurator方法
@@ -25,23 +28,20 @@ import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
  * @author chengyouling
  * @since 2024-02-17
  */
-public class RegistryDirectoryDeclarer extends AbstractDeclarer {
-    private static final String[] ENHANCE_CLASS = {"org.apache.dubbo.registry.integration.RegistryDirectory"};
-
-    private static final String INTERCEPT_CLASS
-            = "com.huaweicloud.sermant.router.dubbo.interceptor.RegistryDirectoryInterceptor";
+public class RegistryDirectoryDeclarer extends AbstractPluginDeclarer {
+    private static final String ENHANCE_CLASS = "org.apache.dubbo.registry.integration.RegistryDirectory";
 
     private static final String METHOD_NAME = "mergeUrl";
 
-    /**
-     * 构造方法
-     */
-    public RegistryDirectoryDeclarer() {
-        super(ENHANCE_CLASS, INTERCEPT_CLASS, METHOD_NAME);
+    @Override
+    public ClassMatcher getClassMatcher() {
+        return ClassMatcher.nameEquals(ENHANCE_CLASS);
     }
 
     @Override
-    public MethodMatcher getMethodMatcher() {
-        return super.getMethodMatcher();
+    public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
+        return new InterceptDeclarer[]{
+                InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME), new RegistryDirectoryInterceptor())
+        };
     }
 }

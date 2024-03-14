@@ -25,7 +25,7 @@ import com.huaweicloud.sermant.router.dubbo.strategy.RuleStrategyHandler;
  * @author chengyouling
  * @since 2024-02-23
  */
-public class InvokerRuleStrategySetServiceImpl implements InvokerRuleStrategyService {
+public class InvokerRuleStrategyServiceImpl implements InvokerRuleStrategyService {
     @Override
     public void builedDubbo3RuleStrategy() {
         RuleStrategyHandler.INSTANCE.builedDubbo3Mapper();

@@ -16,9 +16,11 @@
 
 package com.huaweicloud.sermant.router.dubbo.declarer;
 
+import com.huaweicloud.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
+import com.huaweicloud.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.ClassMatcher;
 import com.huaweicloud.sermant.core.plugin.agent.matcher.MethodMatcher;
-import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
+import com.huaweicloud.sermant.router.dubbo.interceptor.Dubbo3AbstractDirectoryInterceptor;
 
 /**
  * 增强AbstractDirectory的子类的doList方法，筛选标签应用的地址
@@ -26,26 +28,23 @@ import com.huaweicloud.sermant.router.common.declarer.AbstractDeclarer;
  * @author chengyouling
  * @since 2024-02-20
  */
-public class Dubbo3AbstractDirectoryDeclarer extends AbstractDeclarer {
+public class Dubbo3AbstractDirectoryDeclarer extends AbstractPluginDeclarer {
     private static final String APACHE_ENHANCE_CLASS = "org.apache.dubbo.rpc.cluster.directory.AbstractDirectory";
-
-    private static final String INTERCEPT_CLASS
-            = "com.huaweicloud.sermant.router.dubbo.interceptor.Dubbo3AbstractDirectoryInterceptor";
 
     private static final String METHOD_NAME = "doList";
 
     private static final int PARAMETER_COUNT = 3;
 
-    /**
-     * 构造方法
-     */
-    public Dubbo3AbstractDirectoryDeclarer() {
-        super(null, INTERCEPT_CLASS, METHOD_NAME);
-    }
-
     @Override
     public ClassMatcher getClassMatcher() {
         return ClassMatcher.isExtendedFrom(APACHE_ENHANCE_CLASS);
+    }
+
+    @Override
+    public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
+        return new InterceptDeclarer[]{
+                InterceptDeclarer.build(getMethodMatcher(), new Dubbo3AbstractDirectoryInterceptor())
+        };
     }
 
     /**
@@ -53,8 +52,7 @@ public class Dubbo3AbstractDirectoryDeclarer extends AbstractDeclarer {
      *
      * @return 方法匹配器
      */
-    @Override
     public MethodMatcher getMethodMatcher() {
-        return super.getMethodMatcher().and(MethodMatcher.paramCountEquals(PARAMETER_COUNT));
+        return MethodMatcher.nameEquals(METHOD_NAME).and(MethodMatcher.paramCountEquals(PARAMETER_COUNT));
     }
 }

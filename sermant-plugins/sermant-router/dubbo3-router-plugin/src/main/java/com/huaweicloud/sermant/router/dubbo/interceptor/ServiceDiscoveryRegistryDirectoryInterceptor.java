@@ -50,7 +50,10 @@ public class ServiceDiscoveryRegistryDirectoryInterceptor extends AbstractInterc
         Object providerUrl = arguments[0];
         if (providerUrl instanceof InstanceAddressURL) {
             InstanceAddressURL url = (InstanceAddressURL) providerUrl;
-            String application = url.getInstance().getServiceName();
+            String application = "";
+            if (url.getInstance() != null) {
+                application = url.getInstance().getServiceName();
+            }
 
             // 保存接口与服务名之间的映射
             DubboCache.INSTANCE.putApplication(DubboReflectUtils.getServiceInterface(arguments[0]), application);
