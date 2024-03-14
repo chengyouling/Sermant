@@ -24,7 +24,6 @@ import org.apache.dubbo.registry.client.ServiceInstance;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * dubbo3.x注册应用类型instance模式下，获取服务端所有参数，匹配目标版本号的invoker

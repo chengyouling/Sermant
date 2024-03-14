@@ -202,12 +202,12 @@ jobs:
           echo "javaVersion=8" >> $GITHUB_ENV
       - name: common operations
         uses: ./.github/actions/common/dubbo
-      - name: (dubbo router) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
-        if: env.enableDubboRouter == 'true'
-        uses: ./.github/actions/scenarios/dubbo/router
       - name: (dubbo lane) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
         if: env.enableDubboLane == 'true'
         uses: ./.github/actions/scenarios/dubbo/lane
+      - name: (dubbo router) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
+        if: env.enableDubboRouter == 'true'
+        uses: ./.github/actions/scenarios/dubbo/router
       - name: monitor test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
         if: env.enableMonitor == 'true'
         uses: ./.github/actions/scenarios/dubbo/monitor
