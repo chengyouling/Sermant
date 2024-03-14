@@ -48,6 +48,9 @@ public class LaneTest {
 
     private final String baseUrl;
 
+    /**
+     * 增加环境变量，控制dubbo3场景暂时不测试spring场景
+     */
     private final boolean isExecuteSpringTest;
 
     /**
