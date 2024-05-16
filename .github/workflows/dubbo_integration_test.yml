@@ -192,7 +192,7 @@ jobs:
           fetch-depth: 100
       - name: set java version to environment
         run: |
-          echo "javaVersion=8" >> $GITHUB_ENV
+          echo "javaVersion=21" >> $GITHUB_ENV
       - name: common operations
         uses: ./.github/actions/common/dubbo
       - name: (dubbo3.x router) test for ${{ matrix.dubbo-version }}-${{ matrix.dubbo-versions }}
