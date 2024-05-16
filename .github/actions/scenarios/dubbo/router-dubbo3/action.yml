@@ -48,7 +48,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18821
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider.log 2>&1 &
     - name: start second dubbo3 provider service
       shell: bash
@@ -64,7 +64,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18822
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider2.log 2>&1 &
     - name: start third dubbo3 provider service
       shell: bash
@@ -80,7 +80,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18823
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-zk-provider3.log 2>&1 &
     - name: waiting for dubbo3 provider start
       shell: bash
@@ -101,7 +101,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18020
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/zookeeper-consumer.log 2>&1 &
     - name: waiting for dubbo3 consumer start
       shell: bash
@@ -116,7 +116,7 @@ runs:
         ROUTER_PLUGIN_USE_REQUEST_ROUTER: false
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-controller/target/dubbo-integration-controller.jar > ${{ env.logDir }}/cse-controller.log 2>&1 &
     - name: waiting for controller start
       shell: bash

@@ -36,7 +36,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18821
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Ddubbo.application.qos-enable=false -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Ddubbo.application.qos-enable=false -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-provider.log 2>&1 &
     - name: start second provider service
       shell: bash
@@ -50,7 +50,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18822
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Ddubbo.application.qos-enable=false -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Ddubbo.application.qos-enable=false -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/dubbo-provider2.log 2>&1 &
     - name: waiting for providers start
       shell: bash
@@ -69,7 +69,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18823
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -Dexecute.barService.getMetadata=true -Ddubbo.application.qos-enable=false -Ddubbo.application.enable-file-cache=false -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -Dexecute.barService.getMetadata=true -Ddubbo.application.qos-enable=false -Ddubbo.application.enable-file-cache=false -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/dubbo-consumer.log 2>&1 &
     - name: start second consumer service
       shell: bash
@@ -83,7 +83,7 @@ runs:
         DUBBO_PROTOCOL_PORT: 18824
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -Dexecute.barService.getMetadata=true -Ddubbo.application.qos-enable=false -Ddubbo.application.enable-file-cache=false -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -Dexecute.barService.getMetadata=true -Ddubbo.application.qos-enable=false -Ddubbo.application.enable-file-cache=false -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/dubbo-consumer2.log 2>&1 &
     - name: waiting for consumer start
       shell: bash
@@ -99,7 +99,7 @@ runs:
         SERVICE_META_APPLICATION: lane
         DUBBO_REGISTRY_MODE: ${{ matrix.registry-model }}
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -Ddubbo.application.qos-enable=false -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-controller -Ddubbo.application.qos-enable=false -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-controller/target/dubbo-integration-controller.jar > ${{ env.logDir }}/dubbo-controller.log 2>&1 &
     - name: waiting for controller start
       shell: bash
