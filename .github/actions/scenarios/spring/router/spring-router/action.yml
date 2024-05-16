@@ -30,6 +30,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: foo
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -44,6 +45,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: foo
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -58,6 +60,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: bar
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -72,6 +75,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: bar
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -85,6 +89,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: bar
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -99,6 +104,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: foo
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -113,6 +119,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: foo
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -127,6 +134,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: bar
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -141,6 +149,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: bar
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
@@ -154,6 +163,7 @@ runs:
       shell: bash
       env:
         sermant.springboot.registry.enableRegistry: true
+        sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
         SERVICE_META_ZONE: bar
         ROUTER_PLUGIN_ENABLED_REGISTRY_PLUGIN_ADAPTATION: true
