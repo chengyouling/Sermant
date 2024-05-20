@@ -22,7 +22,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.2.0.RELEASE</version>
+        <version>2.6.15</version>
         <relativePath/>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -33,7 +33,7 @@
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
         <maven.compiler.target>8</maven.compiler.target>
-        <spring.boot.version>2.2.0.RELEASE</spring.boot.version>
+        <spring.boot.version>2.6.15</spring.boot.version>
         <nacos.version>2.2.0.RELEASE</nacos.version>
         <spring.cloud.version>Hoxton.RELEASE</spring.cloud.version>
         <httpclient.async.version>4.1.4</httpclient.async.version>
