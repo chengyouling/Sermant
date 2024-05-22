@@ -31,7 +31,7 @@ runs:
         VISIBILITY_SERVICE_FLAG: true
         VISIBILITY_CONFIG_START_FLAG: true
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider  -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-provider -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-provider/target/dubbo-integration-provider.jar > ${{ env.logDir }}/visibility-provider.log 2>&1 &
     - name: start visibility consumer service
       shell: bash
@@ -41,7 +41,7 @@ runs:
         VISIBILITY_SERVICE_VERSION: 12345
         VISIBILITY_CONFIG_START_FLAG: true
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=dubbo-integration-consumer -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/dubbo-test/dubbo-${{ env.projectPath }}-integration-consumer/target/dubbo-integration-consumer.jar > ${{ env.logDir }}/visibility-consumer.log 2>&1 &
     - name: start visibility backend service
       shell: bash

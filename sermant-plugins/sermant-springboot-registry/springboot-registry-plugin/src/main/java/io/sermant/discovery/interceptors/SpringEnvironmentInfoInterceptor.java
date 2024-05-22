@@ -65,7 +65,7 @@ public class SpringEnvironmentInfoInterceptor implements Interceptor {
 
                 // There may be multiple entries here, and when entering multiple times, the latter will take precedence
                 // over the front, so just override the update
-                this.setClientInfo(applicationContext.getEnvironment(), HostIpAddressUtils.getHostAddress());
+                this.setClientInfo(applicationContext.getEnvironment(), NetUtils.getHostAddress());
             }
         }
         return context;
