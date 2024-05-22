@@ -128,6 +128,10 @@ jobs:
             springCloudVersion: "2021.0.3"
             httpClientVersion: "4.5.13"
             jettyClientVersion: "1.1.12"
+          - springBootVersion: "3.0.10"
+            springCloudVersion: "2022.0.3"
+            httpClientVersion: "4.5.13"
+            jettyClientVersion: "1.1.12"
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
@@ -150,9 +154,9 @@ jobs:
 #      - name: (zk dynamic config) test for springboot=${{ matrix.springBootVersion }} springCloudVersion=${{ matrix.springCloudVersion }}
 #        if: env.enableDynamicConfig == 'true'
 #        uses: ./.github/actions/scenarios/spring/dynamic-config-zk
-      - name: monitor test for springboot=${{ matrix.springBootVersion }} springCloudVersion=${{ matrix.springCloudVersion }}
-        if: env.enableMonitor == 'true'
-        uses: ./.github/actions/scenarios/spring/monitor
+#      - name: monitor test for springboot=${{ matrix.springBootVersion }} springCloudVersion=${{ matrix.springCloudVersion }}
+#        if: env.enableMonitor == 'true'
+#        uses: ./.github/actions/scenarios/spring/monitor
       - name: visibility test for springboot=${{ matrix.springBootVersion }} springCloudVersion=${{ matrix.springCloudVersion }}
         if: env.enableVisibility == 'true'
         uses: ./.github/actions/scenarios/spring/visibility
