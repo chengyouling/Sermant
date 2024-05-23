@@ -18,11 +18,24 @@ runs:
       shell: bash
       run: |
         echo "healthApi=actuator/health" >> $GITHUB_ENV
+    - name: 3.x config
+      if: matrix.springBootVersion == '3.0.10'
+      shell: bash
+      run: |
+        echo "tailVersion=3.x" >> $GITHUB_ENV
+        echo "healthApi=actuator/health" >> $GITHUB_ENV
     - name: package common demos
+      if: matrix.springBootVersion != '3.0.10'
       shell: bash
       run: |
         sed -i 's|<version>${{ env.projectSpringBootVersion }}</version>|<version>${{ matrix.springBootVersion }}</version>|g' sermant-integration-tests/spring-test/pom.xml
         mvn package -Dspring.cloud.version=${{ matrix.springCloudVersion }} -Dhttp.client.version=${{ matrix.httpClientVersion }} -Dspring.boot.version=${{ matrix.springBootVersion }} -DskipTests -P common-test${{ env.tailVersion }} --file sermant-integration-tests/spring-test/pom.xml
+    - name: package common3.x demos
+      if: matrix.springBootVersion == '3.0.10'
+      shell: bash
+      run: |
+        sed -i 's|<version>${{ env.projectSpringBootVersion }}</version>|<version>${{ matrix.springBootVersion }}</version>|g' sermant-integration-tests/spring-test/pom.xml
+        mvn package -DskipTests -P common-test${{ env.tailVersion }} --file sermant-integration-tests/spring-test/pom.xml
     - name: package zuul demo
       shell: bash
       if: matrix.springCloudVersion == 'Edgware.SR2' || matrix.springCloudVersion == 'Finchley.RELEASE' || matrix.springCloudVersion == 'Greenwich.RELEASE' || matrix.springCloudVersion == 'Hoxton.RELEASE'

@@ -130,8 +130,6 @@ jobs:
             jettyClientVersion: "1.1.12"
           - springBootVersion: "3.0.10"
             springCloudVersion: "2022.0.3"
-            httpClientVersion: "4.5.13"
-            jettyClientVersion: "1.1.12"
       fail-fast: false
     steps:
       - uses: actions/checkout@v3

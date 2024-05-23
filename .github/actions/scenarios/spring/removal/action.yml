@@ -18,7 +18,20 @@ runs:
       shell: bash
       run: |
         echo "healthApi=actuator/health" >> $GITHUB_ENV
+    - name: 3.x config
+      if: matrix.springBootVersion == '3.0.10'
+      shell: bash
+      run: |
+        echo "tailVersion=3.x" >> $GITHUB_ENV
+        echo "healthApi=actuator/health" >> $GITHUB_ENV
     - name: package common demos
+      if: matrix.springBootVersion != '3.0.10'
+      shell: bash
+      run: |
+        sed -i 's|<version>${{ env.projectSpringBootVersion }}</version>|<version>${{ matrix.springBootVersion }}</version>|g' sermant-integration-tests/spring-test/pom.xml
+        mvn package -Dspring.cloud.version=${{ matrix.springCloudVersion }} -Dspring.boot.version=${{ matrix.springBootVersion }} -DskipTests -P common-test${{ env.tailVersion }} --file sermant-integration-tests/spring-test/pom.xml
+    - name: package common3.x demos
+      if: matrix.springBootVersion == '3.0.10'
       shell: bash
       run: |
         sed -i 's|<version>${{ env.projectSpringBootVersion }}</version>|<version>${{ matrix.springBootVersion }}</version>|g' sermant-integration-tests/spring-test/pom.xml
@@ -35,7 +48,7 @@ runs:
         SPRING_APPLICATION_NAME: removal-provider
         TIMEOUT: 0
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-feign${{ env.tailVersion }}/feign-provider${{ env.tailVersion }}/target/feign-provider${{ env.tailVersion }}.jar > ${{ env.logDir }}/feign-provider.log 2>&1 &
     - name: start second feign provider service
       shell: bash
@@ -46,7 +59,7 @@ runs:
         SPRING_APPLICATION_NAME: removal-provider
         TIMEOUT: 0
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-feign${{ env.tailVersion }}/feign-provider${{ env.tailVersion }}/target/feign-provider${{ env.tailVersion }}.jar > ${{ env.logDir }}/feign-provider2.log 2>&1 &
     - name: start third feign provider service
       shell: bash
@@ -57,7 +70,7 @@ runs:
         SPRING_APPLICATION_NAME: removal-provider
         TIMEOUT: 2000
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-feign${{ env.tailVersion }}/feign-provider${{ env.tailVersion }}/target/feign-provider${{ env.tailVersion }}.jar > ${{ env.logDir }}/feign-provider3.log 2>&1 &
     - name: start fourth feign provider service
       shell: bash
@@ -68,7 +81,7 @@ runs:
         SPRING_APPLICATION_NAME: removal-provider
         TIMEOUT: 2000
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED  -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-feign${{ env.tailVersion }}/feign-provider${{ env.tailVersion }}/target/feign-provider${{ env.tailVersion }}.jar > ${{ env.logDir }}/feign-provider4.log 2>&1 &
     - name: start feign consumer service
       shell: bash
@@ -85,7 +98,7 @@ runs:
         SERVER_PORT: 8017
         SERMANT_SPRINGBOOT_REGISTRY_LB_MAXRETRY: 0
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-feign${{ env.tailVersion }}/feign-consumer${{ env.tailVersion }}/target/feign-consumer${{ env.tailVersion }}.jar > ${{ env.logDir }}/feign-consumer.log 2>&1 &
     - name: start resttemplate provider service
       shell: bash
@@ -94,7 +107,7 @@ runs:
         SERVER_PORT: 8018
         TIMEOUT: 0
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-resttemplate/rest-provider/target/rest-provider.jar > ${{ env.logDir }}/rest-provider.log 2>&1 &
     - name: start second resttemplate provider service
       shell: bash
@@ -103,7 +116,7 @@ runs:
         SERVER_PORT: 8019
         TIMEOUT: 0
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-resttemplate/rest-provider/target/rest-provider.jar > ${{ env.logDir }}/rest-provider2.log 2>&1 &
     - name: start third resttemplate provider service
       shell: bash
@@ -112,7 +125,7 @@ runs:
         SERVER_PORT: 8020
         TIMEOUT: 0
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-resttemplate/rest-provider/target/rest-provider.jar > ${{ env.logDir }}/rest-provider3.log 2>&1 &
     - name: start fourth resttemplate provider service
       shell: bash
@@ -121,7 +134,7 @@ runs:
         SERVER_PORT: 8021
         TIMEOUT: 2000
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-resttemplate/rest-provider/target/rest-provider.jar > ${{ env.logDir }}/rest-provider4.log 2>&1 &
     - name: start resttemplate consumer service
       shell: bash
@@ -139,7 +152,7 @@ runs:
         SERMANT_SPRINGBOOT_REGISTRY_LB_MAXRETRY: 0
         TIMEOUT: 1000
       run: |
-        nohup java -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -jar \
+        nohup java --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.net=ALL-UNNAMED --add-opens java.base/java.math=ALL-UNNAMED --add-opens java.base/sun.net.www=ALL-UNNAMED --add-opens java.base/sun.net.www.protocol.http=ALL-UNNAMED -javaagent:sermant-agent-${{ env.sermantVersion }}/agent/sermant-agent.jar=appName=default -Dnet.bytebuddy.experimental=true -jar \
         sermant-integration-tests/spring-test/spring-common-demos/spring-common-resttemplate/rest-consumer/target/rest-consumer.jar > ${{ env.logDir }}/rest-consumer.log 2>&1 &
     - name: waiting for services start
       shell: bash

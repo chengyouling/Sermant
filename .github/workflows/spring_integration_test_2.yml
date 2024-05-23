@@ -119,7 +119,6 @@ jobs:
             httpClientVersion: "4.5.13"
           - springBootVersion: "3.0.10"
             springCloudVersion: "2022.0.3"
-            httpClientVersion: "4.5.13"
       fail-fast: false
     steps:
       - uses: actions/checkout@v3
