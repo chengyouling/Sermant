@@ -33,6 +33,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public final class NetUtils {
+  private static final String LOCAL_IP = "127.0.0.1";
+
+  private static final String LOCAL_HOST = "localhost";
+
+  private static final String EMPTY_STR = "";
 
   private static final Logger LOGGER = LoggerFactory.getLogger(NetUtils.class);
 
@@ -196,5 +201,41 @@ public final class NetUtils {
     } catch (IOException e) {
       return false;
     }
+  }
+
+  public static String getMachineIp() {
+    try {
+      for (Enumeration<NetworkInterface> networkInterfaceEnumeration = NetworkInterface.getNetworkInterfaces();
+          networkInterfaceEnumeration.hasMoreElements(); ) {
+        NetworkInterface networkInterface = networkInterfaceEnumeration.nextElement();
+        String name = networkInterface.getName();
+        if (name.contains("docker") || name.contains("lo")) {
+          continue;
+        }
+        String ip = resolveNetworkIp(networkInterface);
+        if (!EMPTY_STR.equals(ip)) {
+          return ip;
+        }
+      }
+    } catch (SocketException exception) {
+      exception.printStackTrace();
+    }
+    return LOCAL_IP;
+  }
+
+  private static String resolveNetworkIp(NetworkInterface networkInterface) {
+    for (Enumeration<InetAddress> enumIpAddr = networkInterface.getInetAddresses();
+        enumIpAddr.hasMoreElements(); ) {
+      InetAddress inetAddress = enumIpAddr.nextElement();
+      if (!(inetAddress instanceof Inet4Address) || inetAddress.isLoopbackAddress()) {
+        continue;
+      }
+      String ipaddress = inetAddress.getHostAddress();
+      if (!LOCAL_IP.equals(ipaddress) && !LOCAL_HOST.equals(ipaddress)) {
+        // Take the first IP address that meets the requirements
+        return ipaddress;
+      }
+    }
+    return EMPTY_STR;
   }
 }

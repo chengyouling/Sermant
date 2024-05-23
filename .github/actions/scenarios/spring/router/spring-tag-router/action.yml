@@ -60,6 +60,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -76,6 +77,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -93,6 +95,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -110,6 +113,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -126,6 +130,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -142,6 +147,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -159,6 +165,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -176,6 +183,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -193,6 +201,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development
@@ -210,6 +219,7 @@ runs:
         sermant.springboot.registry.enableRegistry: true
         sermant.springboot.registry.lb.preferIpAddress: true
         SERVICECOMB_SERVICE_ENABLESPRINGREGISTER: true
+        servicecomb.service.preferIpAddress: true
         dynamic.config.dynamicConfigType: KIE
         dynamic.config.serverAddress: 127.0.0.1:30110
         SERVICE_META_ENVIRONMENT: development

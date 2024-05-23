@@ -17,32 +17,14 @@
 
 package io.sermant.spring.rest.consumer;
 
-import org.apache.hc.client5.http.config.RequestConfig;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
-import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
-import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
-import org.apache.hc.core5.ssl.SSLContexts;
-import org.apache.hc.core5.ssl.TrustStrategy;
-import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-
-import java.security.KeyManagementException;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-
-import javax.net.ssl.SSLContext;
 
 /**
  * 流控配置类
@@ -106,31 +88,6 @@ public class FlowcontrolConiguration {
     }
 
     private RestTemplate buildRestTemplate() {
-        RestTemplate restTemplate = null;
-        try {
-            restTemplate = new RestTemplate(buildHttpRequestFactory());
-        } catch (KeyStoreException | NoSuchAlgorithmException | KeyManagementException e) {
-            LOGGER.error("build SSL restTemplate failed!");
-        }
-        return restTemplate;
-    }
-
-    private HttpComponentsClientHttpRequestFactory buildHttpRequestFactory()
-            throws KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
-        TrustStrategy strategy = (x509Certificates, authType) -> true;
-        SSLContext sslContext = SSLContexts.custom().loadTrustMaterial(null, strategy).build();
-        SSLConnectionSocketFactory factory = new SSLConnectionSocketFactory(sslContext, new NoopHostnameVerifier());
-        RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(Timeout.ofSeconds(TIME_OUT))
-            .setConnectionRequestTimeout(Timeout.ofSeconds(30))
-            .setConnectionRequestTimeout(Timeout.ofSeconds(TIME_OUT)).build();
-        HttpClientBuilder httpClientBuilder = HttpClients.custom();
-        httpClientBuilder.setDefaultRequestConfig(requestConfig);
-        httpClientBuilder.setConnectionManager(
-            PoolingHttpClientConnectionManagerBuilder.create().setSSLSocketFactory(factory).build());
-        CloseableHttpClient httpClient = httpClientBuilder.build();
-        HttpComponentsClientHttpRequestFactory requestFactory = new HttpComponentsClientHttpRequestFactory();
-        requestFactory.setHttpClient(httpClient);
-        return requestFactory;
+        return new RestTemplate();
     }
 }
