@@ -91,6 +91,13 @@
             </modules>
         </profile>
         <profile>
+            <id>common-test3.x</id>
+            <modules>
+                <module>spring-common</module>
+                <module>spring-common-demos</module>
+            </modules>
+        </profile>
+        <profile>
             <id>common-test-1.5.x</id>
             <modules>
                 <module>spring-common</module>

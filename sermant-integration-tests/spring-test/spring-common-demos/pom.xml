@@ -87,6 +87,19 @@
             </dependencies>
         </profile>
         <profile>
+            <id>common-test3.x</id>
+            <modules>
+                <module>spring-common-feign3.x</module>
+                <module>spring-common-resttemplate3.x</module>
+            </modules>
+            <dependencies>
+                <dependency>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-starter-zookeeper-discovery</artifactId>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
             <id>common-test-1.5.x</id>
             <modules>
                 <module>spring-common-feign-1.5.x</module>
