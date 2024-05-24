@@ -15,7 +15,7 @@
  *
  */
 
-package io.sermant.flowcontrol;
+package io.sermant.flowcontrol.boot3;
 
 import io.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import io.sermant.core.plugin.agent.declarer.InterceptDeclarer;
@@ -28,7 +28,7 @@ import io.sermant.core.plugin.agent.matcher.MethodMatcher;
  * @author zhouss
  * @since 2022-02-09
  */
-public class DispatcherServletDeclarer extends AbstractPluginDeclarer {
+public class DispatcherServletDeclarerBoot3 extends AbstractPluginDeclarer {
     /**
      * the fully qualified name of the enhanced class
      */
@@ -37,7 +37,7 @@ public class DispatcherServletDeclarer extends AbstractPluginDeclarer {
     /**
      * the fully qualified name of the interceptor class
      */
-    private static final String INTERCEPT_CLASS = DispatcherServletInterceptor.class.getCanonicalName();
+    private static final String INTERCEPT_CLASS = DispatcherServletInterceptorBoot3.class.getCanonicalName();
 
     @Override
     public ClassMatcher getClassMatcher() {
@@ -49,8 +49,8 @@ public class DispatcherServletDeclarer extends AbstractPluginDeclarer {
         return new InterceptDeclarer[]{
                 InterceptDeclarer.build(
                     MethodMatcher.nameEquals("doService")
-                    .and(MethodMatcher.paramTypesEqual("javax.servlet.http.HttpServletRequest",
-                        "javax.servlet.http.HttpServletResponse")), INTERCEPT_CLASS)
+                    .and(MethodMatcher.paramTypesEqual("jakarta.servlet.http.HttpServletRequest",
+                        "jakarta.servlet.http.HttpServletResponse")), INTERCEPT_CLASS)
         };
     }
 }

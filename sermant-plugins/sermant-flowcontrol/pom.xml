@@ -26,6 +26,7 @@
             <modules>
                 <module>flowcontrol-common</module>
                 <module>flowcontrol-plugin</module>
+                <module>flowcontrol-plugin-boot3</module>
                 <module>flowcontrol-service</module>
             </modules>
         </profile>
@@ -34,6 +35,7 @@
             <modules>
                 <module>flowcontrol-common</module>
                 <module>flowcontrol-plugin</module>
+                <module>flowcontrol-plugin-boot3</module>
                 <module>flowcontrol-service</module>
             </modules>
         </profile>
@@ -42,6 +44,7 @@
             <modules>
                 <module>flowcontrol-common</module>
                 <module>flowcontrol-plugin</module>
+                <module>flowcontrol-plugin-boot3</module>
                 <module>flowcontrol-service</module>
             </modules>
         </profile>
