@@ -126,7 +126,7 @@ public class DispatcherServletInterceptorBoot3 implements Interceptor {
      */
     private Map<String, String> getHeaders(HttpServletRequest request) {
         final Enumeration<String> headerNames = request.getHeaderNames();
-        final Map<String, String> headers = new HashMap<>();
+        final Map<String, String> headers = new HashMap<String, String>();
         while (headerNames.hasMoreElements()) {
             final String headerName = headerNames.nextElement();
             headers.put(headerName, request.getHeader(headerName));
