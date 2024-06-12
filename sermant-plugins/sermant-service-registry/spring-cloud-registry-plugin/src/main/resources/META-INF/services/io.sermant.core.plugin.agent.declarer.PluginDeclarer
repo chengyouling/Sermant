@@ -42,3 +42,7 @@ io.sermant.registry.grace.declarers.SpringCacheManagerDeclarer
 io.sermant.registry.grace.declarers.SpringLoadbalancerFeignResponseDeclarer
 io.sermant.registry.grace.declarers.SpringLoadbalancerRestTemplateResponseDeclarer
 io.sermant.registry.grace.declarers.SpringZuulResponseDeclarer
+
+# special
+io.sermant.registry.declarers.SpringFactoriesVovDeclarer
+io.sermant.registry.declarers.ComponentScanDeclarer

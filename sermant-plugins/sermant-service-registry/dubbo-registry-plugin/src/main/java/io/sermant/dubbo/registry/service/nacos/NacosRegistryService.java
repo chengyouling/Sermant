@@ -82,4 +82,12 @@ public interface NacosRegistryService extends PluginService {
      * @return Whether the service is available
      */
     boolean isAvailable();
+
+    /**
+     * 判断服务是否已注册
+     *
+     * @param url
+     * @return 是否已注册
+     */
+    boolean exists(Object url);
 }

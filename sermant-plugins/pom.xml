@@ -23,6 +23,12 @@
         <config.source.dir>../config</config.source.dir>
         <config.output.dir>${package.plugin.dir}/${package.plugin.name}/config</config.output.dir>
     </properties>
+    <dependencies>
+        <dependency>
+            <groupId>io.sermant</groupId>
+            <artifactId>sermant-agentcore-core</artifactId>
+        </dependency>
+    </dependencies>
     <profiles>
         <profile>
             <id>agent</id>
@@ -42,7 +48,8 @@
                 <module>sermant-service-removal</module>
                 <module>sermant-spring-beans-deal</module>
                 <module>sermant-tag-transmission</module>
-                <module>sermant-database-write-prohibition</module>
+<!--                <module>sermant-database-write-prohibition</module>-->
+                <module>sermant-mq-grayscale</module>
             </modules>
             <build>
                 <pluginManagement>

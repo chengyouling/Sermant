@@ -36,7 +36,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
-                <module>tag-transmission-rocketmq5.x-plugin</module>
+<!--                <module>tag-transmission-rocketmq5.x-plugin</module>-->
                 <module>tag-transmission-common</module>
                 <module>tag-transmission-httpclient4.x-plugin</module>
                 <module>tag-transmission-httpclient3.x-plugin</module>
@@ -45,7 +45,7 @@
                 <module>tag-transmission-okhttp2.x-plugin</module>
                 <module>tag-transmission-httpserver-plugin</module>
                 <module>tag-transmission-kafka-plugin</module>
-                <module>tag-transmission-rocketmq4.x-plugin</module>
+<!--                <module>tag-transmission-rocketmq4.x-plugin</module>-->
                 <module>tag-transmission-grpc-plugin</module>
                 <module>tag-transmission-sofarpc-plugin</module>
                 <module>tag-transmission-servicecomb-plugin</module>

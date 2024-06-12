@@ -308,9 +308,9 @@
                 <module>sermant-agentcore</module>
                 <module>sermant-plugins</module>
                 <module>sermant-common</module>
-                <module>sermant-backend</module>
-                <module>sermant-injector</module>
-                <module>report</module>
+<!--                <module>sermant-backend</module>-->
+<!--                <module>sermant-injector</module>-->
+<!--                <module>report</module>-->
             </modules>
             <build>
                 <plugins>

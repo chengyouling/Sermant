@@ -48,4 +48,13 @@ public abstract class AbstractBaseConfigDeclarer extends AbstractPluginDeclarer 
     protected boolean isEnableSpringDoubleRegistry() {
         return registerConfig.isEnableSpringRegister() && registerConfig.isOpenMigration();
     }
+
+    /**
+     * 是否开启spring单注册
+     *
+     * @return true 单注册
+     */
+    protected boolean isEnableSpringRegistry() {
+        return registerConfig.isEnableSpringRegister() && !registerConfig.isOpenMigration();
+    }
 }

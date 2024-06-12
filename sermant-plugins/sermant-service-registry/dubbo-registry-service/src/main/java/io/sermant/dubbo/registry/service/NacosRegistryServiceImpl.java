@@ -277,6 +277,19 @@ public class NacosRegistryServiceImpl implements NacosRegistryService {
         return STATUS_UP.equals(namingService.getServerStatus());
     }
 
+    @Override
+    public boolean exists(Object url) {
+        try {
+            List<Instance> list = namingService.selectInstances(getLegacySubscribedServiceName(url),
+                    nacosRegisterConfig.getGroup(), true);
+            return list.size() > 0;
+        } catch (NacosException e) {
+            LOGGER.log(Level.SEVERE, String.format(Locale.ENGLISH, "failed to selectInstances，url: {%s}",
+                    url), e);
+        }
+        return true;
+    }
+
     private Instance createInstance(Object url) {
         Map<String, String> metaData = new HashMap<>();
         String category = ReflectUtils.getParameter(url, CATEGORY_KEY);
