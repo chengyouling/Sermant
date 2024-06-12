@@ -38,10 +38,8 @@ public class CseMqGrayConfigHandler {
 
     protected final Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
 
-    private final String CONFIG_KEY = "grayscale.mq.config";
-
     public void handle(DynamicConfigEvent event) {
-        if (CONFIG_KEY.equals(event.getKey())) {
+        if ("grayscale.mq.config".equals(event.getKey())) {
             if (event.getEventType() == DynamicConfigEventType.DELETE) {
                 MqGrayscaleConfigUtils.resetGrayscaleConfig();
             }
