@@ -25,7 +25,7 @@ public class MqGrayscaleConfig  implements PluginConfig {
 
     private Base base;
 
-    private boolean serverGrayEnabled = false;
+    private boolean serverGrayEnabled = true;
 
     public boolean isEnabled() {
         return enabled;

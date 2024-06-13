@@ -21,6 +21,10 @@ public class SubscriptionDataUtils {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SubscriptionDataUtils.class);
 
+    private static final String CONSUME_TYPE_ALL = "all";
+
+    private static final String CONSUME_TYPE_BASE = "base";
+
     private SubscriptionDataUtils() {}
 
     public static String buildSQL92ExpressionByTags(Set<String> tagsSet) {
@@ -57,8 +61,33 @@ public class SubscriptionDataUtils {
     private static String buildSQL92Expression() {
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayEnvTag())) {
-            if (MqGrayscaleConfigUtils.getExcludeTagsForSet().isEmpty()) {
+            // all模式所有消息返回
+            if (CONSUME_TYPE_ALL.equals(MqGrayscaleConfigUtils.getConsumeType())) {
                 return "";
+            }
+            // base模式只返回不带标签消息
+            if (CONSUME_TYPE_BASE.equals(MqGrayscaleConfigUtils.getConsumeType())) {
+                sb.append(" ( ( ")
+                        .append(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY)
+                        .append(" is null ")
+                        .append(" )")
+                        .append(" and ( ")
+                        .append(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY)
+                        .append(" is null ) ")
+                        .append(" ) ");
+                return sb.toString();
+            }
+            // auto模式下如果存在流量标签，则仅消费流量标签消息
+            if (!StringUtils.isEmpty(MqGrayscaleConfigUtils.getTrafficGrayTag())) {
+                Set<String> trafficSet = new HashSet<>();
+                trafficSet.add(MqGrayscaleConfigUtils.getTrafficGrayTag());
+                String trafficGrayTag = getStrForSets(trafficSet);
+                sb.append(" ( ")
+                        .append(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY)
+                        .append(" in ")
+                        .append(trafficGrayTag)
+                        .append(" )");
+                return sb.toString();
             }
             sb.append(" ( ( ")
                     .append(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY)
@@ -89,7 +118,8 @@ public class SubscriptionDataUtils {
         String[] originConditions = pattern.split(originSubData);
         List<String> refactorConditions = new ArrayList<>();
         for (String condition: originConditions) {
-            if (!condition.contains(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY)) {
+            if (!condition.contains(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY)
+                    && !condition.contains(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY)) {
                 refactorConditions.add(condition);
             }
         }
@@ -104,8 +134,8 @@ public class SubscriptionDataUtils {
     }
 
     public static void resetsSQL92SubscriptionData(SubscriptionData subscriptionData) {
-        String originSubData = SubscriptionDataUtils.buildSQL92ExpressionByTags(subscriptionData.getTagsSet());
-        String subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
+        String originSubData = buildSQL92ExpressionByTags(subscriptionData.getTagsSet());
+        String subStr = addMseGrayTagsToSQL92Expression(originSubData);
         if (StringUtils.isEmpty(subStr)) {
             subStr = "( " + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is null ) or ( "
                     + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is not null )";

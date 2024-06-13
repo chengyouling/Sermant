@@ -21,8 +21,7 @@ public class SubscriptionDataUpdateInterceptor extends AbstractInterceptor {
 
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
-        if (MqGrayscaleConfigUtils.isPlugEnabled() && MqGrayscaleConfigUtils.isMqServerGrayEnabled()
-                && !StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayEnvTag())) {
+        if (MqGrayscaleConfigUtils.isPlugEnabled() && MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
             SubscriptionData subscriptionData = (SubscriptionData) context.getResult();
             MqConsumerGroupAutoCheck.setTopic(subscriptionData.getTopic());
             if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {

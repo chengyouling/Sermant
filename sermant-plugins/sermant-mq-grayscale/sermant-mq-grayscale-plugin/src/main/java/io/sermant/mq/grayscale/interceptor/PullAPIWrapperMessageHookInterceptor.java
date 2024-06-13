@@ -54,13 +54,15 @@ public class PullAPIWrapperMessageHookInterceptor extends AbstractInterceptor {
                 Optional<Object> fieldValue = ReflectUtils.getFieldValue(context.getObject(), "mQClientFactory");
                 fieldValue.ifPresent(o -> MqConsumerGroupAutoCheck.setMqClientInstance((MQClientInstance) o));
             }
-            ArrayList<FilterMessageHook> messageHooks = (ArrayList<FilterMessageHook>) context.getArguments()[0];
-            for (FilterMessageHook filterMessageHook : messageHooks) {
-                if (MESSAGE_FILTER_NAME.equals(filterMessageHook.hookName())) {
-                    return context;
+            if (!MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
+                ArrayList<FilterMessageHook> messageHooks = (ArrayList<FilterMessageHook>) context.getArguments()[0];
+                for (FilterMessageHook filterMessageHook : messageHooks) {
+                    if (MESSAGE_FILTER_NAME.equals(filterMessageHook.hookName())) {
+                        return context;
+                    }
                 }
+                messageHooks.add(new MqGrayMessageFilter());
             }
-            messageHooks.add(new MqGrayMessageFilter());
         }
         return context;
     }
