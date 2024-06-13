@@ -45,23 +45,23 @@ public class MqGrayMessageFilter implements FilterMessageHook {
         while (iterator.hasNext()) {
             MessageExt message = iterator.next();
             String messageGrayTag = message.getProperty(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY);
+            String trafficMessageTag = message.getProperty(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY);
             if (StringUtils.isEmpty(grayTag)) {
-                filterBasicMessage(iterator, trafficGrayTag, messageGrayTag, message);
+                filterBasicMessage(iterator, trafficGrayTag, messageGrayTag, trafficMessageTag);
                 continue;
             }
-            if (!StringUtils.equals(grayTag, messageGrayTag)) {
-                // 灰度环境仅消费灰度消息
+            if (!StringUtils.equals(grayTag, messageGrayTag) && StringUtils.isEmpty(trafficMessageTag)) {
+                // 灰度环境消费者可消费灰度环境或者灰度流量生成的消息
                 iterator.remove();
             }
         }
     }
 
     private void filterBasicMessage(Iterator<MessageExt> iterator, String trafficGrayTag, String messageGrayTag,
-            MessageExt message) {
+            String trafficMessageTag) {
         if (CONSUME_TYPE_ALL.equals(MqGrayscaleConfigUtils.getConsumeType())) {
             return;
         }
-        String trafficMessageTag = message.getProperty(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY);
         if (CONSUME_TYPE_BASE.equals(MqGrayscaleConfigUtils.getConsumeType())) {
             if (!StringUtils.isEmpty(trafficMessageTag) || !StringUtils.isEmpty(messageGrayTag)) {
                 iterator.remove();

@@ -102,11 +102,15 @@ public class SubscriptionDataUtils {
             Set<String> set = new HashSet<>();
             set.add(MqGrayscaleConfigUtils.getGrayEnvTag());
             String envGrayTag = getStrForSets(set);
-            sb.append(" ( ")
+            sb.append(" ( ( ")
                     .append(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY)
                     .append(" in ")
                     .append(envGrayTag)
-                    .append(")");
+                    .append(")")
+                    .append(" or ( ")
+                    .append(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY)
+                    .append(" is not null ) ")
+                    .append(" ) ");
         }
         return sb.toString();
     }
