@@ -83,6 +83,7 @@
                 <module>sermant-spring-beans-deal</module>
                 <module>sermant-tag-transmission</module>
                 <module>sermant-database-write-prohibition</module>
+                <module>sermant-mq-grayscale</module>
             </modules>
             <build>
                 <pluginManagement>
@@ -116,6 +117,7 @@
                 <module>sermant-spring-beans-deal</module>
                 <module>sermant-tag-transmission</module>
                 <module>sermant-database-write-prohibition</module>
+                <module>sermant-mq-grayscale</module>
             </modules>
         </profile>
     </profiles>

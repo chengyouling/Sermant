@@ -48,6 +48,7 @@ public class CseMqGrayConfigHandler {
         if ("grayscale.mq.config".equals(event.getKey())) {
             if (event.getEventType() == DynamicConfigEventType.DELETE) {
                 MqGrayscaleConfigUtils.resetGrayscaleConfig();
+                return;
             }
             if (!StringUtils.isEmpty(event.getContent())) {
                 LOGGER.warning(String.format(Locale.ROOT,
