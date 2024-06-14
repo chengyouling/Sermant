@@ -18,9 +18,6 @@ package io.sermant.mq.grayscale.declarer;
 
 import io.sermant.core.plugin.agent.declarer.PluginDeclarer;
 import io.sermant.core.plugin.agent.declarer.SuperTypeDeclarer;
-import io.sermant.core.plugin.config.PluginConfigManager;
-import io.sermant.mq.grayscale.config.MqGrayscaleConfig;
-import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
 /**
  * abstract declarer

@@ -18,7 +18,6 @@ package io.sermant.mq.grayscale.interceptor;
 
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
-import io.sermant.core.utils.StringUtils;
 import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
