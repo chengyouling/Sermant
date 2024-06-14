@@ -20,6 +20,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * grayscale entry
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class Grayscale {
     private Map<String, List<String>> environmentMatch = new HashMap<>();
 

@@ -21,6 +21,12 @@ import io.sermant.core.plugin.agent.matcher.ClassMatcher;
 import io.sermant.core.plugin.agent.matcher.MethodMatcher;
 import io.sermant.mq.grayscale.interceptor.MqPullConsumerConstructorInterceptor;
 
+/**
+ * DefaultMQPushConsumer consumer group builder declarer
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MqPushConsumerConstructorDeclarer extends MqAbstractDeclarer {
     private static final String ENHANCE_CLASS = "org.apache.rocketmq.client.consumer.DefaultMQPushConsumer";
 

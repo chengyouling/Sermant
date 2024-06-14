@@ -18,6 +18,12 @@ package io.sermant.mq.grayscale.config;
 
 import io.sermant.core.plugin.config.PluginConfig;
 
+/**
+ * mqGrayscaleConfig entry
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MqGrayscaleConfig  implements PluginConfig {
     private boolean enabled = false;
 

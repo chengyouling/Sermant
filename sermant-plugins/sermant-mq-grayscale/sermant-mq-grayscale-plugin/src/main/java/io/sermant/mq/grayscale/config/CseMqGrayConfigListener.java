@@ -19,6 +19,12 @@ package io.sermant.mq.grayscale.config;
 import io.sermant.core.service.dynamicconfig.common.DynamicConfigEvent;
 import io.sermant.core.service.dynamicconfig.common.DynamicConfigListener;
 
+/**
+ * grayscale dynamic config listener
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class CseMqGrayConfigListener implements DynamicConfigListener {
     private final CseMqGrayConfigHandler handler;
 

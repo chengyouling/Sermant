@@ -26,6 +26,12 @@ import org.apache.rocketmq.common.message.MessageExt;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * gray message filter service
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MqGrayMessageFilter implements FilterMessageHook {
     private static final String CONSUME_TYPE_ALL = "all";
 

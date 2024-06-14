@@ -19,6 +19,12 @@ package io.sermant.mq.grayscale.config;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * messageFilter entry
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MessageFilter {
     private String consumeType;
 

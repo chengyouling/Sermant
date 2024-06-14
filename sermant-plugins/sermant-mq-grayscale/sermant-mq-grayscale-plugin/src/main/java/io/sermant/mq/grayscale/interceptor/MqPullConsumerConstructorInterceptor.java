@@ -25,6 +25,12 @@ import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
 import java.util.Optional;
 
+/**
+ * consumer group builder interceptor
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MqPullConsumerConstructorInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {

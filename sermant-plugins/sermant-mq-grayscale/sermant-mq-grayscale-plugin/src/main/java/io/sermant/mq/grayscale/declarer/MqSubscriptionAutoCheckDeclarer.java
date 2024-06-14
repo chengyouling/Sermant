@@ -19,9 +19,15 @@ package io.sermant.mq.grayscale.declarer;
 import io.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import io.sermant.core.plugin.agent.matcher.ClassMatcher;
 import io.sermant.core.plugin.agent.matcher.MethodMatcher;
-import io.sermant.mq.grayscale.interceptor.MqSubscriptionHealthCheckInterceptor;
+import io.sermant.mq.grayscale.interceptor.MqSubscriptionAutoCheckInterceptor;
 
-public class MqSubscriptionHealthCheckDeclarer extends MqAbstractDeclarer {
+/**
+ * TAG/SQL92 query message statement declarer
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
+public class MqSubscriptionAutoCheckDeclarer extends MqAbstractDeclarer {
     private static final String ENHANCE_CLASS = "org.apache.rocketmq.client.impl.consumer.RebalanceImpl";
 
     private static final String METHOD_NAME = "getSubscriptionInner";
@@ -35,7 +41,7 @@ public class MqSubscriptionHealthCheckDeclarer extends MqAbstractDeclarer {
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[]{
                 InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME),
-                        new MqSubscriptionHealthCheckInterceptor())
+                        new MqSubscriptionAutoCheckInterceptor())
         };
     }
 }

@@ -22,6 +22,12 @@ import io.sermant.core.plugin.config.PluginConfigManager;
 import io.sermant.mq.grayscale.config.MqGrayscaleConfig;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
+/**
+ * abstract declarer
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public abstract class MqAbstractDeclarer implements PluginDeclarer {
     @Override
     public SuperTypeDeclarer[] getSuperTypeDeclarers() {

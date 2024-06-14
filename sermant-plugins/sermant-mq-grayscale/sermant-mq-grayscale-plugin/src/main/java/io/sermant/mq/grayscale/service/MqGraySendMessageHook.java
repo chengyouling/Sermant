@@ -23,6 +23,12 @@ import org.apache.rocketmq.client.hook.SendMessageContext;
 import org.apache.rocketmq.client.hook.SendMessageHook;
 import org.apache.rocketmq.common.message.Message;
 
+/**
+ * gray message send hook service
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MqGraySendMessageHook implements SendMessageHook {
     @Override
     public String hookName() {

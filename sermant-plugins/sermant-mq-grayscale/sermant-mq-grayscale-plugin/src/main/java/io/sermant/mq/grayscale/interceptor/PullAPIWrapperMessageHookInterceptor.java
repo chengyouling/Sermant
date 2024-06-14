@@ -30,6 +30,12 @@ import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import java.util.ArrayList;
 import java.util.Optional;
 
+/**
+ * MessageFilter builder interceptor
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class PullAPIWrapperMessageHookInterceptor extends AbstractInterceptor {
     private static final String MESSAGE_FILTER_NAME = "MqGrayMessageFilter";
 

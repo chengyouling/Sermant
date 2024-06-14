@@ -16,16 +16,13 @@
 
 package io.sermant.mq.grayscale.declarer;
 
-import io.sermant.core.plugin.agent.declarer.AbstractPluginDeclarer;
 import io.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import io.sermant.core.plugin.agent.matcher.ClassMatcher;
 import io.sermant.core.plugin.agent.matcher.MethodMatcher;
-import io.sermant.core.plugin.config.PluginConfigManager;
-import io.sermant.mq.grayscale.config.MqGrayscaleConfig;
 import io.sermant.mq.grayscale.interceptor.RocketMQProducerGrayMessageHookInterceptor;
 
 /**
- * MessageHook interceptor declarer
+ * SendMessageHook builder declarer
  *
  * @author chengyouling
  * @since 2024-05-27

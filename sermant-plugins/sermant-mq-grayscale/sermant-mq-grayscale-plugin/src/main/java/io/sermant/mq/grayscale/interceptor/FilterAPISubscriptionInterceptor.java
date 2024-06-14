@@ -24,6 +24,12 @@ import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
+/**
+ * topic info set interceptor
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class FilterAPISubscriptionInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {

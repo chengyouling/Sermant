@@ -35,6 +35,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * consumer group auto check service
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class MqConsumerGroupAutoCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(MqConsumerGroupAutoCheck.class);
 

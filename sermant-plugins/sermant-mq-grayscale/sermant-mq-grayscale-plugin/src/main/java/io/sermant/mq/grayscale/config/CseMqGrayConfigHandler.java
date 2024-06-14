@@ -33,6 +33,12 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.logging.Logger;
 
+/**
+ * grayscale dynamic config handler
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class CseMqGrayConfigHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 

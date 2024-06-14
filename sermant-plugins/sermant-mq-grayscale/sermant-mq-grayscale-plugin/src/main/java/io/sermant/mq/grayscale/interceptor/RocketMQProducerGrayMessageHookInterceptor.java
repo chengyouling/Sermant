@@ -28,6 +28,12 @@ import org.apache.rocketmq.client.impl.producer.DefaultMQProducerImpl;
 import java.lang.reflect.Method;
 import java.util.Optional;
 
+/**
+ * SendMessageHook builder interceptor
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class RocketMQProducerGrayMessageHookInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {

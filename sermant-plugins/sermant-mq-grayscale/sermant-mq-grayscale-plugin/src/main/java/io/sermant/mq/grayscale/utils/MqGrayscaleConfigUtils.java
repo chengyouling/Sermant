@@ -33,6 +33,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * grayscale config util
+ *
+ * @author chengyouling
+ * @since 2024-06-03
+ */
 public class MqGrayscaleConfigUtils {
     public final static String MICRO_SERVICE_GRAY_TAG_KEY = "micro_service_gray_tag";
 

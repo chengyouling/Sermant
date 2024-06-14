@@ -16,6 +16,12 @@
 
 package io.sermant.mq.grayscale.config;
 
+/**
+ * base consumeType entry
+ *
+ * @author chengyouling
+ * @since 2024-05-27
+ **/
 public class Base {
     private MessageFilter messageFilter;
 
