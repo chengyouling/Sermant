@@ -42,12 +42,11 @@ public class MqGraySendMessageHook implements SendMessageHook {
         // 如果是灰度环境，设置灰度peoperty
         if (!StringUtils.isEmpty(grayTag)) {
             message.putUserProperty(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY, grayTag);
-        } else {
-            // 如果不存在环境灰度标签，查看流量标签
-            String grayTrafficTag = MqGrayscaleConfigUtils.getTrafficGrayTag();
-            if (!StringUtils.isEmpty(grayTrafficTag)) {
-                message.putUserProperty(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY, grayTrafficTag);
-            }
+        }
+        // 如果不存在环境灰度标签，查看流量标签
+        String grayTrafficTag = MqGrayscaleConfigUtils.getTrafficGrayTag();
+        if (!StringUtils.isEmpty(grayTrafficTag)) {
+            message.putUserProperty(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY, grayTrafficTag);
         }
     }
 

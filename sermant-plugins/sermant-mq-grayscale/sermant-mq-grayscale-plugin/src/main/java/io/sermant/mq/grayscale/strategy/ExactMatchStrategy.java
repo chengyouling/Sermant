@@ -32,7 +32,8 @@ public class ExactMatchStrategy implements MatchStrategy {
     public String getMatchTag(Map<String, String> properties, List<String> keyConfigs) {
         int index = 0;
         while (index < keyConfigs.size() - 1) {
-            if (!StringUtils.isEmpty(properties.get(keyConfigs.get(index)))) {
+            if (!StringUtils.isEmpty(properties.get(keyConfigs.get(index)))
+                && properties.get(keyConfigs.get(index)).equals(keyConfigs.get(index + 1))) {
                 return keyConfigs.get(index) + "%" + keyConfigs.get(index + 1);
             }
             index += 2;

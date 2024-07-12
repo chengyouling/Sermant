@@ -55,4 +55,17 @@ public class MessageFilter {
     public void setExcludeTags(Map<String, String> excludeTags) {
         this.excludeTags = excludeTags;
     }
+
+    public boolean isExcludeTagsConfigChanged(MessageFilter compare) {
+        if (this.excludeTags.size() != compare.getExcludeTags().size()) {
+            return true;
+        }
+        for (Map.Entry<String, String> entry : this.excludeTags.entrySet()) {
+            if (!compare.getExcludeTags().containsKey(entry.getKey())
+                || !compare.getExcludeTags().get(entry.getKey()).equals(entry.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

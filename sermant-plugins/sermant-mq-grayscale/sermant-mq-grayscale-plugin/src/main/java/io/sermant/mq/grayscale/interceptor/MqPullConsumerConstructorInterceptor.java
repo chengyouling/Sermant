@@ -51,7 +51,7 @@ public class MqPullConsumerConstructorInterceptor extends AbstractInterceptor {
                 originGroup = (String) originGroupOptional.get();
             }
             // consumerGroup的规则 ^[%|a-zA-Z0-9_-]+$
-            String newConsumerGroup = originGroup + "_" + grayEnvTag;
+            String newConsumerGroup = originGroup.contains(grayEnvTag) ? originGroup : originGroup + "_" + grayEnvTag;
             ReflectUtils.setFieldValue(context.getObject(), "consumerGroup", newConsumerGroup);
         }
         return context;

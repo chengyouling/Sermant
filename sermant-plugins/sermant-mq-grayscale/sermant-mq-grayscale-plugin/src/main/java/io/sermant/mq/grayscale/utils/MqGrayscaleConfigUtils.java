@@ -156,6 +156,9 @@ public class MqGrayscaleConfigUtils {
         }
         Map<String, String> tags =
                 configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter().getExcludeTags();
+        if (tags.isEmpty()) {
+            return excludeTags;
+        }
         for (Map.Entry<String, String> entry: tags.entrySet()) {
             excludeTags.add(standardFormatTag(entry.getKey() + "%" + entry.getValue()));
         }
@@ -192,6 +195,13 @@ public class MqGrayscaleConfigUtils {
     }
 
     public static void setGrayscaleConfig(MqGrayscaleConfig config) {
+        if (!grayBaseDisabled() && config.getBase() != null && config.getBase().getMessageFilter() != null) {
+            MessageFilter lastMessageFilter = configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter();
+            MessageFilter newMessageFilter = config.getBase().getMessageFilter();
+            if (lastMessageFilter.isExcludeTagsConfigChanged(newMessageFilter)) {
+                MQ_EXCLUDE_TAGS_CHANGE_FLAG = true;
+            }
+        }
         configCache.put(CONFIG_CACHE_KEY, config);
     }
 

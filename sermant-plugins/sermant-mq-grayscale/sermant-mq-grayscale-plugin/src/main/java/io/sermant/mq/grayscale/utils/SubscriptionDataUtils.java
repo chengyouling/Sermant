@@ -117,8 +117,9 @@ public class SubscriptionDataUtils {
                     .append(getStrForSets(MqGrayscaleConfigUtils.getExcludeTagsForSet()))
                     .append(" )")
                     .append(" or ( ")
-                    .append(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY)
-                    .append(" is null ) ")
+                    .append(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY)
+                    .append(" not in ")
+                    .append(getStrForSets(MqGrayscaleConfigUtils.getExcludeTagsForSet()))
                     .append(" ) ");
         } else {
             Set<String> set = new HashSet<>();
