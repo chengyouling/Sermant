@@ -120,7 +120,7 @@ public class SubscriptionDataUtils {
                     .append(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY)
                     .append(" not in ")
                     .append(getStrForSets(MqGrayscaleConfigUtils.getExcludeTagsForSet()))
-                    .append(" ) ");
+                    .append(" ) ) ");
         } else {
             Set<String> set = new HashSet<>();
             set.add(MqGrayscaleConfigUtils.getGrayEnvTag());
