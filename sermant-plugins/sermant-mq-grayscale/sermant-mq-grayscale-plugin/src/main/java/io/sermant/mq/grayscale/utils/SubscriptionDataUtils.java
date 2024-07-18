@@ -16,16 +16,17 @@
 
 package io.sermant.mq.grayscale.utils;
 
+import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.utils.StringUtils;
 
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -41,7 +42,7 @@ public class SubscriptionDataUtils {
 
     private static final Pattern pattern = Pattern.compile("and|or", Pattern.CASE_INSENSITIVE);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SubscriptionDataUtils.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger();
 
     private static final String CONSUME_TYPE_ALL = "all";
 
@@ -172,6 +173,7 @@ public class SubscriptionDataUtils {
         subscriptionData.getCodeSet().clear();
         subscriptionData.setSubString(subStr);
         subscriptionData.setSubVersion(System.currentTimeMillis());
-        LOGGER.warn("update TAG to SQL92 subscriptionData, originSubStr: {}, newSubStr: {}", originSubData, subStr);
+        LOGGER.warning(String.format(Locale.ENGLISH, "update TAG to SQL92 subscriptionData, originSubStr: [%s], "
+            + "newSubStr: [%s]", originSubData, subStr));
     }
 }

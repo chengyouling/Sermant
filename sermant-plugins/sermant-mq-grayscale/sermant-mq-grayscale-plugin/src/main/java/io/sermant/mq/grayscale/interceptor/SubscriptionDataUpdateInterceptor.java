@@ -16,6 +16,10 @@
 
 package io.sermant.mq.grayscale.interceptor;
 
+import java.util.Locale;
+import java.util.logging.Logger;
+
+import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
 import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
@@ -23,8 +27,6 @@ import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * TAG/SQL92 query message statement interceptor
@@ -33,7 +35,7 @@ import org.slf4j.LoggerFactory;
  * @since 2024-05-27
  **/
 public class SubscriptionDataUpdateInterceptor extends AbstractInterceptor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SubscriptionDataUpdateInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger();
 
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
@@ -51,9 +53,11 @@ public class SubscriptionDataUpdateInterceptor extends AbstractInterceptor {
                 String originSubData = subscriptionData.getSubString();
                 String subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
                 subscriptionData.setSubString(subStr);
-                LOGGER.warn("update SQL92 subscriptionData, originSubStr: {}, newSubStr: {}", originSubData, subStr);
+                LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, originSubStr: %s, "
+                    + "newSubStr: %s", originSubData, subStr));
             } else {
-                LOGGER.warn("can not process expressionType: {}", subscriptionData.getExpressionType());
+                LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
+                    subscriptionData.getExpressionType()));
             }
         }
         return context;

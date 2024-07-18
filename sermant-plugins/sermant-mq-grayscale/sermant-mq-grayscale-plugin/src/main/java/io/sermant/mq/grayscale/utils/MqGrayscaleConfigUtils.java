@@ -195,7 +195,9 @@ public class MqGrayscaleConfigUtils {
     }
 
     public static void setGrayscaleConfig(MqGrayscaleConfig config) {
-        if (!grayBaseDisabled() && config.getBase() != null && config.getBase().getMessageFilter() != null) {
+        if (grayBaseDisabled() != configBaseMessageFilterDisabled(config)) {
+            MQ_EXCLUDE_TAGS_CHANGE_FLAG = true;
+        } else if (!grayBaseDisabled() && !configBaseMessageFilterDisabled(config)) {
             MessageFilter lastMessageFilter = configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter();
             MessageFilter newMessageFilter = config.getBase().getMessageFilter();
             if (lastMessageFilter.isExcludeTagsConfigChanged(newMessageFilter)) {
@@ -203,6 +205,10 @@ public class MqGrayscaleConfigUtils {
             }
         }
         configCache.put(CONFIG_CACHE_KEY, config);
+    }
+
+    private static boolean configBaseMessageFilterDisabled(MqGrayscaleConfig config) {
+        return config.getBase() == null || config.getBase().getMessageFilter() == null;
     }
 
     public static boolean isPlugEnabled() {

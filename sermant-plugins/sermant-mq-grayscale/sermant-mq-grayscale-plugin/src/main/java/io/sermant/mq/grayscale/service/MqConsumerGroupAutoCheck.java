@@ -16,6 +16,7 @@
 
 package io.sermant.mq.grayscale.service;
 
+import io.sermant.core.common.LoggerFactory;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,16 +25,17 @@ import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * consumer group auto check service
@@ -42,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2024-05-27
  **/
 public class MqConsumerGroupAutoCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MqConsumerGroupAutoCheck.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger();
 
     private static final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
 
@@ -91,22 +93,23 @@ public class MqConsumerGroupAutoCheck {
             String brokerAddress = brokerList.get(0);
             Set<String> availableGroup = new HashSet<>();
             GroupList groupList = mqClientAPI.queryTopicConsumeByWho(brokerAddress, TOPIC, 5000L);
-            LOGGER.warn("auto check gray consumer, fined groups:{}", groupList.getGroupList());
+            LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] fined groups: %s",
+                groupList.getGroupList()));
             for (String group : groupList.getGroupList()) {
                 try {
                     List<String> consumerIds = mqClientAPI.getConsumerIdListByGroup(brokerAddress, group, 15000L);
-                    LOGGER.warn("auto check gray consumer, current group: {}, contains consumerIds:{}", group,
-                            consumerIds);
                     if (!consumerIds.isEmpty()) {
                         availableGroup.add(group);
                     }
                 } catch (Exception e) {
-                    LOGGER.error("auto check gray consumer, get consumerIds error, group: {}", group, e);
+                    LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[auto-check] get consumerIds in "
+                        + "group: [%s] error", group), e);
                 }
             }
             modifyConsumerExcludeTags(availableGroup);
         } catch (Exception e) {
-            LOGGER.error("auto check gray consumer error, message: {}", e.getMessage(), e);
+            LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[auto-check] error, message: %s",
+                e.getMessage()), e);
         }
     }
 
@@ -124,7 +127,7 @@ public class MqConsumerGroupAutoCheck {
                         excludeTag.add(env);
                 }
             }
-            LOGGER.warn("auto check gray consumer, current lastAvailableGroup: {}", lastAvailableGroup);
+            LOGGER.warning(String.format(Locale.ENGLISH, "auto check gray consumer, current lastAvailableGroup: %s", lastAvailableGroup));
             lastAvailableGroup = new HashSet<>(availableGroup);
             MqGrayscaleConfigUtils.modifyExcludeTags(excludeTag);
         }

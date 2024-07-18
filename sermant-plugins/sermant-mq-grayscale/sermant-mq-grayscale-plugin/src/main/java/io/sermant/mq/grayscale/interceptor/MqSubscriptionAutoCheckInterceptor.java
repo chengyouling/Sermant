@@ -16,6 +16,7 @@
 
 package io.sermant.mq.grayscale.interceptor;
 
+import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
 import io.sermant.core.utils.StringUtils;
@@ -23,11 +24,11 @@ import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.concurrent.ConcurrentMap;
+import java.util.logging.Logger;
 
 /**
  * TAG/SQL92 query message statement interceptor
@@ -36,7 +37,7 @@ import java.util.concurrent.ConcurrentMap;
  * @since 2024-05-27
  **/
 public class MqSubscriptionAutoCheckInterceptor extends AbstractInterceptor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MqSubscriptionAutoCheckInterceptor.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger();
 
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
@@ -65,10 +66,11 @@ public class MqSubscriptionAutoCheckInterceptor extends AbstractInterceptor {
                     }
                     subscriptionData.setSubString(subStr);
                     subscriptionData.setSubVersion(System.currentTimeMillis());
-                    LOGGER.warn("update SQL92 subscriptionData, originSubStr: {}, newSubStr: {}", originSubData,
-                            subStr);
+                    LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, "
+                        + "originSubStr: %s, newSubStr: %s", originSubData, subStr));
                 } else {
-                    LOGGER.warn("can not process expressionType: {}", subscriptionData.getExpressionType());
+                    LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
+                        subscriptionData.getExpressionType()));
                 }
             }
             MqGrayscaleConfigUtils.MQ_EXCLUDE_TAGS_CHANGE_FLAG = false;
