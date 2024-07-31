@@ -17,14 +17,19 @@
 package io.sermant.mq.grayscale.service;
 
 import io.sermant.core.utils.StringUtils;
+import io.sermant.mq.grayscale.config.GrayTagItem;
+import io.sermant.mq.grayscale.config.MqGrayscaleConfig;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
+import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.rocketmq.client.hook.FilterMessageContext;
 import org.apache.rocketmq.client.hook.FilterMessageHook;
 import org.apache.rocketmq.common.message.MessageExt;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * gray message filter service
@@ -44,43 +49,69 @@ public class MqGrayMessageFilter implements FilterMessageHook {
 
     @Override
     public void filterMessage(FilterMessageContext context) {
-        String grayTag = MqGrayscaleConfigUtils.getGrayEnvTag();
-        String trafficGrayTag = MqGrayscaleConfigUtils.getTrafficGrayTag();
+        String grayGroupTag = MqGrayscaleConfigUtils.getGrayGroupTag();
         List<MessageExt> MessageExts = context.getMsgList();
+        MqGrayscaleConfig configs = MqGrayscaleConfigUtils.getGrayscaleConfigs();
+        if (configs == null) {
+            return;
+        }
         Iterator<MessageExt> iterator = MessageExts.iterator();
         while (iterator.hasNext()) {
             MessageExt message = iterator.next();
-            String messageGrayTag = message.getProperty(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY);
-            String trafficMessageTag = message.getProperty(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY);
-            if (StringUtils.isEmpty(grayTag)) {
-                filterBasicMessage(iterator, trafficGrayTag, messageGrayTag, trafficMessageTag);
-                continue;
-            }
-            if (!StringUtils.equals(grayTag, messageGrayTag) && StringUtils.isEmpty(trafficMessageTag)) {
-                // 灰度环境消费者可消费灰度环境或者灰度流量生成的消息
-                iterator.remove();
+            if (StringUtils.isEmpty(grayGroupTag)) {
+                filterBasicMessage(iterator, message, configs.getGrayscale());
+            } else {
+                filterGrayscaleMessage(iterator, message, configs, grayGroupTag);
             }
         }
     }
 
-    private void filterBasicMessage(Iterator<MessageExt> iterator, String trafficGrayTag, String messageGrayTag,
-            String trafficMessageTag) {
+    private void filterGrayscaleMessage(Iterator<MessageExt> iterator, MessageExt message, MqGrayscaleConfig config,
+        String grayGroupTag) {
+        GrayTagItem item = MqGrayscaleConfigUtils.getScaleByGroupTag(grayGroupTag, config.getGrayscale());
+        if (item == null) {
+            return;
+        }
+        Set<String> set = new HashSet<>();
+        if (!item.getEnvTag().isEmpty()) {
+            set.addAll(item.getEnvTag().keySet());
+        }
+        if (!item.getTrafficTag().isEmpty()) {
+            set.addAll(item.getTrafficTag().keySet());
+        }
+        for (String grayTagKey : set) {
+            if (message.getUserProperty(grayTagKey) != null) {
+                return;
+            }
+        }
+        iterator.remove();
+    }
+
+    private void filterBasicMessage(Iterator<MessageExt> iterator, MessageExt message, List<GrayTagItem> items) {
         if (CONSUME_TYPE_ALL.equals(MqGrayscaleConfigUtils.getConsumeType())) {
             return;
         }
         if (CONSUME_TYPE_BASE.equals(MqGrayscaleConfigUtils.getConsumeType())) {
-            if (!StringUtils.isEmpty(trafficMessageTag) || !StringUtils.isEmpty(messageGrayTag)) {
-                iterator.remove();
+            if (!items.isEmpty()) {
+                for (String grayTagKey : MqGrayscaleConfigUtils.buildGrayTagKeySet(items)) {
+                    if (message.getUserProperty(grayTagKey) != null) {
+                        iterator.remove();
+                        return;
+                    }
+                }
             }
-            return;
         }
-        if (!StringUtils.isEmpty(trafficGrayTag)) {
-            if (!trafficGrayTag.equals(trafficMessageTag)) {
+        if (SubscriptionDataUtils.getGrayTags() != null) {
+            filterBaseAutoMessage(iterator, message, SubscriptionDataUtils.getGrayTags());
+        }
+    }
+
+    private void filterBaseAutoMessage(Iterator<MessageExt> iterator, MessageExt message, List<GrayTagItem> items) {
+        Set<String> set = MqGrayscaleConfigUtils.buildGrayTagKeySet(items);
+        for (String grayTagKey : set) {
+            if (message.getUserProperty(grayTagKey) != null) {
                 iterator.remove();
-            }
-        } else {
-            if (MqGrayscaleConfigUtils.isExcludeTagsContainsTag(messageGrayTag)) {
-                iterator.remove();
+                return;
             }
         }
     }

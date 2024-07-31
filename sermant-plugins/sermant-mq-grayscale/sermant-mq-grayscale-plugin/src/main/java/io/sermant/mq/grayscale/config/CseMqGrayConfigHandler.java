@@ -26,6 +26,7 @@ import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.SafeConstructor;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -66,39 +67,23 @@ public class CseMqGrayConfigHandler {
         MqGrayscaleConfig config = new MqGrayscaleConfig();
         config.setEnabled(Boolean.parseBoolean(map.get("enabled").toString()));
         config.setServerGrayEnabled(Boolean.parseBoolean(map.get("serverGrayEnabled").toString()));
-        Grayscale grayscale = new Grayscale();
-        Base base = new Base();
-        MessageFilter messageFilter = new MessageFilter();
-        Map<String, String> excludeTags = new HashMap<>();
-        Map<String, List<String>> environmentMatch = new HashMap<>();
-        Map<String, List<String>> trafficMatch = new HashMap<>();
-        for (Entry<String, Object> entry : map.entrySet()) {
-            if (entry.getKey().startsWith("grayscale.environmentMatch")) {
-                environmentMatch.put(entry.getKey().substring(27), (List<String>) entry.getValue());
-                continue;
-            }
-            if (entry.getKey().startsWith("grayscale.trafficMatch")) {
-                trafficMatch.put(entry.getKey().substring(23), (List<String>) entry.getValue());
-                continue;
-            }
-            if (entry.getKey().startsWith("base.messageFilter.consumeType")) {
-                messageFilter.setConsumeType((String) entry.getValue());
-                continue;
-            }
-            if (entry.getKey().startsWith("base.messageFilter.autoCheckDelayTime")) {
-                messageFilter.setAutoCheckDelayTime(Long.parseLong(entry.getValue().toString()));
-                continue;
-            }
-            if (entry.getKey().startsWith("base.messageFilter.excludeTags")) {
-                excludeTags.put(entry.getKey().substring(31), entry.getValue().toString());
+        BaseMessage base = new BaseMessage();
+        base.setConsumeType((String) map.get("base.consumeType"));
+        base.setAutoCheckDelayTime(Long.parseLong(map.get("base.autoCheckDelayTime").toString()));
+        List<GrayTagItem> grayTagItems = new ArrayList<>();
+        if (map.get("grayscale") != null) {
+            List list = (List) map.get("grayscale");
+            for (Object object : list) {
+                Map<String, Object> itemMap = (Map<String, Object>) object;
+                GrayTagItem item = new GrayTagItem();
+                item.setConsumerGroupTag((String) itemMap.get("consumerGroupTag"));
+                item.setEnvTag((Map<String, String>) itemMap.get("envTag"));
+                item.setTrafficTag((Map<String, String>) itemMap.get("trafficTag"));
+                grayTagItems.add(item);
             }
         }
-        grayscale.setEnvironmentMatch(environmentMatch);
-        grayscale.setTrafficMatch(trafficMatch);
-        messageFilter.setExcludeTags(excludeTags);
-        base.setMessageFilter(messageFilter);
+        config.setGrayscale(grayTagItems);
         config.setBase(base);
-        config.setGrayscale(grayscale);
         return config;
     }
 }

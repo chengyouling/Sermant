@@ -16,6 +16,9 @@
 
 package io.sermant.mq.grayscale.config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import io.sermant.core.plugin.config.PluginConfig;
 
 /**
@@ -24,12 +27,12 @@ import io.sermant.core.plugin.config.PluginConfig;
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class MqGrayscaleConfig  implements PluginConfig {
+public class MqGrayscaleConfig {
     private boolean enabled = false;
 
-    private Grayscale grayscale;
+    private List<GrayTagItem> grayscale = new ArrayList<>();
 
-    private Base base;
+    private BaseMessage base;
 
     private boolean serverGrayEnabled = true;
 
@@ -41,19 +44,11 @@ public class MqGrayscaleConfig  implements PluginConfig {
         this.enabled = enabled;
     }
 
-    public Grayscale getGrayscale() {
-        return grayscale;
-    }
-
-    public void setGrayscale(Grayscale grayscale) {
-        this.grayscale = grayscale;
-    }
-
-    public Base getBase() {
+    public BaseMessage getBase() {
         return base;
     }
 
-    public void setBase(Base base) {
+    public void setBase(BaseMessage base) {
         this.base = base;
     }
 
@@ -64,5 +59,12 @@ public class MqGrayscaleConfig  implements PluginConfig {
     public void setServerGrayEnabled(boolean serverGrayEnabled) {
         this.serverGrayEnabled = serverGrayEnabled;
     }
-}
 
+    public List<GrayTagItem> getGrayscale() {
+        return grayscale;
+    }
+
+    public void setGrayscale(List<GrayTagItem> grayscale) {
+        this.grayscale = grayscale;
+    }
+}

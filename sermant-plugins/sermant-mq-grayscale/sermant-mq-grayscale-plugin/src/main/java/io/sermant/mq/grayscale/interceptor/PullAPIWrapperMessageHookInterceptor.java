@@ -55,7 +55,7 @@ public class PullAPIWrapperMessageHookInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled()) {
-            String grayEnv = MqGrayscaleConfigUtils.getGrayEnvTag();
+            String grayEnv = MqGrayscaleConfigUtils.getGrayGroupTag();
             if (StringUtils.isBlank(grayEnv)) {
                 Optional<Object> fieldValue = ReflectUtils.getFieldValue(context.getObject(), "mQClientFactory");
                 fieldValue.ifPresent(o -> MqConsumerGroupAutoCheck.setMqClientInstance((MQClientInstance) o));

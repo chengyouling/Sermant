@@ -16,21 +16,16 @@
 
 package io.sermant.mq.grayscale.config;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * messageFilter entry
+ * base consumeType entry
  *
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class MessageFilter {
+public class BaseMessage {
     private String consumeType;
 
     private long autoCheckDelayTime;
-
-    private Map<String, String> excludeTags = new HashMap<>();
 
     public String getConsumeType() {
         return consumeType;
@@ -46,26 +41,5 @@ public class MessageFilter {
 
     public void setAutoCheckDelayTime(long autoCheckDelayTime) {
         this.autoCheckDelayTime = autoCheckDelayTime;
-    }
-
-    public Map<String, String> getExcludeTags() {
-        return excludeTags;
-    }
-
-    public void setExcludeTags(Map<String, String> excludeTags) {
-        this.excludeTags = excludeTags;
-    }
-
-    public boolean isExcludeTagsConfigChanged(MessageFilter compare) {
-        if (this.excludeTags.size() != compare.getExcludeTags().size()) {
-            return true;
-        }
-        for (Map.Entry<String, String> entry : this.excludeTags.entrySet()) {
-            if (!compare.getExcludeTags().containsKey(entry.getKey())
-                || !compare.getExcludeTags().get(entry.getKey()).equals(entry.getValue())) {
-                return true;
-            }
-        }
-        return false;
     }
 }

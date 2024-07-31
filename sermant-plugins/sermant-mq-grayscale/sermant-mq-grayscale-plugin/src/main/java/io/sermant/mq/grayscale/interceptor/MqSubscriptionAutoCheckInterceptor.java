@@ -25,7 +25,6 @@ import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.concurrent.ConcurrentMap;
 import java.util.logging.Logger;
@@ -48,32 +47,30 @@ public class MqSubscriptionAutoCheckInterceptor extends AbstractInterceptor {
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled()
                 && MqGrayscaleConfigUtils.isMqServerGrayEnabled()
-                && MqGrayscaleConfigUtils.MQ_EXCLUDE_TAGS_CHANGE_FLAG) {
+                && MqGrayscaleConfigUtils.MQ_GRAY_TAGS_CHANGE_FLAG) {
             ConcurrentMap<String, SubscriptionData> map = (ConcurrentMap<String, SubscriptionData>) context.getResult();
-            Iterator<SubscriptionData> iterator = map.values().iterator();
-            if (iterator.hasNext()) {
-                SubscriptionData subscriptionData = iterator.next();
-                String originSubData;
-                String subStr;
-                if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-                    SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData);
-                } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
-                    originSubData = subscriptionData.getSubString();
-                    subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
-                    if (StringUtils.isEmpty(subStr)) {
-                        subStr = "( " + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is null ) or ( "
-                                + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is not null )";
-                    }
-                    subscriptionData.setSubString(subStr);
-                    subscriptionData.setSubVersion(System.currentTimeMillis());
-                    LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, "
-                        + "originSubStr: %s, newSubStr: %s", originSubData, subStr));
-                } else {
-                    LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
-                        subscriptionData.getExpressionType()));
-                }
+          for (SubscriptionData subscriptionData : map.values()) {
+            String originSubData;
+            String subStr;
+            if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
+              SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData);
+            } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
+              originSubData = subscriptionData.getSubString();
+              subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
+              if (StringUtils.isEmpty(subStr)) {
+                subStr = "( " + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is null ) or ( "
+                    + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is not null )";
+              }
+              subscriptionData.setSubString(subStr);
+              subscriptionData.setSubVersion(System.currentTimeMillis());
+              LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, "
+                  + "originSubStr: %s, newSubStr: %s", originSubData, subStr));
+            } else {
+              LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
+                  subscriptionData.getExpressionType()));
             }
-            MqGrayscaleConfigUtils.MQ_EXCLUDE_TAGS_CHANGE_FLAG = false;
+          }
+          MqGrayscaleConfigUtils.MQ_GRAY_TAGS_CHANGE_FLAG = false;
         }
         return context;
     }

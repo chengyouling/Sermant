@@ -38,7 +38,7 @@ public class FilterAPISubscriptionInterceptor extends AbstractInterceptor {
 
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
-        if (MqGrayscaleConfigUtils.isPlugEnabled() && StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayEnvTag())) {
+        if (MqGrayscaleConfigUtils.isPlugEnabled() && StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
             SubscriptionData subscriptionData = (SubscriptionData) context.getResult();
             if (subscriptionData.getTopic() != null && !subscriptionData.getTopic().startsWith("%RETRY%")) {
                 MqConsumerGroupAutoCheck.setTopic(subscriptionData.getTopic());

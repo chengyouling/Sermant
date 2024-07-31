@@ -17,7 +17,9 @@
 package io.sermant.mq.grayscale.service;
 
 import io.sermant.core.common.LoggerFactory;
+import io.sermant.mq.grayscale.config.GrayTagItem;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
+import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
@@ -83,6 +85,10 @@ public class MqConsumerGroupAutoCheck {
         if (!CONSUME_TYPE_AUTO.equals(MqGrayscaleConfigUtils.getConsumeType())) {
             return;
         }
+        if (MqGrayscaleConfigUtils.getGrayscaleConfigs() == null ||
+            MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale().isEmpty()) {
+            return;
+        }
         try {
             MQClientAPIImpl mqClientAPI = BASE_MQ_CLIENT_INSTANCE.getMQClientAPIImpl();
             TopicRouteData topicRouteData = mqClientAPI.getTopicRouteInfoFromNameServer(TOPIC, 5000L, false);
@@ -91,45 +97,51 @@ public class MqConsumerGroupAutoCheck {
                 brokerList.addAll(brokerData.getBrokerAddrs().values());
             }
             String brokerAddress = brokerList.get(0);
-            Set<String> availableGroup = new HashSet<>();
+            Set<String> grayConsumerGroup = new HashSet<>();
             GroupList groupList = mqClientAPI.queryTopicConsumeByWho(brokerAddress, TOPIC, 5000L);
             LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] fined groups: %s",
                 groupList.getGroupList()));
             for (String group : groupList.getGroupList()) {
                 try {
                     List<String> consumerIds = mqClientAPI.getConsumerIdListByGroup(brokerAddress, group, 15000L);
-                    if (!consumerIds.isEmpty()) {
-                        availableGroup.add(group);
+                    if (!consumerIds.isEmpty() && !group.equals(BASE_ORIGIN_GROUP)) {
+                        grayConsumerGroup.add(group);
                     }
                 } catch (Exception e) {
-                    LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[auto-check] get consumerIds in "
-                        + "group: [%s] error", group), e);
+                    LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] can not find ids in group: [%s]。", group));
                 }
             }
-            modifyConsumerExcludeTags(availableGroup);
+            resetAutoCheckGrayTagItems(grayConsumerGroup);
         } catch (Exception e) {
             LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[auto-check] error, message: %s",
                 e.getMessage()), e);
         }
     }
 
-    private static void modifyConsumerExcludeTags(Set<String> availableGroup) {
-        HashSet<String> currentGroups = new HashSet<>(availableGroup);
-        HashSet<String> lastGroups = new HashSet<>(lastAvailableGroup);
+    private static void resetAutoCheckGrayTagItems(Set<String> grayConsumerGroup) {
+        if (grayConsumerGroup.isEmpty()) {
+            if (!lastAvailableGroup.isEmpty()) {
+                SubscriptionDataUtils.resetAutoCheckGrayTagItems(new ArrayList<>());
+                lastAvailableGroup.clear();
+            }
+            return;
+        }
+        HashSet<String> currentGroups = new HashSet<>(grayConsumerGroup);
         currentGroups.removeAll(lastAvailableGroup);
-        lastGroups.removeAll(availableGroup);
-        if (!currentGroups.isEmpty() || !lastGroups.isEmpty()) {
-            Set<String> excludeTag = new HashSet<>();
-            for (String group : availableGroup) {
-                if (!group.equals(BASE_ORIGIN_GROUP)) {
-                    String env = StringUtils.substringAfterLast(group, BASE_ORIGIN_GROUP + "_");
-                    if (StringUtils.isNotEmpty(env))
-                        excludeTag.add(env);
+        List<GrayTagItem> grayTagItems = new ArrayList<>();
+        if (!currentGroups.isEmpty() || grayConsumerGroup.size() != lastAvailableGroup.size()) {
+            for (String group : grayConsumerGroup) {
+                String grayGroupTag = StringUtils.substringAfterLast(group, BASE_ORIGIN_GROUP + "_");
+                GrayTagItem item = MqGrayscaleConfigUtils.getScaleByGroupTag(grayGroupTag,
+                    MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale());
+                if (item != null) {
+                    grayTagItems.add(item);
                 }
             }
-            LOGGER.warning(String.format(Locale.ENGLISH, "auto check gray consumer, current lastAvailableGroup: %s", lastAvailableGroup));
-            lastAvailableGroup = new HashSet<>(availableGroup);
-            MqGrayscaleConfigUtils.modifyExcludeTags(excludeTag);
+            lastAvailableGroup = new HashSet<>(grayConsumerGroup);
+            LOGGER.warning(String.format(Locale.ENGLISH, "auto check gray consumer, current "
+                + "lastAvailableGroup: %s", lastAvailableGroup));
+            SubscriptionDataUtils.resetAutoCheckGrayTagItems(grayTagItems);
         }
     }
 }

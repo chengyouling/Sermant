@@ -16,7 +16,6 @@
 
 package io.sermant.mq.grayscale.service;
 
-import io.sermant.core.utils.StringUtils;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
 import org.apache.rocketmq.client.hook.SendMessageContext;
@@ -38,16 +37,10 @@ public class MqGraySendMessageHook implements SendMessageHook {
     @Override
     public void sendMessageBefore(SendMessageContext context) {
         Message message = context.getMessage();
-        String grayTag = MqGrayscaleConfigUtils.getGrayEnvTag();
-        // 如果是灰度环境，设置灰度peoperty
-        if (!StringUtils.isEmpty(grayTag)) {
-            message.putUserProperty(MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY, grayTag);
-        }
-        // 如果不存在环境灰度标签，查看流量标签
-        String grayTrafficTag = MqGrayscaleConfigUtils.getTrafficGrayTag();
-        if (!StringUtils.isEmpty(grayTrafficTag)) {
-            message.putUserProperty(MqGrayscaleConfigUtils.MICRO_TRAFFIC_GRAY_TAG_KEY, grayTrafficTag);
-        }
+        // 消息中设置环境灰度标识
+        MqGrayscaleConfigUtils.setUserPropertyByEnvTag(message);
+        // 消息中设置流量灰度标识
+        MqGrayscaleConfigUtils.setUserPropertyByTrafficTag(message);
     }
 
     @Override

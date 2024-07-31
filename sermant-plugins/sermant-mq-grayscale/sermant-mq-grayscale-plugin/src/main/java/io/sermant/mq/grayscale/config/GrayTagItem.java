@@ -17,7 +17,6 @@
 package io.sermant.mq.grayscale.config;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -26,24 +25,34 @@ import java.util.Map;
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class Grayscale {
-    private Map<String, List<String>> environmentMatch = new HashMap<>();
+public class GrayTagItem {
+    private String consumerGroupTag;
 
-    private Map<String, List<String>> trafficMatch = new HashMap<>();
+    private Map<String, String> envTag = new HashMap<>();
 
-    public Map<String, List<String>> getEnvironmentMatch() {
-        return environmentMatch;
+    private Map<String, String> trafficTag = new HashMap<>();
+
+    public String getConsumerGroupTag() {
+        return consumerGroupTag;
     }
 
-    public void setEnvironmentMatch(Map<String, List<String>> environmentMatch) {
-        this.environmentMatch = environmentMatch;
+    public void setConsumerGroupTag(String consumerGroupTag) {
+        this.consumerGroupTag = consumerGroupTag;
     }
 
-    public Map<String, List<String>> getTrafficMatch() {
-        return trafficMatch;
+    public Map<String, String> getEnvTag() {
+        return envTag;
     }
 
-    public void setTrafficMatch(Map<String, List<String>> trafficMatch) {
-        this.trafficMatch = trafficMatch;
+    public void setEnvTag(Map<String, String> envTag) {
+        this.envTag = envTag;
+    }
+
+    public Map<String, String> getTrafficTag() {
+        return trafficTag;
+    }
+
+    public void setTrafficTag(Map<String, String> trafficTag) {
+        this.trafficTag = trafficTag;
     }
 }

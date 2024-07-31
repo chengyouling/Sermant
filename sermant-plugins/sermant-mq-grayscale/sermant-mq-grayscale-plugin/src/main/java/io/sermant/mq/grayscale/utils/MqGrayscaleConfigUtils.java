@@ -20,10 +20,8 @@ import io.sermant.core.config.ConfigManager;
 import io.sermant.core.plugin.config.ServiceMeta;
 import io.sermant.core.utils.StringUtils;
 import io.sermant.core.utils.tag.TrafficUtils;
-import io.sermant.mq.grayscale.config.Base;
-import io.sermant.mq.grayscale.config.MessageFilter;
+import io.sermant.mq.grayscale.config.GrayTagItem;
 import io.sermant.mq.grayscale.config.MqGrayscaleConfig;
-import io.sermant.mq.grayscale.strategy.TagKeyMatcher;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +30,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.apache.rocketmq.common.message.Message;
 
 /**
  * grayscale config util
@@ -42,9 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class MqGrayscaleConfigUtils {
     public final static String MICRO_SERVICE_GRAY_TAG_KEY = "micro_service_gray_tag";
 
-    public final static String MICRO_TRAFFIC_GRAY_TAG_KEY = "micro_traffic_gray_tag";
-
-    public static boolean MQ_EXCLUDE_TAGS_CHANGE_FLAG = false;
+    public static boolean MQ_GRAY_TAGS_CHANGE_FLAG = false;
 
     public final static Map<String, String> MICRO_SERVICE_PROPERTIES = new HashMap<>();
 
@@ -63,106 +61,40 @@ public class MqGrayscaleConfigUtils {
 
     private MqGrayscaleConfigUtils() {}
 
-    public static String getGrayEnvTag() {
-        if (grayscaleDisabled()) {
+    public static String getGrayGroupTag() {
+        if (!configCache.get(CONFIG_CACHE_KEY).isEnabled()) {
             return "";
         }
-        Map<String, List<String>> envMatch= configCache.get(CONFIG_CACHE_KEY).getGrayscale().getEnvironmentMatch();
-        if (envMatch == null) {
+        MqGrayscaleConfig mqGrayscaleConfig = configCache.get(CONFIG_CACHE_KEY);
+        if (mqGrayscaleConfig == null) {
             return "";
         }
-        String matchTag = TagKeyMatcher.getMatchTag(envMatch, MICRO_SERVICE_PROPERTIES);
-        if (!StringUtils.isEmpty(matchTag)) {
-            return standardFormatTag(matchTag);
+        GrayTagItem item = matchGrayTagByProperties(buildTrafficTag(), mqGrayscaleConfig.getGrayscale());
+        if (item == null) {
+            item = matchGrayTagByProperties(MICRO_SERVICE_PROPERTIES, mqGrayscaleConfig.getGrayscale());
+        }
+        if (item != null) {
+            return standardFormatTag(item.getConsumerGroupTag());
         }
         return "";
-    }
-
-    public static String getTrafficGrayTag() {
-        if (grayscaleDisabled()) {
-            return "";
-        }
-        Map<String, List<String>> envMatch = configCache.get(CONFIG_CACHE_KEY).getGrayscale().getTrafficMatch();
-        if (envMatch == null) {
-            return "";
-        }
-        String matchTag = TagKeyMatcher.getMatchTag(envMatch, buildTrafficTag());
-        if (!StringUtils.isEmpty(matchTag)) {
-            return standardFormatTag(matchTag);
-        }
-        return "";
-    }
-
-    public static boolean isExcludeTagsContainsTag(String grayTag) {
-        if (StringUtils.isEmpty(grayTag)) {
-            return false;
-        }
-        if (!grayBaseDisabled()) {
-            Map<String, String> excludeTags
-                    = configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter().getExcludeTags();
-            if (!excludeTags.isEmpty()) {
-                for (Map.Entry<String, String> entry: excludeTags.entrySet()) {
-                    if (grayTag.equals(standardFormatTag(entry.getKey() + "%" + entry.getValue()))) {
-                        return true;
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
-    public static void modifyExcludeTags(Set<String> excludeTags) {
-        if (excludeTags.isEmpty()) {
-            return;
-        }
-        MQ_EXCLUDE_TAGS_CHANGE_FLAG = true;
-        if (configCache.get(CONFIG_CACHE_KEY).getBase() == null) {
-            configCache.get(CONFIG_CACHE_KEY).setBase(new Base());
-        }
-        if (configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter() == null) {
-            configCache.get(CONFIG_CACHE_KEY).getBase().setMessageFilter(new MessageFilter());
-        }
-        Map<String, String> configExcludeTags
-                = configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter().getExcludeTags();
-        for (String tag: excludeTags) {
-            String tagName = tag.split("%")[0];
-            String tagValue = tag.split("%")[1];
-            configExcludeTags.put(tagName, tagValue);
-        }
     }
 
     public static String getConsumeType() {
-        if (grayBaseDisabled()) {
+        if (configCache.get(CONFIG_CACHE_KEY).getBase() == null) {
             return "all";
         }
-        return configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter().getConsumeType();
+        return configCache.get(CONFIG_CACHE_KEY).getBase().getConsumeType();
     }
 
     public static long getAutoCheckDelayTime() {
-        if (grayBaseDisabled()) {
+        if (configCache.get(CONFIG_CACHE_KEY).getBase() == null) {
             return 30L;
         }
-        return configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter().getAutoCheckDelayTime();
+        return configCache.get(CONFIG_CACHE_KEY).getBase().getAutoCheckDelayTime();
     }
 
     public static String standardFormatTag(String tag) {
         return tag.toLowerCase(Locale.ROOT).replaceAll("[^%|a-zA-Z0-9_-]", "-");
-    }
-
-    public static Set<String> getExcludeTagsForSet() {
-        Set<String> excludeTags = new HashSet<>();
-        if (grayBaseDisabled()) {
-            return excludeTags;
-        }
-        Map<String, String> tags =
-                configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter().getExcludeTags();
-        if (tags.isEmpty()) {
-            return excludeTags;
-        }
-        for (Map.Entry<String, String> entry: tags.entrySet()) {
-            excludeTags.add(standardFormatTag(entry.getKey() + "%" + entry.getValue()));
-        }
-        return excludeTags;
     }
 
     private static Map<String, String> buildTrafficTag() {
@@ -180,38 +112,127 @@ public class MqGrayscaleConfigUtils {
         return configCache.get(CONFIG_CACHE_KEY).isServerGrayEnabled();
     }
 
-    private static boolean grayscaleDisabled() {
-        return !configCache.get(CONFIG_CACHE_KEY).isEnabled()
-                || configCache.get(CONFIG_CACHE_KEY).getGrayscale() == null;
-    }
-
-    private static boolean grayBaseDisabled() {
-        return configCache.get(CONFIG_CACHE_KEY).getBase() == null
-                || configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter() == null;
-    }
-
     public static void resetGrayscaleConfig() {
         configCache.put(CONFIG_CACHE_KEY, new MqGrayscaleConfig());
     }
 
     public static void setGrayscaleConfig(MqGrayscaleConfig config) {
-        if (grayBaseDisabled() != configBaseMessageFilterDisabled(config)) {
-            MQ_EXCLUDE_TAGS_CHANGE_FLAG = true;
-        } else if (!grayBaseDisabled() && !configBaseMessageFilterDisabled(config)) {
-            MessageFilter lastMessageFilter = configCache.get(CONFIG_CACHE_KEY).getBase().getMessageFilter();
-            MessageFilter newMessageFilter = config.getBase().getMessageFilter();
-            if (lastMessageFilter.isExcludeTagsConfigChanged(newMessageFilter)) {
-                MQ_EXCLUDE_TAGS_CHANGE_FLAG = true;
-            }
-        }
+        MQ_GRAY_TAGS_CHANGE_FLAG = true;
         configCache.put(CONFIG_CACHE_KEY, config);
-    }
-
-    private static boolean configBaseMessageFilterDisabled(MqGrayscaleConfig config) {
-        return config.getBase() == null || config.getBase().getMessageFilter() == null;
     }
 
     public static boolean isPlugEnabled() {
         return configCache.get(CONFIG_CACHE_KEY).isEnabled();
+    }
+
+    public static void setUserPropertyByEnvTag(Message message) {
+        if (!configCache.get(CONFIG_CACHE_KEY).isEnabled()) {
+            return;
+        }
+        MqGrayscaleConfig mqGrayscaleConfig = configCache.get(CONFIG_CACHE_KEY);
+        if (mqGrayscaleConfig == null) {
+            return;
+        }
+        Map<String, String> envTags = getMatchEnvTag(mqGrayscaleConfig.getGrayscale());
+        if (envTags.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : envTags.entrySet()) {
+            message.putUserProperty(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public static void setUserPropertyByTrafficTag(Message message) {
+        if (!configCache.get(CONFIG_CACHE_KEY).isEnabled() || buildTrafficTag().isEmpty()) {
+            return;
+        }
+        MqGrayscaleConfig mqGrayscaleConfig = configCache.get(CONFIG_CACHE_KEY);
+        if (mqGrayscaleConfig == null) {
+            return;
+        }
+        Map<String, String> envTags = getMatchTrafficTag(mqGrayscaleConfig.getGrayscale());
+        if (envTags.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : envTags.entrySet()) {
+            message.putUserProperty(entry.getKey(), entry.getValue());
+        }
+    }
+
+    public static MqGrayscaleConfig getGrayscaleConfigs() {
+        return configCache.get(CONFIG_CACHE_KEY);
+    }
+
+    public static Map<String, String> getMatchEnvTag(List<GrayTagItem> grayTagItems) {
+        Map<String, String> map = new HashMap<>();
+        for (GrayTagItem grayTagItem : grayTagItems) {
+            String envKey = envMatchProperties(MICRO_SERVICE_PROPERTIES, grayTagItem);
+            if (!StringUtils.isEmpty(envKey)) {
+                map.put(envKey, grayTagItem.getEnvTag().get(envKey));
+            }
+        }
+        return map;
+    }
+
+    public static Map<String, String> getMatchTrafficTag(List<GrayTagItem> grayscale) {
+        Map<String, String> map = new HashMap<>();
+        for (GrayTagItem item: grayscale) {
+            String envKey = trafficMatchProperties(buildTrafficTag(), item);
+            if (!StringUtils.isEmpty(envKey)) {
+                map.put(envKey, item.getTrafficTag().get(envKey));
+            }
+        }
+        return map;
+    }
+
+    private static String trafficMatchProperties(Map<String, String> properties, GrayTagItem item) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            if (item.getTrafficTag().containsKey(entry.getKey())
+                && item.getTrafficTag().get(entry.getKey()).equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public static GrayTagItem matchGrayTagByProperties(Map<String, String> properties, List<GrayTagItem> grayscale) {
+        for (GrayTagItem item : grayscale) {
+            if (!StringUtils.isEmpty(envMatchProperties(properties, item))) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private static String envMatchProperties(Map<String, String> properties, GrayTagItem item) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            if (item.getEnvTag().containsKey(entry.getKey())
+                && item.getEnvTag().get(entry.getKey()).equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public static Set<String> buildGrayTagKeySet(List<GrayTagItem> grayTagItems) {
+        Set<String> set = new HashSet<>();
+        for (GrayTagItem item : grayTagItems) {
+            if (!item.getEnvTag().isEmpty()) {
+                set.addAll(item.getEnvTag().keySet());
+            }
+            if (!item.getTrafficTag().isEmpty()) {
+                set.addAll(item.getTrafficTag().keySet());
+            }
+        }
+        return set;
+    }
+
+    public static GrayTagItem getScaleByGroupTag(String groupTag, List<GrayTagItem> items) {
+        for (GrayTagItem item: items) {
+            if (groupTag.equals(item.getConsumerGroupTag())) {
+                return item;
+            }
+        }
+        return null;
     }
 }

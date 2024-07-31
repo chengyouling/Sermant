@@ -40,9 +40,9 @@ public class MqPullConsumerConstructorInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled()) {
-            String grayEnvTag = MqGrayscaleConfigUtils.getGrayEnvTag();
+            String grayGroupTag = MqGrayscaleConfigUtils.getGrayGroupTag();
             Optional<Object> originGroupOptional = ReflectUtils.getFieldValue(context.getObject(), "consumerGroup");
-            if (StringUtils.isEmpty(grayEnvTag)) {
+            if (StringUtils.isEmpty(grayGroupTag)) {
                 originGroupOptional.ifPresent(o -> MqConsumerGroupAutoCheck.setOriginGroup((String) o));
                 return context;
             }
@@ -51,7 +51,8 @@ public class MqPullConsumerConstructorInterceptor extends AbstractInterceptor {
                 originGroup = (String) originGroupOptional.get();
             }
             // consumerGroup的规则 ^[%|a-zA-Z0-9_-]+$
-            String newConsumerGroup = originGroup.contains(grayEnvTag) ? originGroup : originGroup + "_" + grayEnvTag;
+            String newConsumerGroup = originGroup.contains(grayGroupTag)
+                ? originGroup : originGroup + "_" + grayGroupTag;
             ReflectUtils.setFieldValue(context.getObject(), "consumerGroup", newConsumerGroup);
         }
         return context;
