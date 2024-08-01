@@ -79,9 +79,11 @@ public class MqConsumerGroupAutoCheck {
     }
 
     private static void schedulerCheckGrayConsumerStart() {
+        LOGGER.info(String.format(Locale.ENGLISH, "[auto-check] gray consumer, current TOPIC: %s", TOPIC));
         if (TOPIC == null || BASE_MQ_CLIENT_INSTANCE == null) {
             return;
         }
+        LOGGER.info(String.format(Locale.ENGLISH, "[auto-check] gray consumer, BASE_MQ_CLIENT_INSTANCE: %s", BASE_MQ_CLIENT_INSTANCE));
         if (!CONSUME_TYPE_AUTO.equals(MqGrayscaleConfigUtils.getConsumeType())) {
             return;
         }
