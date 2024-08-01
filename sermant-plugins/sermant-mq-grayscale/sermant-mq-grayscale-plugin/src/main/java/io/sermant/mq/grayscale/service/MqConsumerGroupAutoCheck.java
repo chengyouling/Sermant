@@ -102,6 +102,7 @@ public class MqConsumerGroupAutoCheck {
             LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] fined groups: %s",
                 groupList.getGroupList()));
             for (String group : groupList.getGroupList()) {
+                LOGGER.info(String.format(Locale.ENGLISH, "[auto-check] gray consumer, current group: %s", group));
                 try {
                     List<String> consumerIds = mqClientAPI.getConsumerIdListByGroup(brokerAddress, group, 15000L);
                     if (!consumerIds.isEmpty() && !group.equals(BASE_ORIGIN_GROUP)) {
