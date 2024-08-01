@@ -40,8 +40,6 @@ import org.apache.rocketmq.common.message.Message;
  * @since 2024-06-03
  */
 public class MqGrayscaleConfigUtils {
-    public final static String MICRO_SERVICE_GRAY_TAG_KEY = "micro_service_gray_tag";
-
     public static boolean MQ_GRAY_TAGS_CHANGE_FLAG = false;
 
     public final static Map<String, String> MICRO_SERVICE_PROPERTIES = new HashMap<>();
@@ -234,5 +232,20 @@ public class MqGrayscaleConfigUtils {
             }
         }
         return null;
+    }
+
+    public static String chooseTagAsBasicSqlTag() {
+        MqGrayscaleConfig configs = getGrayscaleConfigs();
+        if (configs != null && !configs.getGrayscale().isEmpty()) {
+            for (GrayTagItem item : configs.getGrayscale()) {
+                if (!item.getTrafficTag().isEmpty()) {
+                    return (String) item.getTrafficTag().keySet().toArray()[0];
+                }
+                if (!item.getEnvTag().isEmpty()) {
+                    return (String) item.getEnvTag().keySet().toArray()[0];
+                }
+            }
+        }
+        return "base_tag";
     }
 }

@@ -58,8 +58,8 @@ public class MqSubscriptionAutoCheckInterceptor extends AbstractInterceptor {
               originSubData = subscriptionData.getSubString();
               subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
               if (StringUtils.isEmpty(subStr)) {
-                subStr = "( " + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is null ) or ( "
-                    + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is not null )";
+                String tag = MqGrayscaleConfigUtils.chooseTagAsBasicSqlTag();
+                subStr = "( " + tag + " is null ) or ( " + tag + " is not null )";
               }
               subscriptionData.setSubString(subStr);
               subscriptionData.setSubVersion(System.currentTimeMillis());

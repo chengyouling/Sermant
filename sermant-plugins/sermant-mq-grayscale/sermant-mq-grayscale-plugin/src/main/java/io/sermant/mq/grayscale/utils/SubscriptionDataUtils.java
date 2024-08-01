@@ -60,7 +60,7 @@ public class SubscriptionDataUtils {
     private SubscriptionDataUtils() {}
 
     public static String buildSQL92ExpressionByTags(Set<String> tagsSet) {
-        return tagsSet != null && !tagsSet.isEmpty() ? buildTagsExpression(tagsSet) : " ";
+        return tagsSet != null && !tagsSet.isEmpty() ? buildTagsExpression(tagsSet) : "";
     }
 
     private static String buildTagsExpression(Set<String> tagsSet) {
@@ -204,7 +204,7 @@ public class SubscriptionDataUtils {
         String[] originConditions = pattern.split(originSubData);
         List<String> refactorConditions = new ArrayList<>();
         for (String condition: originConditions) {
-            if (containsGrayTags(condition)) {
+            if (!containsGrayTags(condition)) {
                 refactorConditions.add(condition);
             }
         }
@@ -212,7 +212,7 @@ public class SubscriptionDataUtils {
         for (int i = 0; i < refactorConditions.size(); i++) {
             sb.append(refactorConditions.get(i));
             if (i != refactorConditions.size() - 1) {
-                sb.append(" AND ");
+                sb.append(" and ");
             }
         }
         return sb.toString();
@@ -233,8 +233,8 @@ public class SubscriptionDataUtils {
         String originSubData = buildSQL92ExpressionByTags(subscriptionData.getTagsSet());
         String subStr = addMseGrayTagsToSQL92Expression(originSubData);
         if (StringUtils.isEmpty(subStr)) {
-            subStr = "( " + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is null ) or ( "
-                    + MqGrayscaleConfigUtils.MICRO_SERVICE_GRAY_TAG_KEY + "  is not null )";
+            String tag = MqGrayscaleConfigUtils.chooseTagAsBasicSqlTag();
+            subStr = "( " + tag + " is null ) or ( " + tag + " is not null )";
         }
         subscriptionData.setExpressionType("SQL92");
         subscriptionData.getTagsSet().clear();
