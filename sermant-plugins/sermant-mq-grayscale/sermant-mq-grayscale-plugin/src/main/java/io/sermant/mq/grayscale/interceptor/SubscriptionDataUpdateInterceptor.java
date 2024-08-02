@@ -46,12 +46,15 @@ public class SubscriptionDataUpdateInterceptor extends AbstractInterceptor {
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled() && MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
             SubscriptionData subscriptionData = (SubscriptionData) context.getResult();
-            MqConsumerGroupAutoCheck.setTopic(subscriptionData.getTopic());
+            if (subscriptionData.getTopic() != null && !subscriptionData.getTopic().startsWith("%RETRY%")) {
+                MqConsumerGroupAutoCheck.setTopic(subscriptionData.getTopic());
+            }
             if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-                SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData);
+//                SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData);
             } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
                 String originSubData = subscriptionData.getSubString();
-                String subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
+//                String subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
+                String subStr = "";
                 subscriptionData.setSubString(subStr);
                 LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, originSubStr: %s, "
                     + "newSubStr: %s", originSubData, subStr));

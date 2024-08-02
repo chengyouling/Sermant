@@ -115,8 +115,8 @@ public class MqGrayscaleConfigUtils {
     }
 
     public static void setGrayscaleConfig(MqGrayscaleConfig config) {
-        MQ_GRAY_TAGS_CHANGE_FLAG = true;
         configCache.put(CONFIG_CACHE_KEY, config);
+        SubscriptionDataUtils.updateChangeFlag();
     }
 
     public static boolean isPlugEnabled() {
@@ -232,20 +232,5 @@ public class MqGrayscaleConfigUtils {
             }
         }
         return null;
-    }
-
-    public static String chooseTagAsBasicSqlTag() {
-        MqGrayscaleConfig configs = getGrayscaleConfigs();
-        if (configs != null && !configs.getGrayscale().isEmpty()) {
-            for (GrayTagItem item : configs.getGrayscale()) {
-                if (!item.getTrafficTag().isEmpty()) {
-                    return (String) item.getTrafficTag().keySet().toArray()[0];
-                }
-                if (!item.getEnvTag().isEmpty()) {
-                    return (String) item.getEnvTag().keySet().toArray()[0];
-                }
-            }
-        }
-        return "base_tag";
     }
 }

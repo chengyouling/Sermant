@@ -20,9 +20,11 @@ import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
 import io.sermant.core.utils.StringUtils;
+import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
+import org.apache.rocketmq.client.impl.consumer.RebalanceImpl;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
 import java.util.Locale;
@@ -45,33 +47,47 @@ public class MqSubscriptionAutoCheckInterceptor extends AbstractInterceptor {
 
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
-        if (MqGrayscaleConfigUtils.isPlugEnabled()
-                && MqGrayscaleConfigUtils.isMqServerGrayEnabled()
-                && MqGrayscaleConfigUtils.MQ_GRAY_TAGS_CHANGE_FLAG) {
+        if (MqGrayscaleConfigUtils.isPlugEnabled() && MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
             ConcurrentMap<String, SubscriptionData> map = (ConcurrentMap<String, SubscriptionData>) context.getResult();
-          for (SubscriptionData subscriptionData : map.values()) {
-            String originSubData;
-            String subStr;
-            if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-              SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData);
-            } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
-              originSubData = subscriptionData.getSubString();
-              subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
-              if (StringUtils.isEmpty(subStr)) {
-                String tag = MqGrayscaleConfigUtils.chooseTagAsBasicSqlTag();
-                subStr = "( " + tag + " is null ) or ( " + tag + " is not null )";
-              }
-              subscriptionData.setSubString(subStr);
-              subscriptionData.setSubVersion(System.currentTimeMillis());
-              LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, "
-                  + "originSubStr: %s, newSubStr: %s", originSubData, subStr));
-            } else {
-              LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
-                  subscriptionData.getExpressionType()));
+            RebalanceImpl balance = (RebalanceImpl) context.getObject();
+            for (SubscriptionData subscriptionData : map.values()) {
+                if(buildSql92SubscriptionData(subscriptionData, balance)) {
+                    SubscriptionDataUtils.setTopicGroupChangeFlagMap(subscriptionData.getTopic(),
+                            balance.getConsumerGroup(), false);
+                }
             }
-          }
-          MqGrayscaleConfigUtils.MQ_GRAY_TAGS_CHANGE_FLAG = false;
         }
         return context;
+    }
+
+    private boolean buildSql92SubscriptionData(SubscriptionData subscriptionData, RebalanceImpl balance) {
+        if (balance.getConsumerGroup() != null
+                && SubscriptionDataUtils.checkTopicGroupTag(subscriptionData.getTopic(), balance.getConsumerGroup())) {
+            if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
+                MqConsumerGroupAutoCheck.setMqClientInstance(subscriptionData.getTopic(), balance.getConsumerGroup(),
+                        balance.getmQClientFactory());
+            }
+            String topicGroupKey = SubscriptionDataUtils.buildTopicGroupKey(subscriptionData.getTopic(),
+                    balance.getConsumerGroup());
+            if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
+                SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData, topicGroupKey);
+                return true;
+            } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
+                String originSubData = subscriptionData.getSubString();
+                String subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData, topicGroupKey);
+                if (StringUtils.isEmpty(subStr)) {
+                    subStr = "( _message_tag_ is null ) or ( _message_tag_ is not null )";
+                }
+                subscriptionData.setSubString(subStr);
+                subscriptionData.setSubVersion(System.currentTimeMillis());
+                LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, "
+                        + "originSubStr: %s, newSubStr: %s", originSubData, subStr));
+                return true;
+            } else {
+                LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
+                        subscriptionData.getExpressionType()));
+            }
+        }
+        return false;
     }
 }

@@ -18,17 +18,12 @@ package io.sermant.mq.grayscale.interceptor;
 
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
-import io.sermant.core.utils.ReflectUtils;
-import io.sermant.core.utils.StringUtils;
-import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
 import io.sermant.mq.grayscale.service.MqGrayMessageFilter;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 
 import org.apache.rocketmq.client.hook.FilterMessageHook;
-import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 /**
  * MessageFilter builder interceptor
@@ -55,11 +50,6 @@ public class PullAPIWrapperMessageHookInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled()) {
-            String grayEnv = MqGrayscaleConfigUtils.getGrayGroupTag();
-            if (StringUtils.isBlank(grayEnv)) {
-                Optional<Object> fieldValue = ReflectUtils.getFieldValue(context.getObject(), "mQClientFactory");
-                fieldValue.ifPresent(o -> MqConsumerGroupAutoCheck.setMqClientInstance((MQClientInstance) o));
-            }
             if (!MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
                 ArrayList<FilterMessageHook> messageHooks = (ArrayList<FilterMessageHook>) context.getArguments()[0];
                 for (FilterMessageHook filterMessageHook : messageHooks) {

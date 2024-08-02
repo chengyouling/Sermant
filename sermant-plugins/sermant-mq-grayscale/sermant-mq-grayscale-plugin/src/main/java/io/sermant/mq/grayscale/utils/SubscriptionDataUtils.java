@@ -17,10 +17,11 @@
 package io.sermant.mq.grayscale.utils;
 
 import io.sermant.core.common.LoggerFactory;
-import io.sermant.core.utils.StringUtils;
 import io.sermant.mq.grayscale.config.GrayTagItem;
 import io.sermant.mq.grayscale.config.MqGrayscaleConfig;
+import io.sermant.mq.grayscale.service.MqConsumerClientConfig;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
 import java.util.ArrayList;
@@ -55,7 +56,9 @@ public class SubscriptionDataUtils {
 
     private final static Map<String, List<GrayTagItem>> AUTO_CHECK_GRAY_TAGS = new ConcurrentHashMap<>();
 
-    private final static String AUTO_CHECK_GRAY_TAG_KEY = "autoCheckGrayTags";
+    private final static Map<String, Boolean> AUTO_CHECK_GRAY_CHANGE_MAP = new ConcurrentHashMap<>();
+
+    private final static Map<String, Boolean> GRAY_GROUP_TAG_CHANGE_MAP = new ConcurrentHashMap<>();
 
     private SubscriptionDataUtils() {}
 
@@ -78,11 +81,11 @@ public class SubscriptionDataUtils {
         return builder.toString();
     }
 
-    public static String addMseGrayTagsToSQL92Expression(String originSubData) {
+    public static String addMseGrayTagsToSQL92Expression(String originSubData, String topicGroupKey) {
         if (!StringUtils.isBlank(originSubData)) {
             originSubData = removeMseGrayTagFromOriginSubData(originSubData);
         }
-        String sql92Expression = buildSQL92Expression();
+        String sql92Expression = buildSQL92Expression(topicGroupKey);
         if (StringUtils.isBlank(sql92Expression)) {
             return originSubData;
         } else {
@@ -90,7 +93,7 @@ public class SubscriptionDataUtils {
         }
     }
 
-    private static String buildSQL92Expression() {
+    private static String buildSQL92Expression(String topicGroupKey) {
         StringBuilder sb = new StringBuilder();
         if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
             // all模式所有消息返回
@@ -101,26 +104,26 @@ public class SubscriptionDataUtils {
             if (CONSUME_TYPE_BASE.equals(MqGrayscaleConfigUtils.getConsumeType())) {
                 MqGrayscaleConfig config = MqGrayscaleConfigUtils.getGrayscaleConfigs();
                 if (config != null && !config.getGrayscale().isEmpty()) {
-                    sb.append(" ( ");
+                    sb.append("( ");
                     sb.append(buildBaseTypeTagSql(config.getGrayscale()));
-                    sb.append(" ) ");
+                    sb.append(" )");
                 }
                 return sb.toString();
             }
-            if (AUTO_CHECK_GRAY_TAGS.get(AUTO_CHECK_GRAY_TAG_KEY) == null) {
+            if (AUTO_CHECK_GRAY_TAGS.get(topicGroupKey) == null) {
                 return "";
             }
-            sb.append(" ( ")
-                .append(buildAutoTypeTagSql(AUTO_CHECK_GRAY_TAGS.get(AUTO_CHECK_GRAY_TAG_KEY)))
-                .append(" ) ");
+            sb.append("( ")
+                .append(buildAutoTypeTagSql(AUTO_CHECK_GRAY_TAGS.get(topicGroupKey)))
+                .append(" )");
         } else {
             List<GrayTagItem> items = MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale();
             GrayTagItem grayTagItem
                 = MqGrayscaleConfigUtils.getScaleByGroupTag(MqGrayscaleConfigUtils.getGrayGroupTag(), items);
             if (grayTagItem != null) {
-                sb.append(" ( ")
+                sb.append("(")
                     .append(buildGrayscaleTagSql(grayTagItem))
-                    .append(" ) ");
+                    .append(")");
             }
         }
         return sb.toString();
@@ -139,7 +142,7 @@ public class SubscriptionDataUtils {
             if (builder.length() > 0) {
                 builder.append(" or ");
             }
-            builder.append("( ")
+            builder.append("(")
                 .append(envEntry.getKey())
                 .append(" in ")
                 .append(getStrForSets(new HashSet<>(envEntry.getValue())))
@@ -204,7 +207,7 @@ public class SubscriptionDataUtils {
         String[] originConditions = pattern.split(originSubData);
         List<String> refactorConditions = new ArrayList<>();
         for (String condition: originConditions) {
-            if (!containsGrayTags(condition)) {
+            if (!containsGrayTags(condition) && !condition.contains("_message_tag_")) {
                 refactorConditions.add(condition);
             }
         }
@@ -229,12 +232,11 @@ public class SubscriptionDataUtils {
         return false;
     }
 
-    public static void resetsSQL92SubscriptionData(SubscriptionData subscriptionData) {
+    public static void resetsSQL92SubscriptionData(SubscriptionData subscriptionData, String topicGroupKey) {
         String originSubData = buildSQL92ExpressionByTags(subscriptionData.getTagsSet());
-        String subStr = addMseGrayTagsToSQL92Expression(originSubData);
+        String subStr = addMseGrayTagsToSQL92Expression(originSubData, topicGroupKey);
         if (StringUtils.isEmpty(subStr)) {
-            String tag = MqGrayscaleConfigUtils.chooseTagAsBasicSqlTag();
-            subStr = "( " + tag + " is null ) or ( " + tag + " is not null )";
+            subStr = "( _message_tag_ is null ) or ( _message_tag_ is not null )";
         }
         subscriptionData.setExpressionType("SQL92");
         subscriptionData.getTagsSet().clear();
@@ -245,15 +247,52 @@ public class SubscriptionDataUtils {
             + "newSubStr: [%s]", originSubData, subStr));
     }
 
-    public static void resetAutoCheckGrayTagItems(List<GrayTagItem> grayTagItems) {
+    public static void resetAutoCheckGrayTagItems(List<GrayTagItem> grayTagItems, MqConsumerClientConfig clientConfig) {
         AUTO_CHECK_GRAY_TAGS.clear();
-        MqGrayscaleConfigUtils.MQ_GRAY_TAGS_CHANGE_FLAG = true;
+        setTopicGroupChangeFlagMap(clientConfig.getTopic(), clientConfig.getConsumerGroup(), true);
         if (!grayTagItems.isEmpty()) {
-            AUTO_CHECK_GRAY_TAGS.put(AUTO_CHECK_GRAY_TAG_KEY, grayTagItems);
+            AUTO_CHECK_GRAY_TAGS.put(buildTopicGroupKey(clientConfig.getTopic(), clientConfig.getConsumerGroup()),
+                grayTagItems);
         }
     }
 
     public static List<GrayTagItem> getGrayTags() {
-        return AUTO_CHECK_GRAY_TAGS.get(AUTO_CHECK_GRAY_TAG_KEY);
+        return AUTO_CHECK_GRAY_TAGS.get("");
+    }
+
+    public static void setTopicGroupChangeFlagMap(String topic, String group, boolean flag) {
+        String flagKey = buildTopicGroupKey(topic, group);
+        if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
+            AUTO_CHECK_GRAY_CHANGE_MAP.put(flagKey, flag);
+        } else {
+            GRAY_GROUP_TAG_CHANGE_MAP.put(flagKey, flag);
+        }
+    }
+
+    public static String buildTopicGroupKey(String topic, String consumerGroup) {
+        topic = topic.contains("%RETRY%") ? StringUtils.substringAfterLast(topic, "%RETRY%") : topic;
+        consumerGroup = consumerGroup.contains("%RETRY%")
+            ? StringUtils.substringAfterLast(consumerGroup, "%RETRY%") : consumerGroup;
+        return topic + "@" + consumerGroup;
+    }
+
+    public static boolean checkTopicGroupTag(String topic, String consumerGroup) {
+        if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
+            if (AUTO_CHECK_GRAY_CHANGE_MAP.containsKey(buildTopicGroupKey(topic, consumerGroup))) {
+                return AUTO_CHECK_GRAY_CHANGE_MAP.get(buildTopicGroupKey(topic, consumerGroup));
+            }
+        } else {
+            if (!GRAY_GROUP_TAG_CHANGE_MAP.containsKey(buildTopicGroupKey(topic, consumerGroup))) {
+                GRAY_GROUP_TAG_CHANGE_MAP.put(buildTopicGroupKey(topic, consumerGroup), false);
+                return true;
+            }
+            return GRAY_GROUP_TAG_CHANGE_MAP.get(buildTopicGroupKey(topic, consumerGroup));
+        }
+        return false;
+    }
+
+    public static void updateChangeFlag() {
+        AUTO_CHECK_GRAY_CHANGE_MAP.replaceAll((k, v) -> true);
+        AUTO_CHECK_GRAY_CHANGE_MAP.replaceAll((k, v) -> true);
     }
 }

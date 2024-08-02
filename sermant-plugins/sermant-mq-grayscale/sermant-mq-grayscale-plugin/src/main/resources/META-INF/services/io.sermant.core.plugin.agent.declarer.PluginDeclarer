@@ -16,9 +16,12 @@
 
 io.sermant.mq.grayscale.declarer.RocketMQProducerGrayMessageHookDeclarer
 io.sermant.mq.grayscale.declarer.PullAPIWrapperMessageHookDeclarer
-io.sermant.mq.grayscale.declarer.MqPushConsumerConstructorDeclarer
-io.sermant.mq.grayscale.declarer.MqLitePullConsumerConstructorDeclarer
-io.sermant.mq.grayscale.declarer.FilterAPISubscriptionDeclarer
-io.sermant.mq.grayscale.declarer.MqPullConsumerConstructorDeclarer
-io.sermant.mq.grayscale.declarer.SubscriptionDataUpdateDeclarer
+#io.sermant.mq.grayscale.declarer.MqPushConsumerConstructorDeclarer
+#io.sermant.mq.grayscale.declarer.MqLitePullConsumerConstructorDeclarer
+#io.sermant.mq.grayscale.declarer.FilterAPISubscriptionDeclarer
+#io.sermant.mq.grayscale.declarer.MqPullConsumerConstructorDeclarer
+#io.sermant.mq.grayscale.declarer.SubscriptionDataUpdateDeclarer
 io.sermant.mq.grayscale.declarer.MqSubscriptionAutoCheckDeclarer
+io.sermant.mq.grayscale.declarer.MqLitePullConsumerSubscribeDeclarer
+io.sermant.mq.grayscale.declarer.MqPullConsumerFetchDeclarer
+io.sermant.mq.grayscale.declarer.MqPushConsumerSubscribeFetchDeclarer

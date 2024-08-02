@@ -29,9 +29,11 @@ import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,16 +60,26 @@ public class MqConsumerGroupAutoCheck {
 
     private static String TOPIC = null;
 
-    private static HashSet<String> lastAvailableGroup = new HashSet<>();
+    private static Map<String, Set<String>> LAST_TOPIC_GROUP_GRAY_TAG = new HashMap<>();
+
+    private static final Map<String, MqConsumerClientConfig> CONSUMER_CLIENT_CONFIG_MAP = new HashMap<>();
 
     static {
         executorService.scheduleWithFixedDelay(
-                MqConsumerGroupAutoCheck::schedulerCheckGrayConsumerStart,  0L,
+                MqConsumerGroupAutoCheck::schedulerCheck,  0L,
                 MqGrayscaleConfigUtils.getAutoCheckDelayTime(), TimeUnit.SECONDS);
     }
 
-    public static void setMqClientInstance(MQClientInstance mQClientInstance) {
-        BASE_MQ_CLIENT_INSTANCE = mQClientInstance;
+    public static void setMqClientInstance(String topic, String consumerGroup, MQClientInstance mQClientInstance) {
+        topic = topic.contains("%RETRY%") ? StringUtils.substringAfterLast(topic, "%RETRY%") : topic;
+        consumerGroup = consumerGroup.contains("%RETRY%")
+                ? StringUtils.substringAfterLast(consumerGroup, "%RETRY%") : consumerGroup;
+        String address = mQClientInstance.getClientConfig().getNamesrvAddr();
+        String tempKey = address + "@" + topic + "@" + consumerGroup;
+        LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] setMqClientInstance buildKey: [%s]。", tempKey));
+        if (CONSUMER_CLIENT_CONFIG_MAP.get(tempKey).getMqClientInstance() == null) {
+            CONSUMER_CLIENT_CONFIG_MAP.get(tempKey).setMqClientInstance(mQClientInstance);
+        }
     }
 
     public static void setOriginGroup(String originGroup) {
@@ -78,12 +90,10 @@ public class MqConsumerGroupAutoCheck {
         TOPIC = topic;
     }
 
-    private static void schedulerCheckGrayConsumerStart() {
-        LOGGER.info(String.format(Locale.ENGLISH, "[auto-check] gray consumer, current TOPIC: %s", TOPIC));
-        if (TOPIC == null || BASE_MQ_CLIENT_INSTANCE == null) {
+    private static void schedulerCheck() {
+        if (CONSUMER_CLIENT_CONFIG_MAP.isEmpty()) {
             return;
         }
-        LOGGER.info(String.format(Locale.ENGLISH, "[auto-check] gray consumer, BASE_MQ_CLIENT_INSTANCE: %s", BASE_MQ_CLIENT_INSTANCE));
         if (!CONSUME_TYPE_AUTO.equals(MqGrayscaleConfigUtils.getConsumeType())) {
             return;
         }
@@ -91,60 +101,84 @@ public class MqConsumerGroupAutoCheck {
             MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale().isEmpty()) {
             return;
         }
+        for (MqConsumerClientConfig clientConfig : CONSUMER_CLIENT_CONFIG_MAP.values()) {
+            if (clientConfig.getMqClientInstance() == null) {
+                continue;
+            }
+            findGrayConsumerGroup(clientConfig);
+        }
+    }
+
+    private static void findGrayConsumerGroup(MqConsumerClientConfig clientConfig) {
         try {
-            MQClientAPIImpl mqClientAPI = BASE_MQ_CLIENT_INSTANCE.getMQClientAPIImpl();
-            TopicRouteData topicRouteData = mqClientAPI.getTopicRouteInfoFromNameServer(TOPIC, 5000L, false);
+            MQClientAPIImpl mqClientAPI = clientConfig.getMqClientInstance().getMQClientAPIImpl();
+            TopicRouteData topicRouteData
+                    = mqClientAPI.getTopicRouteInfoFromNameServer(clientConfig.getTopic(), 5000L, false);
             List<String> brokerList = new ArrayList<>();
             for (BrokerData brokerData : topicRouteData.getBrokerDatas()) {
                 brokerList.addAll(brokerData.getBrokerAddrs().values());
             }
             String brokerAddress = brokerList.get(0);
-            Set<String> grayConsumerGroup = new HashSet<>();
-            GroupList groupList = mqClientAPI.queryTopicConsumeByWho(brokerAddress, TOPIC, 5000L);
-            LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] fined groups: %s",
-                groupList.getGroupList()));
+            Set<String> grayTags = new HashSet<>();
+            GroupList groupList = mqClientAPI.queryTopicConsumeByWho(brokerAddress, clientConfig.getTopic(), 5000L);
+            LOGGER.log(Level.WARNING, String.format(Locale.ENGLISH, "topic: %s, [auto-check] find groups: ",
+                    clientConfig.getTopic()), groupList);
             for (String group : groupList.getGroupList()) {
-                LOGGER.info(String.format(Locale.ENGLISH, "[auto-check] gray consumer, current group: %s", group));
                 try {
                     List<String> consumerIds = mqClientAPI.getConsumerIdListByGroup(brokerAddress, group, 15000L);
-                    if (!consumerIds.isEmpty() && !group.equals(BASE_ORIGIN_GROUP)) {
-                        grayConsumerGroup.add(group);
+                    String grayTag = StringUtils.substringAfterLast(group, clientConfig.getConsumerGroup() + "_");
+                    if (!consumerIds.isEmpty() && !StringUtils.isEmpty(grayTag)) {
+                        grayTags.add(grayTag);
                     }
                 } catch (Exception e) {
                     LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] can not find ids in group: [%s]。", group));
                 }
             }
-            resetAutoCheckGrayTagItems(grayConsumerGroup);
+            resetAutoCheckGrayTagItems(grayTags, clientConfig);
         } catch (Exception e) {
             LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[auto-check] error, message: %s",
-                e.getMessage()), e);
+                    e.getMessage()), e);
         }
     }
 
-    private static void resetAutoCheckGrayTagItems(Set<String> grayConsumerGroup) {
-        if (grayConsumerGroup.isEmpty()) {
-            if (!lastAvailableGroup.isEmpty()) {
-                SubscriptionDataUtils.resetAutoCheckGrayTagItems(new ArrayList<>());
-                lastAvailableGroup.clear();
+    private static void resetAutoCheckGrayTagItems(Set<String> grayTags, MqConsumerClientConfig clientConfig) {
+        String topicGroupKey = SubscriptionDataUtils.buildTopicGroupKey(clientConfig.getTopic(),
+                clientConfig.getConsumerGroup());
+        if (grayTags.isEmpty()) {
+            if (LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey) != null) {
+                SubscriptionDataUtils.resetAutoCheckGrayTagItems(new ArrayList<>(), clientConfig);
+                LAST_TOPIC_GROUP_GRAY_TAG.remove(topicGroupKey);
             }
             return;
         }
-        HashSet<String> currentGroups = new HashSet<>(grayConsumerGroup);
-        currentGroups.removeAll(lastAvailableGroup);
+        HashSet<String> currentGroups = new HashSet<>(grayTags);
+        if (LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey) != null) {
+            currentGroups.removeAll(LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey));
+        }
         List<GrayTagItem> grayTagItems = new ArrayList<>();
-        if (!currentGroups.isEmpty() || grayConsumerGroup.size() != lastAvailableGroup.size()) {
-            for (String group : grayConsumerGroup) {
-                String grayGroupTag = StringUtils.substringAfterLast(group, BASE_ORIGIN_GROUP + "_");
-                GrayTagItem item = MqGrayscaleConfigUtils.getScaleByGroupTag(grayGroupTag,
+        if (!currentGroups.isEmpty() || grayTags.size() != LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey).size()) {
+            for (String tag : grayTags) {
+                GrayTagItem item = MqGrayscaleConfigUtils.getScaleByGroupTag(tag,
                     MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale());
                 if (item != null) {
                     grayTagItems.add(item);
                 }
             }
-            lastAvailableGroup = new HashSet<>(grayConsumerGroup);
-            LOGGER.warning(String.format(Locale.ENGLISH, "auto check gray consumer, current "
-                + "lastAvailableGroup: %s", lastAvailableGroup));
-            SubscriptionDataUtils.resetAutoCheckGrayTagItems(grayTagItems);
+            LAST_TOPIC_GROUP_GRAY_TAG.put(topicGroupKey, grayTags);
+            LOGGER.log(Level.INFO, "[auto-check] gray group, current gray tags: ", LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey));
+            SubscriptionDataUtils.resetAutoCheckGrayTagItems(grayTagItems, clientConfig);
         }
+    }
+
+    public static void setConsumerClientConfig(MqConsumerClientConfig config) {
+        String configKey = buildConfigKey(config);
+        if (!CONSUMER_CLIENT_CONFIG_MAP.containsKey(configKey)) {
+            CONSUMER_CLIENT_CONFIG_MAP.put(configKey, config);
+        }
+        SubscriptionDataUtils.setTopicGroupChangeFlagMap(config.getTopic(), config.getConsumerGroup(), true);
+    }
+
+    private static String buildConfigKey(MqConsumerClientConfig config) {
+        return config.getAddress() + "@" + config.getTopic() + "@" + config.getConsumerGroup();
     }
 }
