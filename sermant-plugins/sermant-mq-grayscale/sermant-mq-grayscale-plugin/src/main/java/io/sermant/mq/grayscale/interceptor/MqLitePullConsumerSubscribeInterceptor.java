@@ -7,6 +7,7 @@ import io.sermant.core.utils.StringUtils;
 import io.sermant.mq.grayscale.service.MqConsumerClientConfig;
 import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
+import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.impl.consumer.DefaultLitePullConsumerImpl;
@@ -35,10 +36,13 @@ public class MqLitePullConsumerSubscribeInterceptor extends AbstractInterceptor 
                 config.setConsumerGroup(baseGroup);
                 config.setAddress(pullConsumer.getNamesrvAddr());
                 MqConsumerGroupAutoCheck.setConsumerClientConfig(config);
+                SubscriptionDataUtils.setAutoCheckTagChangeMap(config.getTopic(), baseGroup, true);
             } else {
                 // consumerGroup的规则 ^[%|a-zA-Z0-9_-]+$
                 String grayConsumerGroup = baseGroup.contains(grayEnv) ? baseGroup : baseGroup + "_" + grayEnv;
                 pullConsumer.setConsumerGroup(grayConsumerGroup);
+                SubscriptionDataUtils.setGrayGroupTagChangeMap((String) context.getArguments()[0], grayConsumerGroup,
+                        true);
             }
         }
         return context;

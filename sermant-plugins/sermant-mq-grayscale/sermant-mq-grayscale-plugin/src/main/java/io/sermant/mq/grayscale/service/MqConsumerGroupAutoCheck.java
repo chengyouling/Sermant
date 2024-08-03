@@ -60,7 +60,7 @@ public class MqConsumerGroupAutoCheck {
 
     private static String TOPIC = null;
 
-    private static Map<String, Set<String>> LAST_TOPIC_GROUP_GRAY_TAG = new HashMap<>();
+    private static final Map<String, Set<String>> LAST_TOPIC_GROUP_GRAY_TAG = new HashMap<>();
 
     private static final Map<String, MqConsumerClientConfig> CONSUMER_CLIENT_CONFIG_MAP = new HashMap<>();
 
@@ -95,6 +95,9 @@ public class MqConsumerGroupAutoCheck {
             return;
         }
         if (!CONSUME_TYPE_AUTO.equals(MqGrayscaleConfigUtils.getConsumeType())) {
+            return;
+        }
+        if (!StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
             return;
         }
         if (MqGrayscaleConfigUtils.getGrayscaleConfigs() == null ||
@@ -145,14 +148,14 @@ public class MqConsumerGroupAutoCheck {
         String topicGroupKey = SubscriptionDataUtils.buildTopicGroupKey(clientConfig.getTopic(),
                 clientConfig.getConsumerGroup());
         if (grayTags.isEmpty()) {
-            if (LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey) != null) {
+            if (LAST_TOPIC_GROUP_GRAY_TAG.containsKey(topicGroupKey)) {
                 SubscriptionDataUtils.resetAutoCheckGrayTagItems(new ArrayList<>(), clientConfig);
                 LAST_TOPIC_GROUP_GRAY_TAG.remove(topicGroupKey);
             }
             return;
         }
         HashSet<String> currentGroups = new HashSet<>(grayTags);
-        if (LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey) != null) {
+        if (LAST_TOPIC_GROUP_GRAY_TAG.containsKey(topicGroupKey)) {
             currentGroups.removeAll(LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey));
         }
         List<GrayTagItem> grayTagItems = new ArrayList<>();
@@ -165,7 +168,7 @@ public class MqConsumerGroupAutoCheck {
                 }
             }
             LAST_TOPIC_GROUP_GRAY_TAG.put(topicGroupKey, grayTags);
-            LOGGER.log(Level.INFO, "[auto-check] gray group, current gray tags: ", LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey));
+            LOGGER.log(Level.INFO, "[auto-check] gray group, current gray tags: ", grayTags);
             SubscriptionDataUtils.resetAutoCheckGrayTagItems(grayTagItems, clientConfig);
         }
     }
@@ -175,7 +178,6 @@ public class MqConsumerGroupAutoCheck {
         if (!CONSUMER_CLIENT_CONFIG_MAP.containsKey(configKey)) {
             CONSUMER_CLIENT_CONFIG_MAP.put(configKey, config);
         }
-        SubscriptionDataUtils.setTopicGroupChangeFlagMap(config.getTopic(), config.getConsumerGroup(), true);
     }
 
     private static String buildConfigKey(MqConsumerClientConfig config) {

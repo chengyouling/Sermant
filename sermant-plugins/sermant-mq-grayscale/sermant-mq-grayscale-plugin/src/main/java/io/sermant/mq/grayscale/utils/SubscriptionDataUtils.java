@@ -56,7 +56,7 @@ public class SubscriptionDataUtils {
 
     private final static Map<String, List<GrayTagItem>> AUTO_CHECK_GRAY_TAGS = new ConcurrentHashMap<>();
 
-    private final static Map<String, Boolean> AUTO_CHECK_GRAY_CHANGE_MAP = new ConcurrentHashMap<>();
+    private final static Map<String, Boolean> AUTO_CHECK_TAG_CHANGE_MAP = new ConcurrentHashMap<>();
 
     private final static Map<String, Boolean> GRAY_GROUP_TAG_CHANGE_MAP = new ConcurrentHashMap<>();
 
@@ -77,7 +77,7 @@ public class SubscriptionDataUtils {
             builder.append(",");
         }
         builder.deleteCharAt(builder.length() - 1);
-        builder.append(") ");
+        builder.append(")");
         return builder.toString();
     }
 
@@ -86,6 +86,7 @@ public class SubscriptionDataUtils {
             originSubData = removeMseGrayTagFromOriginSubData(originSubData);
         }
         String sql92Expression = buildSQL92Expression(topicGroupKey);
+        LOGGER.warning(String.format(Locale.ENGLISH, "build key: %s, SQL92Expression result: %s", topicGroupKey, sql92Expression));
         if (StringUtils.isBlank(sql92Expression)) {
             return originSubData;
         } else {
@@ -249,7 +250,7 @@ public class SubscriptionDataUtils {
 
     public static void resetAutoCheckGrayTagItems(List<GrayTagItem> grayTagItems, MqConsumerClientConfig clientConfig) {
         AUTO_CHECK_GRAY_TAGS.clear();
-        setTopicGroupChangeFlagMap(clientConfig.getTopic(), clientConfig.getConsumerGroup(), true);
+        setAutoCheckTagChangeMap(clientConfig.getTopic(), clientConfig.getConsumerGroup(), true);
         if (!grayTagItems.isEmpty()) {
             AUTO_CHECK_GRAY_TAGS.put(buildTopicGroupKey(clientConfig.getTopic(), clientConfig.getConsumerGroup()),
                 grayTagItems);
@@ -260,13 +261,14 @@ public class SubscriptionDataUtils {
         return AUTO_CHECK_GRAY_TAGS.get("");
     }
 
-    public static void setTopicGroupChangeFlagMap(String topic, String group, boolean flag) {
+    public static void setAutoCheckTagChangeMap(String topic, String group, boolean flag) {
         String flagKey = buildTopicGroupKey(topic, group);
-        if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
-            AUTO_CHECK_GRAY_CHANGE_MAP.put(flagKey, flag);
-        } else {
-            GRAY_GROUP_TAG_CHANGE_MAP.put(flagKey, flag);
-        }
+        AUTO_CHECK_TAG_CHANGE_MAP.put(flagKey, flag);
+    }
+
+    public static void setGrayGroupTagChangeMap(String topic, String group, boolean flag) {
+        String flagKey = buildTopicGroupKey(topic, group);
+        GRAY_GROUP_TAG_CHANGE_MAP.put(flagKey, flag);
     }
 
     public static String buildTopicGroupKey(String topic, String consumerGroup) {
@@ -278,21 +280,27 @@ public class SubscriptionDataUtils {
 
     public static boolean checkTopicGroupTag(String topic, String consumerGroup) {
         if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
-            if (AUTO_CHECK_GRAY_CHANGE_MAP.containsKey(buildTopicGroupKey(topic, consumerGroup))) {
-                return AUTO_CHECK_GRAY_CHANGE_MAP.get(buildTopicGroupKey(topic, consumerGroup));
+            if (AUTO_CHECK_TAG_CHANGE_MAP.containsKey(buildTopicGroupKey(topic, consumerGroup))) {
+                return AUTO_CHECK_TAG_CHANGE_MAP.get(buildTopicGroupKey(topic, consumerGroup));
             }
         } else {
-            if (!GRAY_GROUP_TAG_CHANGE_MAP.containsKey(buildTopicGroupKey(topic, consumerGroup))) {
-                GRAY_GROUP_TAG_CHANGE_MAP.put(buildTopicGroupKey(topic, consumerGroup), false);
-                return true;
+            if (GRAY_GROUP_TAG_CHANGE_MAP.containsKey(buildTopicGroupKey(topic, consumerGroup))) {
+                return GRAY_GROUP_TAG_CHANGE_MAP.get(buildTopicGroupKey(topic, consumerGroup));
             }
-            return GRAY_GROUP_TAG_CHANGE_MAP.get(buildTopicGroupKey(topic, consumerGroup));
         }
         return false;
     }
 
     public static void updateChangeFlag() {
-        AUTO_CHECK_GRAY_CHANGE_MAP.replaceAll((k, v) -> true);
-        AUTO_CHECK_GRAY_CHANGE_MAP.replaceAll((k, v) -> true);
+        AUTO_CHECK_TAG_CHANGE_MAP.replaceAll((k, v) -> true);
+        GRAY_GROUP_TAG_CHANGE_MAP.replaceAll((k, v) -> true);
+    }
+
+    public static void resetTagChangeMap(String topic, String consumerGroup, boolean flag) {
+        if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
+            setAutoCheckTagChangeMap(topic, consumerGroup, flag);
+        } else {
+            setGrayGroupTagChangeMap(topic, consumerGroup, flag);
+        }
     }
 }

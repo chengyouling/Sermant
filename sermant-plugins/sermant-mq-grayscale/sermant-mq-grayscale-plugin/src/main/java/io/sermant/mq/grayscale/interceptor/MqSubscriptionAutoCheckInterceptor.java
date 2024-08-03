@@ -52,7 +52,7 @@ public class MqSubscriptionAutoCheckInterceptor extends AbstractInterceptor {
             RebalanceImpl balance = (RebalanceImpl) context.getObject();
             for (SubscriptionData subscriptionData : map.values()) {
                 if(buildSql92SubscriptionData(subscriptionData, balance)) {
-                    SubscriptionDataUtils.setTopicGroupChangeFlagMap(subscriptionData.getTopic(),
+                    SubscriptionDataUtils.resetTagChangeMap(subscriptionData.getTopic(),
                             balance.getConsumerGroup(), false);
                 }
             }
