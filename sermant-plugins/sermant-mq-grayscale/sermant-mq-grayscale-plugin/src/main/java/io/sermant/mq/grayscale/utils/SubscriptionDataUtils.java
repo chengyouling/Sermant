@@ -86,7 +86,6 @@ public class SubscriptionDataUtils {
             originSubData = removeMseGrayTagFromOriginSubData(originSubData);
         }
         String sql92Expression = buildSQL92Expression(topicGroupKey);
-        LOGGER.warning(String.format(Locale.ENGLISH, "build key: %s, SQL92Expression result: %s", topicGroupKey, sql92Expression));
         if (StringUtils.isBlank(sql92Expression)) {
             return originSubData;
         } else {
@@ -114,9 +113,9 @@ public class SubscriptionDataUtils {
             if (AUTO_CHECK_GRAY_TAGS.get(topicGroupKey) == null) {
                 return "";
             }
-            sb.append("( ")
+            sb.append("(")
                 .append(buildAutoTypeTagSql(AUTO_CHECK_GRAY_TAGS.get(topicGroupKey)))
-                .append(" )");
+                .append(")");
         } else {
             List<GrayTagItem> items = MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale();
             GrayTagItem grayTagItem

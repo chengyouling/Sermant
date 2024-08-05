@@ -19,7 +19,7 @@ package io.sermant.mq.grayscale.declarer;
 import io.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import io.sermant.core.plugin.agent.matcher.ClassMatcher;
 import io.sermant.core.plugin.agent.matcher.MethodMatcher;
-import io.sermant.mq.grayscale.interceptor.SubscriptionDataUpdateInterceptor;
+import io.sermant.mq.grayscale.interceptor.PullConsumerSubscriptionUpdateInterceptor;
 
 /**
  * TAG/SQL92 query message statement declarer
@@ -27,12 +27,10 @@ import io.sermant.mq.grayscale.interceptor.SubscriptionDataUpdateInterceptor;
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class SubscriptionDataUpdateDeclarer extends MqAbstractDeclarer {
-    private static final String ENHANCE_CLASS = "org.apache.rocketmq.common.filter.FilterAPI";
+public class PullConsumerSubscriptionUpdateDeclarer extends MqAbstractDeclarer {
+    private static final String ENHANCE_CLASS = "org.apache.rocketmq.client.impl.consumer.DefaultMQPullConsumerImpl";
 
-    private static final String METHOD_NAME = "buildSubscriptionData";
-
-    private static final String METHOD_NAME_BUILD = "build";
+    private static final String METHOD_NAME = "getSubscriptionData";
 
     @Override
     public ClassMatcher getClassMatcher() {
@@ -42,8 +40,7 @@ public class SubscriptionDataUpdateDeclarer extends MqAbstractDeclarer {
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[]{
-                InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME_BUILD)
-                                .or(MethodMatcher.nameEquals(METHOD_NAME)), new SubscriptionDataUpdateInterceptor())
+                InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME), new PullConsumerSubscriptionUpdateInterceptor())
         };
     }
 }

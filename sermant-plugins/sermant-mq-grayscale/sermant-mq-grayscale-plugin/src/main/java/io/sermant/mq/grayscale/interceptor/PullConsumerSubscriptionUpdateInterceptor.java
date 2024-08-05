@@ -22,19 +22,20 @@ import java.util.logging.Logger;
 import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
-import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
+import org.apache.rocketmq.client.impl.consumer.DefaultMQPullConsumerImpl;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
 /**
- * TAG/SQL92 query message statement interceptor
+ * update pull consumer subscription SQL92 query statement interceptor
  *
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class SubscriptionDataUpdateInterceptor extends AbstractInterceptor {
+public class PullConsumerSubscriptionUpdateInterceptor extends AbstractInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
     @Override
@@ -46,18 +47,18 @@ public class SubscriptionDataUpdateInterceptor extends AbstractInterceptor {
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled() && MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
             SubscriptionData subscriptionData = (SubscriptionData) context.getResult();
-            if (subscriptionData.getTopic() != null && !subscriptionData.getTopic().startsWith("%RETRY%")) {
-                MqConsumerGroupAutoCheck.setTopic(subscriptionData.getTopic());
-            }
+            DefaultMQPullConsumer pullConsumer =
+                    ((DefaultMQPullConsumerImpl) context.getObject()).getDefaultMQPullConsumer();
+            String consumerGroup = pullConsumer.getConsumerGroup();
+            String topicGroupKey = SubscriptionDataUtils.buildTopicGroupKey(subscriptionData.getTopic(), consumerGroup);
             if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-//                SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData);
+                SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData, topicGroupKey);
             } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
-                String originSubData = subscriptionData.getSubString();
-//                String subStr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(originSubData);
-                String subStr = "";
-                subscriptionData.setSubString(subStr);
-                LOGGER.warning(String.format(Locale.ENGLISH, "update SQL92 subscriptionData, originSubStr: %s, "
-                    + "newSubStr: %s", originSubData, subStr));
+                String oldSubStr = subscriptionData.getSubString();
+                String newSubstr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(oldSubStr, topicGroupKey);
+                subscriptionData.setSubString(newSubstr);
+                LOGGER.warning(String.format(Locale.ENGLISH, "update pull consumer subscriptionData, "
+                        + "oldSubStr: %s, newSubStr: %s", oldSubStr, newSubstr));
             } else {
                 LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
                     subscriptionData.getExpressionType()));
