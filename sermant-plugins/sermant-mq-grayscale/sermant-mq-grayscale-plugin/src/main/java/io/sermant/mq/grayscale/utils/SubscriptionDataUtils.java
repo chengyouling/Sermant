@@ -249,11 +249,11 @@ public class SubscriptionDataUtils {
     }
 
     public static void resetAutoCheckGrayTagItems(List<GrayTagItem> grayTagItems, MqConsumerClientConfig clientConfig) {
-        AUTO_CHECK_GRAY_TAGS.clear();
+        String topicGroupTagKey = buildTopicGroupKey(clientConfig.getTopic(), clientConfig.getConsumerGroup());
+        AUTO_CHECK_GRAY_TAGS.remove(topicGroupTagKey);
         setAutoCheckTagChangeMap(clientConfig.getTopic(), clientConfig.getConsumerGroup(), true);
         if (!grayTagItems.isEmpty()) {
-            AUTO_CHECK_GRAY_TAGS.put(buildTopicGroupKey(clientConfig.getTopic(), clientConfig.getConsumerGroup()),
-                grayTagItems);
+            AUTO_CHECK_GRAY_TAGS.put(topicGroupTagKey, grayTagItems);
         }
     }
 
