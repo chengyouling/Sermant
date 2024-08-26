@@ -1,0 +1,25 @@
+# configuration of rocketMq message grayscale
+grayscale.mq.config:
+  # whether to enable message grayscale. The default value is false
+  enabled: false
+  # gray group information definition, each group contains consumerGroupTag、serviceMeta、trafficTag info.
+  grayscale:
+    # gray consumer group tag. example, base group is basic_group, then gray group is basic_group_${consumerGroupTag}
+    - consumerGroupTag: gray
+      # serviceMeta match tag, if service_meta_parameters set cas_lane_tag:gray, then current consumer is gray node.
+      # if using service_meta_version for match info, config key mast is 'version', as version:1.0.0
+      serviceMeta:
+        cas_lane_tag: gray
+      # traffic match info, this config effective with sermant-tag-transmission plugin, if request header has
+      # x_cse_canary=gray-3 and tag.transmission.config.matchRule.exact: ['x_cse_canary'], then will set as gray message
+      trafficTag:
+        x_cse_canary: gray
+  # base group information definition
+  base:
+    # base group consumer message type, default 'auto'
+    consumeType: auto
+    # interval for checking gray consumer group information in auto consumer type
+    autoCheckDelayTime: 15
+    # tag of the gray consumer group to be excluded, corresponding value is above consumerGroupTag value
+    # auto/base consumer type all effective
+    excludeGroupTags: ["red", "gray"]

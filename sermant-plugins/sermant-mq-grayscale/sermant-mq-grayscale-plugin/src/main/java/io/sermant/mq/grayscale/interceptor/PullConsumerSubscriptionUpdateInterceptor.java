@@ -16,18 +16,23 @@
 
 package io.sermant.mq.grayscale.interceptor;
 
-import java.util.Locale;
-import java.util.logging.Logger;
-
 import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
+import io.sermant.core.utils.ReflectUtils;
+import io.sermant.core.utils.StringUtils;
+import io.sermant.mq.grayscale.service.MqConsumerGroupAutoCheck;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.impl.consumer.DefaultMQPullConsumerImpl;
+import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
+
+import java.util.Locale;
+import java.util.Optional;
+import java.util.logging.Logger;
 
 /**
  * update pull consumer subscription SQL92 query statement interceptor
@@ -45,24 +50,29 @@ public class PullConsumerSubscriptionUpdateInterceptor extends AbstractIntercept
 
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
-        if (MqGrayscaleConfigUtils.isPlugEnabled() && MqGrayscaleConfigUtils.isMqServerGrayEnabled()) {
+        if (MqGrayscaleConfigUtils.isPlugEnabled()) {
             SubscriptionData subscriptionData = (SubscriptionData) context.getResult();
-            DefaultMQPullConsumer pullConsumer =
-                    ((DefaultMQPullConsumerImpl) context.getObject()).getDefaultMQPullConsumer();
-            String consumerGroup = pullConsumer.getConsumerGroup();
-            String topicGroupKey = SubscriptionDataUtils.buildTopicGroupKey(subscriptionData.getTopic(), consumerGroup);
-            if (SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-                SubscriptionDataUtils.resetsSQL92SubscriptionData(subscriptionData, topicGroupKey);
-            } else if (SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())) {
-                String oldSubStr = subscriptionData.getSubString();
-                String newSubstr = SubscriptionDataUtils.addMseGrayTagsToSQL92Expression(oldSubStr, topicGroupKey);
-                subscriptionData.setSubString(newSubstr);
-                LOGGER.warning(String.format(Locale.ENGLISH, "update pull consumer subscriptionData, "
-                        + "oldSubStr: %s, newSubStr: %s", oldSubStr, newSubstr));
-            } else {
+            if (!SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())
+                    && !SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
                 LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
-                    subscriptionData.getExpressionType()));
+                        subscriptionData.getExpressionType()));
+                return context;
             }
+            Optional<Object> fieldValue = ReflectUtils.getFieldValue(context.getObject(), "mQClientFactory");
+            DefaultMQPullConsumer pullConsumer
+                    = ((DefaultMQPullConsumerImpl) context.getObject()).getDefaultMQPullConsumer();
+            String consumerGroup = pullConsumer.getConsumerGroup();
+            String namesrvAddr = "";
+            if (fieldValue.isPresent()) {
+                namesrvAddr = ((MQClientInstance) fieldValue.get()).getClientConfig().getNamesrvAddr();
+                if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
+                    MqConsumerGroupAutoCheck.setMqClientInstance(subscriptionData.getTopic(), consumerGroup,
+                            (MQClientInstance) fieldValue.get());
+                }
+            }
+            String addrTopicGroupKey = SubscriptionDataUtils.buildAddrTopicGroupKey(subscriptionData.getTopic(),
+                    consumerGroup, namesrvAddr);
+            SubscriptionDataUtils.resetsSql92SubscriptionData(subscriptionData, addrTopicGroupKey);
         }
         return context;
     }

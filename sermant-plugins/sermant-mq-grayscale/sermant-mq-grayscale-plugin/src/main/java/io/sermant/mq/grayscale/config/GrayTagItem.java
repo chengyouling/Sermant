@@ -17,10 +17,11 @@
 package io.sermant.mq.grayscale.config;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * grayscale entry
+ * grayscale item entry
  *
  * @author chengyouling
  * @since 2024-05-27
@@ -28,7 +29,7 @@ import java.util.Map;
 public class GrayTagItem {
     private String consumerGroupTag;
 
-    private Map<String, String> envTag = new HashMap<>();
+    private Map<String, String> serviceMeta = new HashMap<>();
 
     private Map<String, String> trafficTag = new HashMap<>();
 
@@ -40,12 +41,12 @@ public class GrayTagItem {
         this.consumerGroupTag = consumerGroupTag;
     }
 
-    public Map<String, String> getEnvTag() {
-        return envTag;
+    public Map<String, String> getServiceMeta() {
+        return serviceMeta;
     }
 
-    public void setEnvTag(Map<String, String> envTag) {
-        this.envTag = envTag;
+    public void setServiceMeta(Map<String, String> serviceMeta) {
+        this.serviceMeta = serviceMeta;
     }
 
     public Map<String, String> getTrafficTag() {
@@ -54,5 +55,51 @@ public class GrayTagItem {
 
     public void setTrafficTag(Map<String, String> trafficTag) {
         this.trafficTag = trafficTag;
+    }
+
+    /**
+     * match grayscale tag with serviceMeta info
+     *
+     * @param properties serviceMeta
+     * @return isMatch
+     */
+    public boolean serviceMetaMatchProperties(Map<String, String> properties) {
+        for (Map.Entry<String, String> entry : properties.entrySet()) {
+            if (getServiceMeta().containsKey(entry.getKey())
+                    && getServiceMeta().get(entry.getKey()).equals(entry.getValue())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * match grayscale tag with traffic tag info
+     *
+     * @param trafficProperties trafficTagInfo
+     * @return match tag key
+     */
+    public String trafficMatchProperties(Map<String, String> trafficProperties) {
+        for (Map.Entry<String, String> entry : trafficProperties.entrySet()) {
+            if (getTrafficTag().containsKey(entry.getKey())
+                    && getTrafficTag().get(entry.getKey()).equals(entry.getValue())) {
+                return entry.getKey();
+            }
+        }
+        return "";
+    }
+
+    /**
+     * update traffic tags
+     *
+     * @param grayscale grayscale
+     */
+    public void updateTrafficTags(List<GrayTagItem> grayscale) {
+        for (GrayTagItem item: grayscale) {
+            if (getConsumerGroupTag().equals(item.getConsumerGroupTag())) {
+                setTrafficTag(item.getTrafficTag());
+                return;
+            }
+        }
     }
 }

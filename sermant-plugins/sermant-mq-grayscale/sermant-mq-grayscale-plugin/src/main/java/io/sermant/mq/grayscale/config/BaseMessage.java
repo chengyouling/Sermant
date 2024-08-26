@@ -16,6 +16,10 @@
 
 package io.sermant.mq.grayscale.config;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+
 /**
  * base consumeType entry
  *
@@ -27,8 +31,10 @@ public class BaseMessage {
 
     private long autoCheckDelayTime;
 
+    private List<String> excludeGroupTags = new ArrayList<>();
+
     public String getConsumeType() {
-        return consumeType;
+        return consumeType == null ? "" : consumeType.toLowerCase(Locale.ROOT);
     }
 
     public void setConsumeType(String consumeType) {
@@ -41,5 +47,13 @@ public class BaseMessage {
 
     public void setAutoCheckDelayTime(long autoCheckDelayTime) {
         this.autoCheckDelayTime = autoCheckDelayTime;
+    }
+
+    public List<String> getExcludeGroupTags() {
+        return excludeGroupTags;
+    }
+
+    public void setExcludeGroupTags(List<String> excludeGroupTags) {
+        this.excludeGroupTags = excludeGroupTags;
     }
 }

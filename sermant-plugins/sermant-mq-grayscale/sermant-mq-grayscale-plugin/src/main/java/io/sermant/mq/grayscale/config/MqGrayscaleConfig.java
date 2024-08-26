@@ -16,10 +16,15 @@
 
 package io.sermant.mq.grayscale.config;
 
-import java.util.ArrayList;
-import java.util.List;
+import io.sermant.core.utils.StringUtils;
+import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
-import io.sermant.core.plugin.config.PluginConfig;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * mqGrayscaleConfig entry
@@ -33,8 +38,6 @@ public class MqGrayscaleConfig {
     private List<GrayTagItem> grayscale = new ArrayList<>();
 
     private BaseMessage base;
-
-    private boolean serverGrayEnabled = true;
 
     public boolean isEnabled() {
         return enabled;
@@ -52,19 +55,153 @@ public class MqGrayscaleConfig {
         this.base = base;
     }
 
-    public boolean isServerGrayEnabled() {
-        return serverGrayEnabled;
-    }
-
-    public void setServerGrayEnabled(boolean serverGrayEnabled) {
-        this.serverGrayEnabled = serverGrayEnabled;
-    }
-
     public List<GrayTagItem> getGrayscale() {
         return grayscale;
     }
 
     public void setGrayscale(List<GrayTagItem> grayscale) {
         this.grayscale = grayscale;
+    }
+
+    /**
+     * return the corresponding traffic label based on serviceMeta matching result
+     *
+     * @param microServiceProperties serviceMeta
+     * @return traffic tags
+     */
+    public Map<String, String> getGrayTagsByServiceMeta(Map<String, String> microServiceProperties) {
+        Map<String, String> map = new HashMap<>();
+        for (GrayTagItem grayTagItem : getGrayscale()) {
+            if (grayTagItem.serviceMetaMatchProperties(microServiceProperties)
+                    && !grayTagItem.getTrafficTag().isEmpty()) {
+                // set item traffic tags when serviceMeta match, because all message tag using traffic tags.
+                map.putAll(grayTagItem.getTrafficTag());
+            }
+        }
+        return map;
+    }
+
+    /**
+     * return the corresponding traffic label based on traffic properties matching result
+     *
+     * @param trafficProperties traffic
+     * @return traffic tags
+     */
+    public Map<String, String> getGrayTagsByTrafficTag(Map<String, String> trafficProperties) {
+        Map<String, String> map = new HashMap<>();
+        for (GrayTagItem item: getGrayscale()) {
+            String envKey = item.trafficMatchProperties(trafficProperties);
+            if (!StringUtils.isEmpty(envKey)) {
+                map.put(envKey, item.getTrafficTag().get(envKey));
+            }
+        }
+        return map;
+    }
+
+    /**
+     * return the traffic tag item based on traffic properties matching result
+     *
+     * @param properties traffic
+     * @return gray tag item
+     */
+    public Optional<GrayTagItem> matchGrayTagByTrafficProperties(Map<String, String> properties) {
+        for (GrayTagItem item : getGrayscale()) {
+            if (!StringUtils.isEmpty(item.trafficMatchProperties(properties))) {
+                return Optional.of(item);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * return the traffic tag item based on serviceMeta properties matching result
+     *
+     * @param properties serviceMeta
+     * @return gray tag item
+     */
+    public Optional<GrayTagItem> matchGrayTagByServiceMeta(Map<String, String> properties) {
+        for (GrayTagItem item : getGrayscale()) {
+            if (item.serviceMetaMatchProperties(properties)) {
+                return Optional.of(item);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * return the traffic tag item by grayGroupTag
+     *
+     * @param grayGroupTag grayGroupTag
+     * @return gray tag item
+     */
+    public Optional<GrayTagItem> getGrayTagByGroupTag(String grayGroupTag) {
+        for (GrayTagItem item: getGrayscale()) {
+            if (grayGroupTag.equals(item.getConsumerGroupTag())) {
+                return Optional.of(item);
+            }
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * build traffic tag properties to string
+     *
+     * @return traffic tag string
+     */
+    public String buildAllTrafficTagInfoToStr() {
+        StringBuilder sb = new StringBuilder();
+        for (GrayTagItem item : getGrayscale()) {
+            if (sb.length() > 0) {
+                sb.append(SubscriptionDataUtils.AFA_SYMBOL);
+            }
+            sb.append(item.getConsumerGroupTag());
+            for (Map.Entry<String, String> entry : item.getTrafficTag().entrySet()) {
+                sb.append(entry.getKey())
+                        .append(SubscriptionDataUtils.AFA_SYMBOL)
+                        .append(entry.getValue());
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * compare source/target MqGrayscaleConfig excludeGroupTags config whether to change
+     *
+     * @param target MqGrayscaleConfig
+     * @return isChanged
+     */
+    public boolean isBaseExcludeGroupTagsChanged(MqGrayscaleConfig target) {
+        HashSet<String> targetBaseExcludeTags = new HashSet<>(target.getBase().getExcludeGroupTags());
+        HashSet<String> sourceBaseExcludeTags = new HashSet<>(getBase().getExcludeGroupTags());
+        targetBaseExcludeTags.removeAll(sourceBaseExcludeTags);
+        target.getBase().getExcludeGroupTags().forEach(sourceBaseExcludeTags::remove);
+        return !targetBaseExcludeTags.isEmpty() || !sourceBaseExcludeTags.isEmpty();
+    }
+
+    /**
+     * compare source/target MqGrayscaleConfig consumerType config whether to change
+     *
+     * @param target MqGrayscaleConfig
+     * @return isChanged
+     */
+    public boolean isConsumerTypeChanged(MqGrayscaleConfig target) {
+        String sourceType = getBase() == null ? "" : getBase().getConsumeType();
+        String targetType = target.getBase() == null ? "" : target.getBase().getConsumeType();
+        return !sourceType.equals(targetType);
+    }
+
+    /**
+     * update base info/traffic tags
+     *
+     * @param config config
+     */
+    public void updateGrayscaleConfig(MqGrayscaleConfig config) {
+        setBase(config.getBase());
+        if (config.getGrayscale().isEmpty()) {
+            return;
+        }
+        for (GrayTagItem item : getGrayscale()) {
+            item.updateTrafficTags(config.getGrayscale());
+        }
     }
 }

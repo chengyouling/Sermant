@@ -18,15 +18,21 @@ package io.sermant.mq.grayscale.service;
 
 import io.sermant.core.common.LoggerFactory;
 import io.sermant.mq.grayscale.config.GrayTagItem;
+import io.sermant.mq.grayscale.config.MqConsumerClientConfig;
 import io.sermant.mq.grayscale.utils.MqGrayscaleConfigUtils;
 import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.impl.MQClientAPIImpl;
 import org.apache.rocketmq.client.impl.factory.MQClientInstance;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.route.BrokerData;
 import org.apache.rocketmq.common.protocol.route.TopicRouteData;
+import org.apache.rocketmq.remoting.exception.RemotingConnectException;
+import org.apache.rocketmq.remoting.exception.RemotingSendRequestException;
+import org.apache.rocketmq.remoting.exception.RemotingTimeoutException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,10 +40,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -50,58 +58,68 @@ import java.util.logging.Logger;
 public class MqConsumerGroupAutoCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
-    private static final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private static final ScheduledExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadScheduledExecutor();
 
     private static final String CONSUME_TYPE_AUTO = "auto";
 
-    private static MQClientInstance BASE_MQ_CLIENT_INSTANCE = null;
-
-    private static String BASE_ORIGIN_GROUP = null;
-
-    private static String TOPIC = null;
-
+    /**
+     * gray consumer tags at last time
+     * key: namesrvAddr@topic@consumerGroup
+     * value: consumer gray tags
+     */
     private static final Map<String, Set<String>> LAST_TOPIC_GROUP_GRAY_TAG = new HashMap<>();
 
+    /**
+     * client configs for query consumer group
+     * key: namesrvAddr@topic@consumerGroup
+     * value: client config
+     */
     private static final Map<String, MqConsumerClientConfig> CONSUMER_CLIENT_CONFIG_MAP = new HashMap<>();
 
-    static {
-        executorService.scheduleWithFixedDelay(
-                MqConsumerGroupAutoCheck::schedulerCheck,  0L,
-                MqGrayscaleConfigUtils.getAutoCheckDelayTime(), TimeUnit.SECONDS);
+    private static final AtomicBoolean START_AUTO_CHECK = new AtomicBoolean(false);
+
+    private static final long INITIAL_DELAY = 10L;
+
+    private static final long ROCKET_MQ_READ_TIMEOUT = 5000L;
+
+    private MqConsumerGroupAutoCheck() {
     }
 
-    public static void setMqClientInstance(String topic, String consumerGroup, MQClientInstance mQClientInstance) {
-        topic = topic.contains("%RETRY%") ? StringUtils.substringAfterLast(topic, "%RETRY%") : topic;
-        consumerGroup = consumerGroup.contains("%RETRY%")
-                ? StringUtils.substringAfterLast(consumerGroup, "%RETRY%") : consumerGroup;
-        String address = mQClientInstance.getClientConfig().getNamesrvAddr();
-        String tempKey = address + "@" + topic + "@" + consumerGroup;
-        LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] setMqClientInstance buildKey: [%s]。", tempKey));
-        if (CONSUMER_CLIENT_CONFIG_MAP.get(tempKey).getMqClientInstance() == null) {
-            CONSUMER_CLIENT_CONFIG_MAP.get(tempKey).setMqClientInstance(mQClientInstance);
+    /**
+     * set current client MQClientInstance info
+     *
+     * @param topic topic
+     * @param consumerGroup consumerGroup
+     * @param mqClientInstance mqClientInstance
+     */
+    public static void setMqClientInstance(String topic, String consumerGroup, MQClientInstance mqClientInstance) {
+        String addrTopicGroupKey = SubscriptionDataUtils.buildAddrTopicGroupKey(topic, consumerGroup,
+                mqClientInstance.getClientConfig().getNamesrvAddr());
+        if (CONSUMER_CLIENT_CONFIG_MAP.get(addrTopicGroupKey) != null
+                && CONSUMER_CLIENT_CONFIG_MAP.get(addrTopicGroupKey).getMqClientInstance() == null) {
+            CONSUMER_CLIENT_CONFIG_MAP.get(addrTopicGroupKey).setMqClientInstance(mqClientInstance);
         }
-    }
+        if (CONSUME_TYPE_AUTO.equals(MqGrayscaleConfigUtils.getConsumeType())) {
+            // sync to obtain current gray consumer group at service start
+            schedulerCheck();
 
-    public static void setOriginGroup(String originGroup) {
-        BASE_ORIGIN_GROUP = originGroup;
-    }
-
-    public static void setTopic(String topic) {
-        TOPIC = topic;
+            // async to check gray consumer group
+            if (START_AUTO_CHECK.compareAndSet(false, true)) {
+                EXECUTOR_SERVICE.scheduleWithFixedDelay(MqConsumerGroupAutoCheck::schedulerCheck, INITIAL_DELAY,
+                        MqGrayscaleConfigUtils.getAutoCheckDelayTime(), TimeUnit.SECONDS);
+            }
+        }
     }
 
     private static void schedulerCheck() {
         if (CONSUMER_CLIENT_CONFIG_MAP.isEmpty()) {
             return;
         }
-        if (!CONSUME_TYPE_AUTO.equals(MqGrayscaleConfigUtils.getConsumeType())) {
-            return;
-        }
         if (!StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
             return;
         }
-        if (MqGrayscaleConfigUtils.getGrayscaleConfigs() == null ||
-            MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale().isEmpty()) {
+        if (MqGrayscaleConfigUtils.getGrayscaleConfigs() == null
+                || MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale().isEmpty()) {
             return;
         }
         for (MqConsumerClientConfig clientConfig : CONSUMER_CLIENT_CONFIG_MAP.values()) {
@@ -112,75 +130,92 @@ public class MqConsumerGroupAutoCheck {
         }
     }
 
+    /**
+     * querying all consumer groups of Topic and Collecting grayGroupTag
+     *
+     * @param clientConfig clientConfig
+     */
     private static void findGrayConsumerGroup(MqConsumerClientConfig clientConfig) {
         try {
-            MQClientAPIImpl mqClientAPI = clientConfig.getMqClientInstance().getMQClientAPIImpl();
-            TopicRouteData topicRouteData
-                    = mqClientAPI.getTopicRouteInfoFromNameServer(clientConfig.getTopic(), 5000L, false);
+            MQClientAPIImpl mqClientApi = clientConfig.getMqClientInstance().getMQClientAPIImpl();
+            TopicRouteData topicRouteData = mqClientApi.getTopicRouteInfoFromNameServer(clientConfig.getTopic(),
+                    ROCKET_MQ_READ_TIMEOUT, false);
             List<String> brokerList = new ArrayList<>();
             for (BrokerData brokerData : topicRouteData.getBrokerDatas()) {
                 brokerList.addAll(brokerData.getBrokerAddrs().values());
             }
             String brokerAddress = brokerList.get(0);
             Set<String> grayTags = new HashSet<>();
-            GroupList groupList = mqClientAPI.queryTopicConsumeByWho(brokerAddress, clientConfig.getTopic(), 5000L);
-            LOGGER.log(Level.WARNING, String.format(Locale.ENGLISH, "topic: %s, [auto-check] find groups: ",
-                    clientConfig.getTopic()), groupList);
+            GroupList groupList = mqClientApi.queryTopicConsumeByWho(brokerAddress, clientConfig.getTopic(),
+                    ROCKET_MQ_READ_TIMEOUT);
             for (String group : groupList.getGroupList()) {
                 try {
-                    List<String> consumerIds = mqClientAPI.getConsumerIdListByGroup(brokerAddress, group, 15000L);
+                    List<String> consumerIds = mqClientApi.getConsumerIdListByGroup(brokerAddress, group,
+                            ROCKET_MQ_READ_TIMEOUT);
                     String grayTag = StringUtils.substringAfterLast(group, clientConfig.getConsumerGroup() + "_");
                     if (!consumerIds.isEmpty() && !StringUtils.isEmpty(grayTag)) {
                         grayTags.add(grayTag);
                     }
-                } catch (Exception e) {
-                    LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] can not find ids in group: [%s]。", group));
+                } catch (RemotingConnectException | RemotingSendRequestException | RemotingTimeoutException
+                         | MQBrokerException | InterruptedException e) {
+                    LOGGER.warning(String.format(Locale.ENGLISH, "[auto-check] can not find ids in group: [%s].",
+                            group));
                 }
             }
             resetAutoCheckGrayTagItems(grayTags, clientConfig);
-        } catch (Exception e) {
+        } catch (MQClientException | InterruptedException | RemotingTimeoutException | RemotingSendRequestException
+                 | RemotingConnectException | MQBrokerException e) {
             LOGGER.log(Level.FINE, String.format(Locale.ENGLISH, "[auto-check] error, message: %s",
                     e.getMessage()), e);
         }
     }
 
+    /**
+     * compare current query grayGroupTag with collected last time, reset autoCheckGrayTagItems
+     *
+     * @param grayTags grayTags
+     * @param clientConfig MqConsumerClientConfig
+     */
     private static void resetAutoCheckGrayTagItems(Set<String> grayTags, MqConsumerClientConfig clientConfig) {
-        String topicGroupKey = SubscriptionDataUtils.buildTopicGroupKey(clientConfig.getTopic(),
-                clientConfig.getConsumerGroup());
+        String addrTopicGroupKey = SubscriptionDataUtils.buildAddrTopicGroupKey(clientConfig.getTopic(),
+                clientConfig.getConsumerGroup(), clientConfig.getAddress());
         if (grayTags.isEmpty()) {
-            if (LAST_TOPIC_GROUP_GRAY_TAG.containsKey(topicGroupKey)) {
+            if (LAST_TOPIC_GROUP_GRAY_TAG.containsKey(addrTopicGroupKey)) {
                 SubscriptionDataUtils.resetAutoCheckGrayTagItems(new ArrayList<>(), clientConfig);
-                LAST_TOPIC_GROUP_GRAY_TAG.remove(topicGroupKey);
+                LAST_TOPIC_GROUP_GRAY_TAG.remove(addrTopicGroupKey);
             }
             return;
         }
         HashSet<String> currentGroups = new HashSet<>(grayTags);
-        if (LAST_TOPIC_GROUP_GRAY_TAG.containsKey(topicGroupKey)) {
-            currentGroups.removeAll(LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey));
+        if (LAST_TOPIC_GROUP_GRAY_TAG.containsKey(addrTopicGroupKey)) {
+            currentGroups.removeAll(LAST_TOPIC_GROUP_GRAY_TAG.get(addrTopicGroupKey));
         }
         List<GrayTagItem> grayTagItems = new ArrayList<>();
-        if (!currentGroups.isEmpty() || grayTags.size() != LAST_TOPIC_GROUP_GRAY_TAG.get(topicGroupKey).size()) {
-            for (String tag : grayTags) {
-                GrayTagItem item = MqGrayscaleConfigUtils.getScaleByGroupTag(tag,
-                    MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayscale());
-                if (item != null) {
-                    grayTagItems.add(item);
-                }
+        if (!currentGroups.isEmpty() || grayTags.size() != LAST_TOPIC_GROUP_GRAY_TAG.get(addrTopicGroupKey).size()) {
+            for (String grayTag : grayTags) {
+                LOGGER.log(Level.INFO, String.format(Locale.ENGLISH, "[auto-check] current find gray tag: [%s].",
+                        grayTag));
+                Optional<GrayTagItem> item = MqGrayscaleConfigUtils.getGrayscaleConfigs().getGrayTagByGroupTag(grayTag);
+                item.ifPresent(grayTagItems::add);
             }
-            LAST_TOPIC_GROUP_GRAY_TAG.put(topicGroupKey, grayTags);
-            LOGGER.log(Level.INFO, "[auto-check] gray group, current gray tags: ", grayTags);
+            LAST_TOPIC_GROUP_GRAY_TAG.put(addrTopicGroupKey, grayTags);
             SubscriptionDataUtils.resetAutoCheckGrayTagItems(grayTagItems, clientConfig);
         }
     }
 
-    public static void setConsumerClientConfig(MqConsumerClientConfig config) {
-        String configKey = buildConfigKey(config);
-        if (!CONSUMER_CLIENT_CONFIG_MAP.containsKey(configKey)) {
-            CONSUMER_CLIENT_CONFIG_MAP.put(configKey, config);
+    /**
+     * set consumer client config
+     *
+     * @param address address
+     * @param topic topic
+     * @param consumerGroup consumerGroup
+     */
+    public static void setConsumerClientConfig(String address, String topic, String consumerGroup) {
+        MqConsumerClientConfig config = new MqConsumerClientConfig(address, topic, consumerGroup);
+        String addrTopicGroupKey = SubscriptionDataUtils.buildAddrTopicGroupKey(topic, consumerGroup, address);
+        if (!CONSUMER_CLIENT_CONFIG_MAP.containsKey(addrTopicGroupKey)) {
+            CONSUMER_CLIENT_CONFIG_MAP.put(addrTopicGroupKey, config);
+            SubscriptionDataUtils.setAutoCheckTagChangeMap(address, topic, consumerGroup, true);
         }
-    }
-
-    private static String buildConfigKey(MqConsumerClientConfig config) {
-        return config.getAddress() + "@" + config.getTopic() + "@" + config.getConsumerGroup();
     }
 }

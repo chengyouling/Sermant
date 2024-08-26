@@ -19,7 +19,7 @@ package io.sermant.mq.grayscale.declarer;
 import io.sermant.core.plugin.agent.declarer.InterceptDeclarer;
 import io.sermant.core.plugin.agent.matcher.ClassMatcher;
 import io.sermant.core.plugin.agent.matcher.MethodMatcher;
-import io.sermant.mq.grayscale.interceptor.RocketMQProducerGrayMessageHookInterceptor;
+import io.sermant.mq.grayscale.interceptor.MqProducerGrayMessageHookInterceptor;
 
 /**
  * SendMessageHook builder declarer
@@ -27,7 +27,7 @@ import io.sermant.mq.grayscale.interceptor.RocketMQProducerGrayMessageHookInterc
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class RocketMQProducerGrayMessageHookDeclarer extends MqAbstractDeclarer {
+public class RocketMqProducerGrayMessageHookDeclarer extends MqAbstractDeclarer {
     private static final String ENHANCE_CLASS = "org.apache.rocketmq.client.impl.producer.DefaultMQProducerImpl";
 
     private static final String[] METHOD_PARAM_TYPES = {
@@ -44,7 +44,7 @@ public class RocketMQProducerGrayMessageHookDeclarer extends MqAbstractDeclarer 
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[]{
                 InterceptDeclarer.build(MethodMatcher.isConstructor()
-                .and(MethodMatcher.paramTypesEqual(METHOD_PARAM_TYPES)), new RocketMQProducerGrayMessageHookInterceptor())
+                .and(MethodMatcher.paramTypesEqual(METHOD_PARAM_TYPES)), new MqProducerGrayMessageHookInterceptor())
         };
     }
 }

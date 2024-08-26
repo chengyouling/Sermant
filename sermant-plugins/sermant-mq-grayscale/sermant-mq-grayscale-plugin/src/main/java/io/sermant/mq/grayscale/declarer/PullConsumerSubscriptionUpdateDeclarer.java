@@ -22,7 +22,7 @@ import io.sermant.core.plugin.agent.matcher.MethodMatcher;
 import io.sermant.mq.grayscale.interceptor.PullConsumerSubscriptionUpdateInterceptor;
 
 /**
- * TAG/SQL92 query message statement declarer
+ * pull consumer TAG/SQL92 query message statement build declarer
  *
  * @author chengyouling
  * @since 2024-05-27
@@ -40,7 +40,8 @@ public class PullConsumerSubscriptionUpdateDeclarer extends MqAbstractDeclarer {
     @Override
     public InterceptDeclarer[] getInterceptDeclarers(ClassLoader classLoader) {
         return new InterceptDeclarer[]{
-                InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME), new PullConsumerSubscriptionUpdateInterceptor())
+                InterceptDeclarer.build(MethodMatcher.nameEquals(METHOD_NAME),
+                        new PullConsumerSubscriptionUpdateInterceptor())
         };
     }
 }

@@ -34,7 +34,7 @@ import java.util.Optional;
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class RocketMQProducerGrayMessageHookInterceptor extends AbstractInterceptor {
+public class MqProducerGrayMessageHookInterceptor extends AbstractInterceptor {
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
         return context;

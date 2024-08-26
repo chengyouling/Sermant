@@ -37,9 +37,11 @@ public class MqGraySendMessageHook implements SendMessageHook {
     @Override
     public void sendMessageBefore(SendMessageContext context) {
         Message message = context.getMessage();
-        // 消息中设置环境灰度标识
-        MqGrayscaleConfigUtils.setUserPropertyByEnvTag(message);
-        // 消息中设置流量灰度标识
+
+        // set env gray tag in message
+        MqGrayscaleConfigUtils.setUserPropertyByServiceMeta(message);
+
+        // set traffic gray tag in message
         MqGrayscaleConfigUtils.setUserPropertyByTrafficTag(message);
     }
 

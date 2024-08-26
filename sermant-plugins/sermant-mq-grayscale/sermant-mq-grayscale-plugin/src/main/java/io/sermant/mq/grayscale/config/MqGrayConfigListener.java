@@ -25,11 +25,14 @@ import io.sermant.core.service.dynamicconfig.common.DynamicConfigListener;
  * @author chengyouling
  * @since 2024-05-27
  **/
-public class CseMqGrayConfigListener implements DynamicConfigListener {
-    private final CseMqGrayConfigHandler handler;
+public class MqGrayConfigListener implements DynamicConfigListener {
+    private final MqGrayConfigHandler handler;
 
-    public CseMqGrayConfigListener() {
-        handler = new CseMqGrayConfigHandler();
+    /**
+     * construction
+     */
+    public MqGrayConfigListener() {
+        handler = new MqGrayConfigHandler();
     }
 
     @Override

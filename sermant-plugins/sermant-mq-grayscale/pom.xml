@@ -15,7 +15,7 @@
 
     <properties>
         <sermant.basedir>${pom.basedir}/../../..</sermant.basedir>
-        <package.plugin.name>sermant-mq-grayscale</package.plugin.name>
+        <package.plugin.name>mq-grayscale</package.plugin.name>
         <rocketmq-client.version>5.0.0</rocketmq-client.version>
     </properties>
 

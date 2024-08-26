@@ -16,10 +16,12 @@
 
 package io.sermant.mq.grayscale.service;
 
+import io.sermant.core.config.ConfigManager;
+import io.sermant.core.plugin.config.ServiceMeta;
 import io.sermant.core.plugin.service.PluginService;
 import io.sermant.core.plugin.subscribe.ConfigSubscriber;
 import io.sermant.core.plugin.subscribe.CseGroupConfigSubscriber;
-import io.sermant.mq.grayscale.config.CseMqGrayConfigListener;
+import io.sermant.mq.grayscale.config.MqGrayConfigListener;
 
 /**
  * grayscale dynamic config service
@@ -28,13 +30,12 @@ import io.sermant.mq.grayscale.config.CseMqGrayConfigListener;
  * @since 2024-05-27
  **/
 public class CseMqGrayDynamicConfigService implements PluginService {
-    public CseMqGrayDynamicConfigService() {
-    }
-
     @Override
     public void start() {
-        CseMqGrayConfigListener listener = new CseMqGrayConfigListener();
-        ConfigSubscriber subscriber = new CseGroupConfigSubscriber("default", listener, "SERMANT-MQ-GRAYSCALE");
+        ServiceMeta serviceMeta = ConfigManager.getConfig(ServiceMeta.class);
+        MqGrayConfigListener listener = new MqGrayConfigListener();
+        ConfigSubscriber subscriber = new CseGroupConfigSubscriber(serviceMeta.getService(), listener,
+                "SERMANT-MQ-GRAYSCALE");
         subscriber.subscribe();
     }
 }
