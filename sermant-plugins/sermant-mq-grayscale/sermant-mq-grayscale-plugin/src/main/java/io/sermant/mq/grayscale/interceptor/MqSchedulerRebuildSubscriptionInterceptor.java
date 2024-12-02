@@ -40,6 +40,8 @@ import java.util.logging.Logger;
 public class MqSchedulerRebuildSubscriptionInterceptor extends AbstractInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger();
 
+    private static final String RETYPE = "%RETRY%";
+
     private final Object lock = new Object();
 
     @Override
@@ -53,7 +55,7 @@ public class MqSchedulerRebuildSubscriptionInterceptor extends AbstractIntercept
             ConcurrentMap<String, SubscriptionData> map = (ConcurrentMap<String, SubscriptionData>) context.getResult();
             RebalanceImpl balance = (RebalanceImpl) context.getObject();
             for (SubscriptionData subscriptionData : map.values()) {
-                if (balance.getConsumerGroup() == null) {
+                if (balance.getConsumerGroup() == null || subscriptionData.getTopic().contains(RETYPE)) {
                     continue;
                 }
                 if (!SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())
