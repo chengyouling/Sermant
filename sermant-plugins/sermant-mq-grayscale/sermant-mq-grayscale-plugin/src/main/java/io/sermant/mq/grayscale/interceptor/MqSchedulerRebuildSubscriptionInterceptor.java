@@ -27,8 +27,9 @@ import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 import org.apache.rocketmq.client.impl.consumer.RebalanceImpl;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
+import java.util.Collection;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 import java.util.logging.Logger;
 
 /**
@@ -42,8 +43,6 @@ public class MqSchedulerRebuildSubscriptionInterceptor extends AbstractIntercept
 
     private static final String RETYPE = "%RETRY%";
 
-    private final Object lock = new Object();
-
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
         return context;
@@ -52,40 +51,63 @@ public class MqSchedulerRebuildSubscriptionInterceptor extends AbstractIntercept
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled()) {
-            ConcurrentMap<String, SubscriptionData> map = (ConcurrentMap<String, SubscriptionData>) context.getResult();
-            RebalanceImpl balance = (RebalanceImpl) context.getObject();
-            for (SubscriptionData subscriptionData : map.values()) {
-                if (balance.getConsumerGroup() == null || subscriptionData.getTopic().contains(RETYPE)) {
-                    continue;
+            synchronized (MqSchedulerRebuildSubscriptionInterceptor.class) {
+                Map<String, SubscriptionData> map = (Map<String, SubscriptionData>) context.getResult();
+                RebalanceImpl balance = (RebalanceImpl) context.getObject();
+                for (SubscriptionData subscriptionData : map.values()) {
+                    if (balance.getConsumerGroup() == null || subscriptionData.getTopic().contains(RETYPE)) {
+                        continue;
+                    }
+                    if (!SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())
+                            && !SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
+                        LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
+                                subscriptionData.getExpressionType()));
+                        continue;
+                    }
+
+                    // if config not changed, continue other topic
+                    if (!SubscriptionDataUtils.getGrayTagChangeFlag(subscriptionData.getTopic(), balance)) {
+                        continue;
+                    }
+                    buildSql92SubscriptionData(subscriptionData, balance);
+
+                    // update %RETRY%+GROUP dimension substring
+                    updateRetrySubscriptionData(subscriptionData, map.values());
                 }
-                if (!SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())
-                        && !SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-                    LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
-                            subscriptionData.getExpressionType()));
-                    continue;
-                }
-                buildSql92SubscriptionData(subscriptionData, balance);
             }
         }
         return context;
     }
 
-    private void buildSql92SubscriptionData(SubscriptionData subscriptionData, RebalanceImpl balance) {
-        synchronized (lock) {
-            if (SubscriptionDataUtils.getGrayTagChangeFlag(subscriptionData.getTopic(), balance)) {
-                if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
-                    MqConsumerGroupAutoCheck.setMqClientInstance(subscriptionData.getTopic(),
-                            balance.getConsumerGroup(), balance.getmQClientFactory());
-                }
-                String addrTopicGroupKey = SubscriptionDataUtils.buildAddrTopicGroupKey(subscriptionData.getTopic(),
-                        balance.getConsumerGroup(), balance.getmQClientFactory().getClientConfig().getNamesrvAddr());
-                SubscriptionDataUtils.resetsSql92SubscriptionData(subscriptionData, addrTopicGroupKey);
-
-                // update change flag when finished build substr
-                SubscriptionDataUtils.resetTagChangeMap(
-                        balance.getmQClientFactory().getClientConfig().getNamesrvAddr(),
-                        subscriptionData.getTopic(), balance.getConsumerGroup(), false);
+    private void updateRetrySubscriptionData(SubscriptionData subscriptionData,
+            Collection<SubscriptionData> subscriptionDatas) {
+        for (SubscriptionData subData : subscriptionDatas) {
+            if (subData.getTopic().contains(RETYPE)) {
+                String originSubData = subData.getSubString();
+                subData.getTagsSet().clear();
+                subData.getCodeSet().clear();
+                subData.setSubString(subscriptionData.getSubString());
+                subData.setExpressionType("SQL92");
+                subData.setSubVersion(System.currentTimeMillis());
+                LOGGER.warning(String.format(Locale.ENGLISH, "update retry topic [%s] SQL92 expression, "
+                        + "originTopic: [%s], originSubStr: [%s], newSubStr: [%s]", subData.getTopic(),
+                        subscriptionData.getTopic(), originSubData, subscriptionData.getSubString()));
             }
         }
+    }
+
+    private void buildSql92SubscriptionData(SubscriptionData subscriptionData, RebalanceImpl balance) {
+        if (StringUtils.isEmpty(MqGrayscaleConfigUtils.getGrayGroupTag())) {
+            MqConsumerGroupAutoCheck.setMqClientInstance(subscriptionData.getTopic(),
+                    balance.getConsumerGroup(), balance.getmQClientFactory());
+        }
+        String addrTopicGroupKey = SubscriptionDataUtils.buildAddrTopicGroupKey(subscriptionData.getTopic(),
+                balance.getConsumerGroup(), balance.getmQClientFactory().getClientConfig().getNamesrvAddr());
+        SubscriptionDataUtils.resetsSql92SubscriptionData(subscriptionData, addrTopicGroupKey);
+
+        // update change flag when finished build substr
+        SubscriptionDataUtils.resetTagChangeMap(
+                balance.getmQClientFactory().getClientConfig().getNamesrvAddr(),
+                subscriptionData.getTopic(), balance.getConsumerGroup(), false);
     }
 }
