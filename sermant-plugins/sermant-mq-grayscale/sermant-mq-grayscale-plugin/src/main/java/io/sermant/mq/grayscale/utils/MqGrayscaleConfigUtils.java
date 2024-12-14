@@ -235,6 +235,8 @@ public class MqGrayscaleConfigUtils {
         }
         for (Map.Entry<String, String> entry : grayTags.entrySet()) {
             message.putUserProperty(entry.getKey(), entry.getValue());
+            LOGGER.log(Level.FINE, "gray instance set property, messageId: " + message.getProperty("UNIQ_KEY") + ", "
+                    + "gray tag value: " + entry.getValue());
         }
     }
 
@@ -262,6 +264,9 @@ public class MqGrayscaleConfigUtils {
         }
         for (Map.Entry<String, String> entry : grayTags.entrySet()) {
             message.putUserProperty(entry.getKey(), entry.getValue());
+            LOGGER.log(Level.FINE, "gray traffic set property, messageId: " + message.getProperty("UNIQ_KEY") + ", "
+                    + "gray tag "
+                    + "value: " + entry.getValue());
         }
     }
 

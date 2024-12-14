@@ -45,6 +45,8 @@ public abstract class AbstractThreadWrapper<T> {
 
     private final boolean cannotTransmit;
 
+    private final String name;
+
     /**
      * Constructor
      *
@@ -66,6 +68,7 @@ public abstract class AbstractThreadWrapper<T> {
             this.requestData = requestData;
         }
         this.cannotTransmit = cannotTransmit;
+        this.name = Thread.currentThread().getName();
     }
 
     /**
@@ -117,6 +120,9 @@ public abstract class AbstractThreadWrapper<T> {
     }
 
     private void after() {
+        if (name.equals(Thread.currentThread().getName())) {
+            return;
+        }
         ThreadLocalUtils.removeRequestTag();
         ThreadLocalUtils.removeRequestData();
     }
