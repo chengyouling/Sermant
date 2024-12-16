@@ -51,6 +51,8 @@ public abstract class AbstractThreadWrapper<T> {
 
     private final boolean cannotTransmit;
 
+    private final String name;
+
     /**
      * constructor
      *
@@ -73,6 +75,7 @@ public abstract class AbstractThreadWrapper<T> {
         }
         this.cannotTransmit = cannotTransmit;
         this.executorName = executorName;
+        this.name = Thread.currentThread().getName();
     }
 
     /**
@@ -133,6 +136,9 @@ public abstract class AbstractThreadWrapper<T> {
      * Post method executed by thread object
      */
     protected void after() {
+        if (name.equals(Thread.currentThread().getName())) {
+            return;
+        }
         TrafficUtils.removeTrafficTag();
         TrafficUtils.removeTrafficData();
     }
