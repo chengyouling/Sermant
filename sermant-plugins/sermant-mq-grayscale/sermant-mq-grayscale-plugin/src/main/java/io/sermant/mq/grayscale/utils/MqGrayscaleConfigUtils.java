@@ -28,7 +28,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.common.message.Message;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -167,16 +166,13 @@ public class MqGrayscaleConfigUtils {
      */
     public static void setGrayscaleConfig(MqGrayscaleConfig config, DynamicConfigEventType eventType) {
         buildGrayTagsSet(config);
-        if (eventType == DynamicConfigEventType.CREATE) {
+        if (eventType == DynamicConfigEventType.CREATE || eventType == DynamicConfigEventType.INIT) {
             CACHE_CONFIG.put(CACHE_CONFIG_KEY, config);
             SubscriptionDataUtils.updateChangeFlag();
         } else {
-            boolean isAllowRefresh = isAllowRefreshChangeFlag(CACHE_CONFIG.get(CACHE_CONFIG_KEY), config);
-            if (isAllowRefresh) {
-                MqGrayscaleConfig cacheConfig = CACHE_CONFIG.get(CACHE_CONFIG_KEY);
-                cacheConfig.updateGrayscaleConfig(config);
-                SubscriptionDataUtils.updateChangeFlag();
-            }
+            MqGrayscaleConfig cacheConfig = CACHE_CONFIG.get(CACHE_CONFIG_KEY);
+            cacheConfig.updateGrayscaleConfig(config);
+            SubscriptionDataUtils.updateChangeFlag();
         }
     }
 
@@ -186,25 +182,6 @@ public class MqGrayscaleConfigUtils {
                 GRAY_TAGS_SET.addAll(item.getTrafficTag().keySet());
             }
         }
-    }
-
-    /**
-     * only traffic label changes allow refresh tag change map to rebuild SQL92 query statement,
-     * because if the serviceMeta changed, the gray consumer cannot be matched and becomes a base consumer
-     * so, if you need to change the env tag, restart all services.
-     *
-     * @param resource cache config
-     * @param target cache config
-     * @return boolean
-     */
-    private static boolean isAllowRefreshChangeFlag(MqGrayscaleConfig resource, MqGrayscaleConfig target) {
-        if (resource.isBaseExcludeGroupTagsChanged(target)) {
-            return true;
-        }
-        if (resource.isConsumerTypeChanged(target)) {
-            return true;
-        }
-        return !resource.buildAllTrafficTagInfoToStr().equals(target.buildAllTrafficTagInfoToStr());
     }
 
     /**

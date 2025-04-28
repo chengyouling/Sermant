@@ -16,6 +16,10 @@
 
 package io.sermant.mq.grayscale.interceptor;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
 import io.sermant.core.utils.StringUtils;
@@ -35,6 +39,8 @@ import org.apache.rocketmq.client.impl.consumer.DefaultLitePullConsumerImpl;
  * @since 2024-05-27
  **/
 public class MqLitePullConsumerSubscribeInterceptor extends AbstractInterceptor {
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
         return context;
@@ -55,6 +61,8 @@ public class MqLitePullConsumerSubscribeInterceptor extends AbstractInterceptor 
                 String grayConsumerGroup
                         = baseGroup.contains("_" + grayGroupTag) ? baseGroup : baseGroup + "_" + grayGroupTag;
                 pullConsumer.setConsumerGroup(grayConsumerGroup);
+                LOGGER.log(Level.INFO, "update [topic: " + context.getArguments()[0] + "] group name as: "
+                    + grayConsumerGroup);
                 SubscriptionDataUtils.setGrayGroupTagChangeMap(pullConsumer.getNamesrvAddr(),
                         (String) context.getArguments()[0], grayConsumerGroup, true);
             }

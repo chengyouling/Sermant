@@ -51,27 +51,29 @@ public class MqSchedulerRebuildSubscriptionInterceptor extends AbstractIntercept
     @Override
     public ExecuteContext after(ExecuteContext context) throws Exception {
         if (MqGrayscaleConfigUtils.isPlugEnabled()) {
-            Map<String, SubscriptionData> map = (Map<String, SubscriptionData>) context.getResult();
-            RebalanceImpl balance = (RebalanceImpl) context.getObject();
-            for (SubscriptionData subscriptionData : map.values()) {
-                if (balance.getConsumerGroup() == null || subscriptionData.getTopic().contains(RETYPE)) {
-                    continue;
-                }
-                if (!SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())
+            synchronized (MqSchedulerRebuildSubscriptionInterceptor.class) {
+                Map<String, SubscriptionData> map = (Map<String, SubscriptionData>) context.getResult();
+                RebalanceImpl balance = (RebalanceImpl) context.getObject();
+                for (SubscriptionData subscriptionData : map.values()) {
+                    if (balance.getConsumerGroup() == null || subscriptionData.getTopic().contains(RETYPE)) {
+                        continue;
+                    }
+                    if (!SubscriptionDataUtils.EXPRESSION_TYPE_SQL92.equals(subscriptionData.getExpressionType())
                         && !SubscriptionDataUtils.EXPRESSION_TYPE_TAG.equals(subscriptionData.getExpressionType())) {
-                    LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
+                        LOGGER.warning(String.format(Locale.ENGLISH, "can not process expressionType: %s",
                             subscriptionData.getExpressionType()));
-                    continue;
-                }
+                        continue;
+                    }
 
-                // if config not changed, continue other topic
-                if (!SubscriptionDataUtils.getGrayTagChangeFlag(subscriptionData.getTopic(), balance)) {
-                    continue;
-                }
-                buildSql92SubscriptionData(subscriptionData, balance);
+                    // if config not changed, continue other topic
+                    if (!SubscriptionDataUtils.getGrayTagChangeFlag(subscriptionData.getTopic(), balance)) {
+                        continue;
+                    }
+                    buildSql92SubscriptionData(subscriptionData, balance);
 
-                // update %RETRY%+GROUP dimension substring
-                updateRetrySubscriptionData(subscriptionData, map.values());
+                    // update %RETRY%+GROUP dimension substring
+                    updateRetrySubscriptionData(subscriptionData, map.values());
+                }
             }
         }
         return context;

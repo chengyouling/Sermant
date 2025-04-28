@@ -17,11 +17,9 @@
 package io.sermant.mq.grayscale.config;
 
 import io.sermant.core.utils.StringUtils;
-import io.sermant.mq.grayscale.utils.SubscriptionDataUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -144,64 +142,12 @@ public class MqGrayscaleConfig {
     }
 
     /**
-     * build traffic tag properties to string
-     *
-     * @return traffic tag string
-     */
-    public String buildAllTrafficTagInfoToStr() {
-        StringBuilder sb = new StringBuilder();
-        for (GrayTagItem item : getGrayscale()) {
-            if (sb.length() > 0) {
-                sb.append(SubscriptionDataUtils.AFA_SYMBOL);
-            }
-            sb.append(item.getConsumerGroupTag());
-            for (Map.Entry<String, String> entry : item.getTrafficTag().entrySet()) {
-                sb.append(entry.getKey())
-                        .append(SubscriptionDataUtils.AFA_SYMBOL)
-                        .append(entry.getValue());
-            }
-        }
-        return sb.toString();
-    }
-
-    /**
-     * compare source/target MqGrayscaleConfig excludeGroupTags config whether to change
-     *
-     * @param target MqGrayscaleConfig
-     * @return isChanged
-     */
-    public boolean isBaseExcludeGroupTagsChanged(MqGrayscaleConfig target) {
-        HashSet<String> targetBaseExcludeTags = new HashSet<>(target.getBase().getExcludeGroupTags());
-        HashSet<String> sourceBaseExcludeTags = new HashSet<>(getBase().getExcludeGroupTags());
-        targetBaseExcludeTags.removeAll(sourceBaseExcludeTags);
-        target.getBase().getExcludeGroupTags().forEach(sourceBaseExcludeTags::remove);
-        return !targetBaseExcludeTags.isEmpty() || !sourceBaseExcludeTags.isEmpty();
-    }
-
-    /**
-     * compare source/target MqGrayscaleConfig consumerType config whether to change
-     *
-     * @param target MqGrayscaleConfig
-     * @return isChanged
-     */
-    public boolean isConsumerTypeChanged(MqGrayscaleConfig target) {
-        String sourceType = getBase() == null ? "" : getBase().getConsumeType();
-        String targetType = target.getBase() == null ? "" : target.getBase().getConsumeType();
-        return !sourceType.equals(targetType);
-    }
-
-    /**
-     * update base info/traffic tags
+     * update config
      *
      * @param config config
      */
     public void updateGrayscaleConfig(MqGrayscaleConfig config) {
         setBase(config.getBase());
-        if (config.getGrayscale().isEmpty()) {
-            return;
-        }
-        for (GrayTagItem item : getGrayscale()) {
-            item.updateTrafficTags(config.getGrayscale());
-        }
+        setGrayscale(config.getGrayscale());
     }
 }

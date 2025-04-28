@@ -16,6 +16,7 @@
 
 package io.sermant.mq.grayscale.interceptor;
 
+import io.sermant.core.common.LoggerFactory;
 import io.sermant.core.plugin.agent.entity.ExecuteContext;
 import io.sermant.core.plugin.agent.interceptor.AbstractInterceptor;
 import io.sermant.core.utils.ReflectUtils;
@@ -27,6 +28,8 @@ import org.apache.rocketmq.client.impl.producer.DefaultMQProducerImpl;
 
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * SendMessageHook builder interceptor
@@ -35,6 +38,8 @@ import java.util.Optional;
  * @since 2024-05-27
  **/
 public class MqProducerGrayMessageHookInterceptor extends AbstractInterceptor {
+    private static final Logger LOGGER = LoggerFactory.getLogger();
+
     @Override
     public ExecuteContext before(ExecuteContext context) throws Exception {
         return context;
@@ -49,6 +54,7 @@ public class MqProducerGrayMessageHookInterceptor extends AbstractInterceptor {
             if (method.isPresent()) {
                 method.get().invoke(producer, new MqGraySendMessageHook());
             }
+            LOGGER.log(Level.INFO, "producer add MqGraySendMessageHook success!");
         }
         return context;
     }
