@@ -147,7 +147,11 @@ public class MqGrayscaleConfig {
      * @param config config
      */
     public void updateGrayscaleConfig(MqGrayscaleConfig config) {
-        setBase(config.getBase());
-        setGrayscale(config.getGrayscale());
+        if (config.getBase() != null) {
+            setBase(config.getBase());
+        }
+        if (!config.getGrayscale().isEmpty()) {
+            setGrayscale(config.getGrayscale());
+        }
     }
 }
