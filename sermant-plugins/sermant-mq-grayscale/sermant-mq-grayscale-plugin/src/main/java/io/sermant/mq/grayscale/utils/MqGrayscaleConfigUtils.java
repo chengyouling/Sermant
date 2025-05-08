@@ -38,6 +38,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 
 /**
  * grayscale config util
@@ -72,6 +73,12 @@ public class MqGrayscaleConfigUtils {
      */
     private static final Set<String> GRAY_TAGS_SET = new HashSet<>();
 
+    /**
+     * consumerGroup name rule: ^[a-zA-Z0-9_-]+$
+     */
+    private static final Pattern PATTERN = Pattern.compile("^[a-zA-Z0-9_-]+$");
+
+
     static {
         ServiceMeta serviceMeta = ConfigManager.getConfig(ServiceMeta.class);
         MICRO_SERVICE_PROPERTIES.put("version", serviceMeta.getVersion());
@@ -101,7 +108,16 @@ public class MqGrayscaleConfigUtils {
         if (!itemOptional.isPresent()) {
             itemOptional = mqGrayscaleConfig.matchGrayTagByServiceMeta(MICRO_SERVICE_PROPERTIES);
         }
-        return itemOptional.map(grayTagItem -> standardFormatGroupTag(grayTagItem.getConsumerGroupTag())).orElse("");
+        if (itemOptional.isPresent()) {
+            String consumerGroup = itemOptional.get().getConsumerGroupTag();
+            if (PATTERN.matcher(consumerGroup).matches()) {
+                return itemOptional.get().getConsumerGroupTag();
+            } else {
+                LOGGER.warning(String.format(Locale.ENGLISH, "current consumerGroup tag [%s] not matches pattern "
+                    + "[a-zA-Z0-9_-], modify it and restart service to valid.", consumerGroup));
+            }
+        }
+        return "";
     }
 
     /**
@@ -127,17 +143,6 @@ public class MqGrayscaleConfigUtils {
             return DEFAULT_AUTO_CHECK_DELAY_TIME;
         }
         return CACHE_CONFIG.get(CACHE_CONFIG_KEY).getBase().getAutoCheckDelayTime();
-    }
-
-    /**
-     * format grayGroupTag
-     *
-     * @param grayGroupTag grayGroupTag
-     * @return standard grayGroupTag
-     */
-    public static String standardFormatGroupTag(String grayGroupTag) {
-        // consumerGroup name rule: ^[%|a-zA-Z0-9_-]+$
-        return grayGroupTag.toLowerCase(Locale.ROOT).replaceAll("[^%|a-zA-Z0-9_-]", "-");
     }
 
     private static Map<String, String> getTrafficTag() {
